@@ -89,7 +89,7 @@ export default function Home() {
                                 <button
                                     key={city}
                                     onClick={() =>
-                                        router.push(`/directory?city=${city}`)
+                                        router.push(`/directoryAirlines?city=${city}`)
                                     }
                                     className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-5 py-2 rounded-full text-sm border border-white/20 transition-all"
                                 >

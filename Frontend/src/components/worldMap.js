@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { MapPin, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { OFFICES } from "@/components/constdata";
+import Image from "next/image";
 
 const WorldMap = () => {
     const [hoveredOffice, setHoveredOffice] = useState(null);
@@ -37,131 +38,16 @@ const WorldMap = () => {
     return (
         <div className="relative w-full aspect-video md:aspect-[21/9] bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl overflow-hidden shadow-2xl border border-blue-200">
             {/* Real World Map SVG Background */}
-            <svg
-                className="absolute inset-0 w-full h-full"
-                viewBox="0 0 1000 500"
-                preserveAspectRatio="xMidYMid slice"
-            >
-                <defs>
-                    {/* Ocean */}
-                    <linearGradient
-                        id="ocean"
-                        x1="0%"
-                        y1="0%"
-                        x2="0%"
-                        y2="100%"
-                    >
-                        <stop offset="0%" stopColor="#EAF6FF" />
-                        <stop offset="50%" stopColor="#CFEAFF" />
-                        <stop offset="100%" stopColor="#B7DFFF" />
-                    </linearGradient>
-
-                    {/* Land */}
-                    <radialGradient id="land" cx="50%" cy="40%" r="80%">
-                        <stop
-                            offset="0%"
-                            stopColor="#7ED1F2"
-                            stopOpacity="0.45"
-                        />
-                        <stop
-                            offset="100%"
-                            stopColor="#00ADEF"
-                            stopOpacity="0.18"
-                        />
-                    </radialGradient>
-
-                    {/* Coastline glow */}
-                    <filter id="coastGlow">
-                        <feGaussianBlur stdDeviation="1.5" />
-                    </filter>
-
-                    {/* Flight glow */}
-                    <filter id="flightGlow">
-                        <feGaussianBlur stdDeviation="2" />
-                    </filter>
-
-                    {/* Atmosphere */}
-                    <radialGradient id="atmosphere" cx="50%" cy="50%" r="70%">
-                        <stop
-                            offset="0%"
-                            stopColor="#ffffff"
-                            stopOpacity="0.35"
-                        />
-                        <stop
-                            offset="100%"
-                            stopColor="#ffffff"
-                            stopOpacity="0"
-                        />
-                    </radialGradient>
-                </defs>
-
-                {/* Ocean */}
-                <rect width="1000" height="500" fill="url(#ocean)" />
-
-                {/* Atmosphere */}
-                <rect width="1000" height="500" fill="url(#atmosphere)" />
-
-                {/* Continents */}
-                <g fill="url(#land)" filter="url(#coastGlow)">
-                    {/* North America */}
-                    <path d="M140 90 L200 70 L260 80 L300 110 L310 160 L280 200 L230 220 L180 210 L150 170 Z" />
-
-                    {/* South America */}
-                    <path d="M260 240 L300 250 L315 300 L300 360 L270 400 L240 380 L230 320 Z" />
-
-                    {/* Europe */}
-                    <path d="M450 90 L500 80 L540 100 L550 130 L520 150 L480 145 L455 120 Z" />
-
-                    {/* Africa */}
-                    <path d="M480 170 L530 180 L565 230 L570 300 L540 360 L490 350 L460 300 L455 230 Z" />
-
-                    {/* Asia */}
-                    <path d="M580 70 L700 65 L810 110 L850 160 L830 200 L760 220 L650 210 L590 160 Z" />
-
-                    {/* Australia */}
-                    <path d="M760 330 L820 325 L860 360 L830 400 L770 390 Z" />
-                </g>
-
-                {/* Latitude / Longitude */}
-                <g stroke="#00ADEF" strokeWidth="0.4" opacity="0.12">
-                    {[...Array(9)].map((_, i) => (
-                        <line
-                            key={`v${i}`}
-                            x1={i * 125}
-                            y1="0"
-                            x2={i * 125}
-                            y2="500"
-                        />
-                    ))}
-                    {[...Array(5)].map((_, i) => (
-                        <line
-                            key={`h${i}`}
-                            x1="0"
-                            y1={i * 100}
-                            x2="1000"
-                            y2={i * 100}
-                        />
-                    ))}
-                </g>
-
-                {/* Flight Paths */}
-                <g fill="none" filter="url(#flightGlow)">
-                    <path
-                        d="M 220 190 C 420 120 580 140 720 170"
-                        stroke="#F5A623"
-                        strokeWidth="2"
-                        strokeDasharray="6 8"
-                        opacity="0.6"
-                    />
-                    <path
-                        d="M 520 170 C 650 220 760 260 840 310"
-                        stroke="#00ADEF"
-                        strokeWidth="2"
-                        strokeDasharray="6 8"
-                        opacity="0.6"
-                    />
-                </g>
-            </svg>
+            {/* World Map Image */}
+            <div className="absolute inset-0">
+                <Image
+                    src="/images/worldmap/google_world_map.jpg"
+                    alt="World Map"
+                    fill
+                    className="object-cover"
+                    priority
+                />
+            </div>
 
             {/* Office Location Pins */}
             {OFFICES.map((office) => {

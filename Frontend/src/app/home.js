@@ -117,7 +117,7 @@ export default function Home() {
                                 key={airline.id}
                                 onClick={() =>
                                     router.push(
-                                        `/directory?airline=${airline.id}`
+                                        `/directoryAirlines?airline=${airline.id}`
                                     )
                                 }
                                 className="group cursor-pointer flex flex-col items-center p-6 rounded-2xl border border-gray-100 hover:border-[#00ADEF] hover:shadow-xl transition-all"

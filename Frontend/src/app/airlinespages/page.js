@@ -14,6 +14,7 @@ export default function AirlinePage() {
                 <h1 className="text-2xl font-bold">Airline Office ID: {id}</h1>
             </div>
             <Footer />
+            
         </>
     );
 }

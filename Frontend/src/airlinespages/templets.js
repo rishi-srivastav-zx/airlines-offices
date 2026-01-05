@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import AboutAirline from '@/components/Aboutairline';
 import { useRouter, useParams } from 'next/navigation';
 import {
     Plane,
@@ -15,8 +16,12 @@ import {
     Star,
     Navigation,
 } from 'lucide-react';
-import { OFFICES, aircraftByAirline, servicesList, getAirlineById } from '@/components/constdata';
+import { OFFICES, aircraftByAirline, servicesList, getAirlineById, } from '@/components/constdata';
 import SafeImage from '@/components/safeImage';
+import { officeInquiries } from '@/components/constdata';
+import InquiryTable from "@/components/InquiryTable";
+
+const inquiryData = officeInquiries[OFFICES.airlineId];
 
 // InfoTable Component
 const InfoTable = ({ icon: Icon, title, rows }) => {
@@ -210,7 +215,6 @@ const OfficeTemplate = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col">
-
             <main className="flex-grow">
                 {/* Hero / Header Section */}
                 <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 py-12 md:py-20 px-4">
@@ -220,10 +224,14 @@ const OfficeTemplate = () => {
                             Verified Airline Office Info
                         </div>
                         <h1 className="text-3xl md:text-5xl font-black text-white mb-4 leading-tight">
-                            {selectedOffice.airlineName} {selectedOffice.city} Office
+                            {selectedOffice.airlineName} {selectedOffice.city}{" "}
+                            Office
                         </h1>
                         <p className="text-blue-50 text-lg max-w-2xl opacity-90 leading-relaxed font-medium">
-                            Official contact details, airport coordinates, and headquarter information for {selectedOffice.airlineName} in {selectedOffice.country}.
+                            Official contact details, airport coordinates, and
+                            headquarter information for{" "}
+                            {selectedOffice.airlineName} in{" "}
+                            {selectedOffice.country}.
                         </p>
                     </div>
                 </div>
@@ -231,25 +239,30 @@ const OfficeTemplate = () => {
                 {/* Content Container */}
                 <div className="container mx-auto px-4 w-full -mt-8 md:-mt-12 pb-20">
                     <div className="grid lg:grid-cols-12 gap-8">
-                        
                         {/* Left Column (Primary Info) */}
                         <div className="lg:col-span-8 space-y-8">
-                            
                             {/* Quick Action Cards */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <a 
-                                    href={`tel:${selectedOffice.phone.replace(/\s/g, '')}`}
+                                <a
+                                    href={`tel:${selectedOffice.phone.replace(
+                                        /\s/g,
+                                        ""
+                                    )}`}
                                     className="flex items-center gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200 group hover:border-blue-500 hover:shadow-lg transition-all"
                                 >
                                     <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                                         <Phone className="text-lg" />
                                     </div>
                                     <div>
-                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Office Support</p>
-                                        <p className="font-bold text-slate-800">{selectedOffice.phone}</p>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                                            Office Support
+                                        </p>
+                                        <p className="font-bold text-slate-800">
+                                            {selectedOffice.phone}
+                                        </p>
                                     </div>
                                 </a>
-                                <a 
+                                <a
                                     href={`mailto:${selectedOffice.email}`}
                                     className="flex items-center gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200 group hover:border-blue-500 hover:shadow-lg transition-all"
                                 >
@@ -257,37 +270,105 @@ const OfficeTemplate = () => {
                                         <Mail className="text-lg" />
                                     </div>
                                     <div>
-                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Email Inquiry</p>
-                                        <p className="font-bold text-slate-800 break-all">{selectedOffice.email}</p>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                                            Email Inquiry
+                                        </p>
+                                        <p className="font-bold text-slate-800 break-all">
+                                            {selectedOffice.email}
+                                        </p>
                                     </div>
                                 </a>
                             </div>
 
+                            <AboutAirline
+                                airlineId={selectedOffice.airlineId}
+                                airlineName={selectedOffice.airlineName}
+                                city={selectedOffice.city}
+                            />
+
                             {/* Detailed Info Tables */}
-                            <InfoTable 
+                            <InfoTable
                                 icon={Info}
                                 title="Office Overview"
                                 rows={[
-                                    { label: "Address", value: <span className="text-blue-600">{selectedOffice.address}</span> },
-                                    { label: "Phone Number", value: selectedOffice.phone },
-                                    { label: "Operation Hours", value: <div className="flex items-center gap-2"><Clock className="text-orange-500 w-4 h-4" /> {selectedOffice.hours}</div> },
-                                    { label: "Official Website", value: <a href={website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1">{website} <ExternalLink className="w-3 h-3" /></a> }
+                                    {
+                                        label: "Address",
+                                        value: (
+                                            <span className="text-blue-600">
+                                                {selectedOffice.address}
+                                            </span>
+                                        ),
+                                    },
+                                    {
+                                        label: "Phone Number",
+                                        value: selectedOffice.phone,
+                                    },
+                                    {
+                                        label: "Operation Hours",
+                                        value: (
+                                            <div className="flex items-center gap-2">
+                                                <Clock className="text-orange-500 w-4 h-4" />{" "}
+                                                {selectedOffice.hours}
+                                            </div>
+                                        ),
+                                    },
+                                    {
+                                        label: "Official Website",
+                                        value: (
+                                            <a
+                                                href={website}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 hover:underline flex items-center gap-1"
+                                            >
+                                                {website}{" "}
+                                                <ExternalLink className="w-3 h-3" />
+                                            </a>
+                                        ),
+                                    },
                                 ]}
                             />
 
-                            <InfoTable 
+                            <InfoTable
                                 icon={Plane}
                                 title="Airport Liaison"
                                 rows={[
-                                    { label: "Airport Name", value: airportName },
-                                    { label: "Terminal Info", value: airportAddress },
-                                    { label: "IATA Code", value: <span className="inline-block bg-slate-800 text-white px-2 py-0.5 rounded text-xs font-mono">{airportCode}</span> },
-                                    { label: "Counter Contact", value: airportContact }
+                                    {
+                                        label: "Airport Name",
+                                        value: airportName,
+                                    },
+                                    {
+                                        label: "Terminal Info",
+                                        value: airportAddress,
+                                    },
+                                    {
+                                        label: "IATA Code",
+                                        value: (
+                                            <span className="inline-block bg-slate-800 text-white px-2 py-0.5 rounded text-xs font-mono">
+                                                {airportCode}
+                                            </span>
+                                        ),
+                                    },
+                                    {
+                                        label: "Counter Contact",
+                                        value: airportContact,
+                                    },
                                 ]}
                             />
 
+                            {inquiryData ? (
+                                <InquiryTable
+                                    title={inquiryData.title}
+                                    columns={inquiryData.columns}
+                                />
+                            ) : (
+                                <p className="text-red-500">
+                                    No inquiry data found
+                                </p>
+                            )}
+                            
                             {/* Map Section */}
-                            <MapSection 
+                            <MapSection
                                 airlineName={selectedOffice.airlineName}
                                 city={selectedOffice.city}
                                 address={selectedOffice.address}
@@ -302,7 +383,10 @@ const OfficeTemplate = () => {
                                 </h2>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                     {servicesList.map((service, i) => (
-                                        <div key={i} className="flex items-center gap-3 group">
+                                        <div
+                                            key={i}
+                                            className="flex items-center gap-3 group"
+                                        >
                                             <div className="w-2 h-2 rounded-full bg-blue-200 group-hover:bg-blue-600 transition-colors"></div>
                                             <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">
                                                 {service}
@@ -323,7 +407,10 @@ const OfficeTemplate = () => {
                                 </h2>
                                 <div className="flex flex-wrap gap-2">
                                     {aircraft.map((plane, i) => (
-                                        <span key={i} className="bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/20 transition-all cursor-default">
+                                        <span
+                                            key={i}
+                                            className="bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/20 transition-all cursor-default"
+                                        >
                                             {plane}
                                         </span>
                                     ))}
@@ -333,7 +420,6 @@ const OfficeTemplate = () => {
 
                         {/* Right Column (Sidebar) */}
                         <div className="lg:col-span-4 space-y-6">
-                            
                             {/* Headquarter Card */}
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                                 <h3 className="text-lg font-bold text-slate-800 mb-5 flex items-center gap-2">
@@ -342,12 +428,20 @@ const OfficeTemplate = () => {
                                 </h3>
                                 <div className="space-y-4">
                                     <div className="p-4 bg-slate-50 rounded-xl">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">HQ Address</p>
-                                        <p className="text-sm font-bold text-slate-700">{headquarterAddress}</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">
+                                            HQ Address
+                                        </p>
+                                        <p className="text-sm font-bold text-slate-700">
+                                            {headquarterAddress}
+                                        </p>
                                     </div>
                                     <div className="p-4 bg-slate-50 rounded-xl">
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">HQ Phone</p>
-                                        <p className="text-sm font-bold text-slate-700">{headquarterPhone}</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">
+                                            HQ Phone
+                                        </p>
+                                        <p className="text-sm font-bold text-slate-700">
+                                            {headquarterPhone}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -369,23 +463,33 @@ const OfficeTemplate = () => {
 
                             {/* Related Offices */}
                             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                                <h3 className="text-lg font-bold text-slate-800 mb-5">Browse More Offices</h3>
+                                <h3 className="text-lg font-bold text-slate-800 mb-5">
+                                    Browse More Offices
+                                </h3>
                                 <div className="space-y-3">
-                                    {OFFICES.filter(o => o.id !== selectedOffice.id).map(o => (
+                                    {OFFICES.filter(
+                                        (o) => o.id !== selectedOffice.id
+                                    ).map((o) => (
                                         <button
                                             key={o.id}
-                                            onClick={() => handleOfficeSelect(o)}
+                                            onClick={() =>
+                                                handleOfficeSelect(o)
+                                            }
                                             className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all text-left"
                                         >
-                                            <SafeImage 
-                                                src={o.image} 
+                                            <SafeImage
+                                                src={o.image}
                                                 alt={o.city}
                                                 className="w-16 h-12 rounded-lg object-cover flex-shrink-0"
                                                 fallbackSrc="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&q=80&w=800"
                                             />
                                             <div>
-                                                <p className="text-xs font-bold text-blue-600 leading-tight">{o.airlineName}</p>
-                                                <p className="text-sm font-bold text-slate-800">{o.city} Office</p>
+                                                <p className="text-xs font-bold text-blue-600 leading-tight">
+                                                    {o.airlineName}
+                                                </p>
+                                                <p className="text-sm font-bold text-slate-800">
+                                                    {o.city} Office
+                                                </p>
                                             </div>
                                         </button>
                                     ))}
@@ -394,8 +498,13 @@ const OfficeTemplate = () => {
 
                             {/* Newsletter / CTA */}
                             <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 p-8 rounded-3xl text-white shadow-2xl shadow-blue-200">
-                                <h3 className="text-xl font-black mb-3 italic">Need Help?</h3>
-                                <p className="text-sm text-blue-50 mb-6 opacity-80">Our support team is available 24/7 for urgent ticketing and travel inquiries.</p>
+                                <h3 className="text-xl font-black mb-3 italic">
+                                    Need Help?
+                                </h3>
+                                <p className="text-sm text-blue-50 mb-6 opacity-80">
+                                    Our support team is available 24/7 for
+                                    urgent ticketing and travel inquiries.
+                                </p>
                                 <button className="w-full bg-white text-blue-600 font-black py-4 rounded-2xl hover:bg-blue-50 transition-colors shadow-lg">
                                     Live Chat Support
                                 </button>

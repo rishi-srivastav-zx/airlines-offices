@@ -235,3 +235,68 @@ export const servicesList = [
     "Group Sales",
     "Flight Costs",
 ];
+
+export const airlineAbout = {
+    qatar: {
+        location:
+            "G/F One Global Place, Fifth Avenue corner 25th Street, Bonifacio Global City, Taguig, Manila, Philippines.",
+        overview:
+            "Qatar Airways is the national carrier of Qatar and one of the world’s leading airlines.",
+        network:
+            "From its hub at Hamad International Airport (DOH), the airline flies to more than 145 destinations across six continents.",
+        fleet: "Qatar Airways operates a modern fleet of nearly 200 aircraft with Economy Class, Business Class, and First Class cabins on select routes.",
+        alliance:
+            "The airline has been a member of the Oneworld alliance since October 2013.",
+        support:
+            "Customers can contact the Manila office for bookings, cancellations, baggage services, privilege club inquiries, and other travel assistance.",
+    },
+
+    etihad: {
+        location: "Etihad Airways Office, Abu Dhabi, United Arab Emirates.",
+        overview:
+            "Etihad Airways is the national airline of the United Arab Emirates.",
+        network:
+            "Operating from Abu Dhabi International Airport, Etihad serves destinations across Asia, Europe, the Americas, and Oceania.",
+        fleet: "Etihad operates a modern fleet with Economy, Business, and First Class cabins.",
+        alliance:
+            "Etihad partners with global airlines through strategic codeshare agreements.",
+        support:
+            "The office assists with reservations, ticket changes, baggage support, and loyalty program inquiries.",
+    },
+};
+
+export const officeInquiries = {
+    qatar: {
+        title: "The Qatar Airways Office in Manila Handles the Following Inquiries",
+        columns: [
+            [
+                "Flight Ticket Booking",
+                "Airport Lounges",
+                "Airport Transfers",
+                "Immigration Services",
+                "Missing Luggage",
+                "Airport Facilities",
+                "Valet Parking",
+            ],
+            [
+                "Ok to Board",
+                "Visa Services",
+                "Meet and Greet",
+                "Business Class",
+                "Economy Class",
+                "In-Flight Entertainment",
+                "Visa on Arrival",
+            ],
+            [
+                "Flight Ticket Cancellation",
+                "Baggage Allowance, Online Check-in",
+                "Duty-Free Allowance",
+                "In-Flight Meals",
+                "Flight / Visa Info",
+                "Delayed Flights",
+                "Airport Wifi",
+                "Flight Wifi",
+            ],
+        ],
+    },
+};

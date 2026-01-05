@@ -165,3 +165,73 @@ export const getFeaturedOffices = () => {
 export const getAirlineById = (airlineId) => {
     return AIRLINES.find((airline) => airline.id === airlineId);
 };
+
+// Aircraft data by airline
+export const aircraftByAirline = {
+    qatar: [
+        "Airbus A350-900",
+        "Airbus A380-800",
+        "Boeing 777-300ER",
+        "Boeing 787-9",
+        "Airbus A330-300",
+        "Boeing 777-200LR",
+    ],
+    etihad: [
+        "Airbus A380-800",
+        "Boeing 787-9",
+        "Boeing 777-300ER",
+        "Airbus A350-1000",
+        "Boeing 787-10",
+    ],
+    philippine: [
+        "Airbus A350-900",
+        "Airbus A330-300",
+        "Boeing 777-300ER",
+        "Airbus A321neo",
+        "Airbus A320",
+    ],
+    saudia: [
+        "Boeing 787-9",
+        "Boeing 777-300ER",
+        "Airbus A330-300",
+        "Airbus A320",
+        "Boeing 787-10",
+    ],
+    gulf: [
+        "Boeing 787-9",
+        "Airbus A320",
+        "Airbus A321neo",
+        "Boeing 777-300ER",
+    ],
+    srilankan: [
+        "Airbus A330-300",
+        "Airbus A320",
+        "Airbus A321neo",
+    ],
+    wizz: [
+        "Airbus A320",
+        "Airbus A321neo",
+    ],
+};
+
+// Services list
+export const servicesList = [
+    "Flight Ticket Booking",
+    "Call to Airport",
+    "Flight Ticket Cancellation",
+    "Frequent Baggage Claim Cases",
+    "Board Complaint",
+    "Baggage Promotion Claims Check-in",
+    "Miles and Smiles",
+    "Exceptional Services",
+    "Getting Luggage",
+    "In-flight Meals",
+    "Flight Cancellation",
+    "Flight Complaints",
+    "In-flight Entertainment",
+    "Baggage Policy",
+    "Seat Booking",
+    "Passenger Tickets",
+    "Group Sales",
+    "Flight Costs",
+];

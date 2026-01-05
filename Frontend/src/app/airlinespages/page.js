@@ -1,12 +1,19 @@
-import Footer from "../footer";
-import Navbar from "../navbar";
+"use client";
 
+import Footer from "@/app/footer";
+import Navbar from "@/app/navbar";
+import { useParams } from "next/navigation";
 
-export default function() {
-    return(
+export default function AirlinePage() {
+    const { id } = useParams(); // ✅ correct
+
+    return (
         <>
-         <Navbar/>
-         <Footer/>
+            <Navbar />
+            <div className="p-6">
+                <h1 className="text-2xl font-bold">Airline Office ID: {id}</h1>
+            </div>
+            <Footer />
         </>
-    )
+    );
 }

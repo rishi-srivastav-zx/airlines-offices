@@ -152,7 +152,7 @@ export default function Home() {
                         </p>
                     </div>
                     <button
-                        onClick={() => router.push("/directory")}
+                        onClick={() => router.push("/directoryAirlines")}
                         className="hidden md:flex items-center text-[#00ADEF] font-bold group"
                     >
                         View All Offices{" "}

@@ -7,7 +7,7 @@ import SafeImage from "./safeImage";
 
 const OfficeCard = ({ office }) => {
     return (
-        <Link href={`/office/${office.id}`}>
+        <Link href={`/airlinespages/${office.id}`}>
             <div className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 h-full flex flex-col cursor-pointer">
                 {/* Image Section */}
                 <div className="relative h-64 overflow-hidden bg-gray-100 flex-shrink-0">

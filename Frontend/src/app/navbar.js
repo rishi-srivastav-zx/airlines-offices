@@ -11,7 +11,7 @@ export default function Navbar() {
     return (
         <>
             <nav className="bg-white shadow-md sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-20">
                         <div className="flex items-center">
                             <Link
@@ -75,7 +75,7 @@ export default function Navbar() {
                         {AIRLINES.map((airline) => (
                             <Link
                                 key={airline.id}
-                                href={`/directory?airline=${airline.id}`}
+                                href={`/directoryAirlines?airline=${airline.id}`}
                                 className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#00ADEF] hover:bg-gray-50"
                                 onClick={() => setIsOpen(false)}
                             >

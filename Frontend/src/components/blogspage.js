@@ -20,7 +20,7 @@ export default function BlogPage() {
 
                 {/* Featured Post */}
                 <div className="mb-16">
-                    <Link href={`/blog/${BLOG_POSTS[0].id}`}>
+                    <Link href={`/blogs/${BLOG_POSTS[0].id}`}>
                         <div className="bg-white rounded-[2rem] overflow-hidden shadow-xl flex flex-col lg:flex-row border border-gray-100 group cursor-pointer">
                             <div className="lg:w-3/5 h-[400px] overflow-hidden relative">
                                 <Image
@@ -82,7 +82,7 @@ export default function BlogPage() {
                 {/* Post Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 w-full ">
                     {BLOG_POSTS.map((post) => (
-                        <Link key={post.id} href={`/blog/${post.id}`}>
+                        <Link key={post.id} href={`/blogs/${post.id}`}>
                             <div className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-gray-100 flex flex-col group cursor-pointer h-full">
                                 <div className="relative h-60 overflow-hidden">
                                     <Image

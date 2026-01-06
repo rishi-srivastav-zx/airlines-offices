@@ -265,38 +265,176 @@ export const airlineAbout = {
     },
 };
 
+
 export const officeInquiries = {
-    qatar: {
-        title: "The Qatar Airways Office in Manila Handles the Following Inquiries",
-        columns: [
-            [
-                "Flight Ticket Booking",
-                "Airport Lounges",
-                "Airport Transfers",
-                "Immigration Services",
-                "Missing Luggage",
-                "Airport Facilities",
-                "Valet Parking",
-            ],
-            [
-                "Ok to Board",
-                "Visa Services",
-                "Meet and Greet",
-                "Business Class",
-                "Economy Class",
-                "In-Flight Entertainment",
-                "Visa on Arrival",
-            ],
-            [
-                "Flight Ticket Cancellation",
-                "Baggage Allowance, Online Check-in",
-                "Duty-Free Allowance",
-                "In-Flight Meals",
-                "Flight / Visa Info",
-                "Delayed Flights",
-                "Airport Wifi",
-                "Flight Wifi",
-            ],
+    title: "Qatar Airways Office List",
+    city: "Manila",
+    inquiries: [
+        ["Flight Ticket Booking", "Ok to Board", "Flight Ticket Cancellation"],
+        [
+            "Airport Lounges",
+            "Visa Services",
+            "Baggage Allowance, Online Check-in",
         ],
-    },
+        ["Airport Transfers", "Meet and Greet", "Duty-Free Allowance"],
+        ["Immigration Services", "Business Class", "In-Flight Meals"],
+        ["Missing Luggage", "Airport Lounges", "Flight/Visa Info"],
+        ["Miles", "Economy Class", "Delayed Flights"],
+        ["Airport Facilities", "In-Flight Entertainment", "Airport Wifi"],
+        ["Valet Parking", "Visa on Arrival", "Flight Wifi"],
+    ],
 };
+
+
+   export const BLOG_CONTENT = {
+       b1: {
+           id: "b1",
+
+           title: "How to Get an Upgrade on Air Transat?",
+           subtitle:
+               "Are you tired of squeezing in an economy seat on Air Transat?",
+           heroImage:
+               "https://images.unsplash.com/photo-1556388158-158ea5ccacbd?auto=format&fit=crop&q=80&w=1200",
+
+           tableOfContents: [
+               { id: "cabin-classes", title: "Air Transat Cabin Classes" },
+               { id: "economy", title: "Economy Class" },
+               { id: "standard", title: "Standard Seats" },
+               { id: "front-cabin", title: "Front Cabin Seats" },
+               { id: "two-by-two", title: "Two by Two Seats" },
+               { id: "extra-legroom", title: "Extra Legroom Seats" },
+               {
+                   id: "club-class",
+                   title: "What are the advantages of Club Class?",
+               },
+               {
+                   id: "upgrade-methods",
+                   title: "How to Upgrade to Club Class on Air Transat?",
+               },
+               { id: "online", title: "Making an upgrade online" },
+               { id: "auction", title: "Upgrading your flight by auction" },
+               { id: "worth-it", title: "Is Upgrading Worth It?" },
+               { id: "cost", title: "Air Transat Club Class Upgrade Cost" },
+               { id: "faq", title: "Frequently Asked Questions" },
+           ],
+
+           intro: {
+               text: "If you're planning to fly with Air Transat, you know that the airline offers a comfortable flying experience and a personalized experience...",
+               additionalText:
+                   "You need upgraded travel options to enjoy different Air Transat seat features from icing during eating fun.",
+           },
+
+           cabinClasses: {
+               title: "Air Transat Cabin Classes",
+               image: "https://images.unsplash.com/photo-1542296332-2e4473faf563?auto=format&fit=crop&q=80&w=1200",
+               intro: "To learn more about the upgrade options you need to be well-informed about the different cabin classes available on Air Transat.",
+
+               classes: [
+                   {
+                       title: "Economy Class",
+                       subtitle:
+                           "Air Transat's economy class offers low fares and quality services.",
+                       features: [],
+                   },
+                   {
+                       title: "Standard Seats",
+                       description:
+                           "The Economy Class cabin offers basic seating and economical services.",
+                   },
+                   {
+                       title: "Front Cabin Seats",
+                       description:
+                           "Located near the front for faster exit and better service.",
+                   },
+                   {
+                       title: "Two by Two Seats",
+                       description:
+                           "Reserved in pairs for extra space and privacy.",
+                   },
+                   {
+                       title: "Extra Legroom Seats",
+                       description:
+                           "4–6 inches more legroom with added comfort.",
+                   },
+               ],
+           },
+
+           clubClass: {
+               title: "Club Class",
+               image: "https://images.unsplash.com/photo-1556388158-158ea5ccacbd?auto=format&fit=crop&q=80&w=1200",
+               subtitle: "What are the advantages of Club Class?",
+               description:
+                   "Club Class is the premium cabin of Air Transat offering luxury seating and services.",
+               additionalInfo:
+                   "Available on select routes with premium experience.",
+
+               benefits: [
+                   "Priority services",
+                   "Premium seats with extra legroom",
+                   "Noise-canceling headphones",
+                   "Premium meals & beverages",
+                   "Dedicated cabin crew",
+               ],
+           },
+
+           upgradeMethods: {
+               title: "How to Upgrade to Club Class on Air Transat?",
+               intro: "Upgrades are available on select routes and subject to availability.",
+
+               online: {
+                   title: "Making an upgrade online",
+                   steps: [
+                       "Visit Air Transat official website",
+                       "Retrieve booking details",
+                       "Select Club Class upgrade",
+                       "Complete payment",
+                   ],
+               },
+
+               auction: {
+                   title: "Upgrading your flight by auction",
+                   description:
+                       "Bid for an upgrade and get notified if approved.",
+                   steps: [
+                       "Place your bid",
+                       "Wait for approval",
+                       "Receive confirmation email",
+                   ],
+                   note: "Approval depends on seat availability.",
+               },
+           },
+
+           worthIt: {
+               title: "Is Upgrading Worth It?",
+               points: [
+                   "Complimentary seat selection",
+                   "Premium baggage allowance",
+                   "Priority boarding",
+                   "Comfortable long-haul experience",
+               ],
+           },
+
+           upgradeCost: {
+               title: "Air Transat Club Class Upgrade Cost",
+               content:
+                   "Upgrade prices typically range between $400 and $700 depending on route and demand.",
+           },
+
+           conclusion: {
+               title: "Conclusion",
+               content:
+                   "Upgrading to Club Class offers a premium and comfortable travel experience.",
+           },
+
+           faq: [
+               {
+                   question: "What is the best cabin on Air Transat?",
+                   answer: "Club Class is the premium cabin.",
+               },
+               {
+                   question: "How much does an upgrade cost?",
+                   answer: "$400–$700 depending on route.",
+               },
+           ],
+       },
+   };

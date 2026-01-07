@@ -10,7 +10,6 @@ import {
     MapPin,
     Clock,
     Info,
-    Building,
     ExternalLink,
     Layers,
     Star,
@@ -29,8 +28,8 @@ import OfficeInquiryList from "@/components/InquiryTable";
 // InfoTable Component
 const InfoTable = ({ icon: Icon, title, rows }) => {
     return (
-        <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200">
-            <h2 className="text-xl sm:text-2xl font-black text-slate-800 mb-4 sm:mb-6 md:mb-8 flex items-center gap-2 sm:gap-3">
+        <div className="bg-white sm:p-6 md:p-8  border">
+            <h2 className="text-xxl sm:text-4xl font-black text-slate-800 mb-4 sm:mb-6 md:mb-8 flex items-center gap-2 sm:gap-3">
                 <div className="w-1.5 sm:w-2 h-6 sm:h-8 bg-blue-600 rounded-full"></div>
                 {Icon && (
                     <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
@@ -41,12 +40,12 @@ const InfoTable = ({ icon: Icon, title, rows }) => {
                 {rows.map((row, idx) => (
                     <div
                         key={idx}
-                        className="flex flex-col sm:flex-row sm:items-start sm:justify-between py-2 sm:py-3 border-b border-slate-100 last:border-0 gap-1 sm:gap-4"
+                        className="flex flex-col sm:flex-row lg:items-start py-2 sm:py-3 border-b border-slate-100 last:border-0 gap-1 sm:gap-4"
                     >
-                        <span className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-tighter sm:min-w-[140px]">
+                        <span className="text-xs sm:text-lg font-bold text-slate-500 uppercase tracking-tighter sm:min-w-[140px]">
                             {row.label}
                         </span>
-                        <div className="sm:text-right flex-1 text-sm font-semibold text-slate-800 break-words">
+                        <div className="sm:text-right ml-auto text-lg font-semibold text-slate-800 break-words">
                             {row.value}
                         </div>
                     </div>
@@ -242,7 +241,7 @@ const OfficeTemplate = () => {
             <main className="flex-grow">
                 {/* Hero / Header Section */}
                 <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 py-8 sm:py-12 md:py-16 lg:py-20 px-4">
-                    <div className="container mx-auto w-full text-center md:text-left">
+                    <div className="container w-full mx-auto  text-center md:text-left">
                         <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-2 sm:px-3 py-1 rounded-full text-white/80 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-4 sm:mb-6">
                             <span className="flex h-2 w-2 rounded-full bg-blue-300 animate-pulse"></span>
                             <span className="whitespace-nowrap">
@@ -263,12 +262,12 @@ const OfficeTemplate = () => {
                 </div>
 
                 {/* Content Container */}
-                <div className="container mx-auto px-4 w-full -mt-6 sm:-mt-8 md:-mt-12 pb-12 sm:pb-16 md:pb-20">
+                <div className="container w-full mx-auto   sm:-mt-8 md:-mt-12 pb-12 sm:pb-16 md:pb-20">
                     <div className="grid lg:grid-cols-12 gap-6 sm:gap-8">
                         {/* Left Column (Primary Info) */}
                         <div className="lg:col-span-8 space-y-6 sm:space-y-8">
                             {/* Quick Action Cards */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <a
                                     href={`tel:${selectedOffice.phone.replace(
                                         /\s/g,
@@ -284,7 +283,7 @@ const OfficeTemplate = () => {
                                             Call Now
                                         </p>
                                         <p className="font-bold text-slate-800 text-sm sm:text-base break-words">
-                                            <b>+1-833-842-6011</b> (Toll-Free)
+                                           {selectedOffice.phone}
                                         </p>
                                     </div>
                                 </a>
@@ -304,7 +303,7 @@ const OfficeTemplate = () => {
                                         </p>
                                     </div>
                                 </a>
-                            </div>
+                            </div> */}
 
                             <AboutAirline
                                 airlineId={selectedOffice.airlineId}
@@ -353,6 +352,21 @@ const OfficeTemplate = () => {
                                                     {website}
                                                 </span>{" "}
                                                 <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                                            </a>
+                                        ),
+                                    },
+                                    {
+                                        label: " TOLL - FREE NUMBER",
+                                        value: (
+                                            <a
+                                                href="tel:+18338426011"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className=" bg-yellow-500 text-black-600 hover:underline flex items-center gap-1 break-all rounded-2xl p-2 shadow-xl border border-yellow-100"
+                                            >
+                                                <span className="break-all">
+                                                    📞 Call Now: +1 833-842-6011
+                                                </span>{" "}
                                             </a>
                                         ),
                                     },

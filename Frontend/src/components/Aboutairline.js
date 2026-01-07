@@ -13,12 +13,12 @@ export default function AboutAirline({ airlineId, airlineName, city }) {
 
     return (
         <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100">
-            <h2 className="text-2xl font-bold text-[#333333] mb-4">
+            <h2 className="text-3xl font-bold text-[#333333] mb-4">
                 About {airlineName} {city} Office
             </h2>
 
             {/* Always visible */}
-            <p className="text-gray-600 text-sm mb-4">
+            <p className="text-gray-600 text-lg mb-4">
                 The {airlineName} {city} office is located at {data.location}
             </p>
 
@@ -28,7 +28,7 @@ export default function AboutAirline({ airlineId, airlineName, city }) {
                     open ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
                 }`}
             >
-                <div className="space-y-3 text-sm text-gray-600">
+                <div className="space-y-3 text-lg text-gray-600">
                     <p>{data.overview}</p>
                     <p>{data.network}</p>
                     <p>{data.fleet}</p>
@@ -40,7 +40,7 @@ export default function AboutAirline({ airlineId, airlineName, city }) {
             {/* Toggle */}
             <button
                 onClick={() => setOpen(!open)}
-                className="mt-4 flex items-center gap-2 text-[#00ADEF] font-semibold text-sm hover:underline"
+                className="mt-4 flex items-center gap-2 text-[#00ADEF] font-semibold text-lg hover:underline"
             >
                 {open ? "Read less" : "Read more"}
                 {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}

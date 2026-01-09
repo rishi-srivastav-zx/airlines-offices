@@ -77,7 +77,6 @@ const Directory = () => {
         </div>
     );
 
-
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
             {/* Hero Header */}
@@ -154,7 +153,7 @@ const Directory = () => {
                             showFilters ? "block" : "hidden lg:block"
                         }`}
                     >
-                        <div className="bg-white rounded-2xl p-6 mx-4 shadow-sm border border-gray-200 sticky top-4">
+                        <div className="bg-white rounded-2xl p-4 mx-4 shadow-sm border border-gray-200 sticky top-24">
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center space-x-2">
                                     <Filter className="h-5 w-5 text-[#00ADEF]" />
@@ -328,7 +327,7 @@ const Directory = () => {
                             <div
                                 className={
                                     viewMode === "grid"
-                                        ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6"
+                                        ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
                                         : "flex flex-col gap-4"
                                 }
                             >

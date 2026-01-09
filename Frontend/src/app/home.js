@@ -23,7 +23,7 @@ export default function Home() {
     const handleSearch = (e) => {
         e.preventDefault();
         if (searchQuery.trim()) {
-            router.push(`/directory?q=${encodeURIComponent(searchQuery)}`);
+            router.push(`/directoryAirlines?airline=${encodeURIComponent(searchQuery)}`);
         }
     };
 

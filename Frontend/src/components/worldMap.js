@@ -28,11 +28,11 @@ const WorldMap = () => {
     };
 
     const handleExploreClick = () => {
-        router.push("/directory");
+        router.push("/directoryAirlines");
     };
 
     const handleViewOffice = (officeId) => {
-        router.push(`/office/${officeId}`);
+        router.push(`/airlinespages/${officeId.id}`);
     };
 
     return (

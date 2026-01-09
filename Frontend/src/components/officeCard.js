@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { MapPin, Phone, Clock, ArrowRight, Mail, Star } from "lucide-react";
+import { MapPin, Phone, Clock, ArrowRight, Mail, } from "lucide-react";
 import SafeImage from "./safeImage";
 
 const OfficeCard = ({ office }) => {

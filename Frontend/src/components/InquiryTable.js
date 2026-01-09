@@ -2,13 +2,13 @@ const OfficeInquiryList = ({ data = {} }) => {
     const { title, city, inquiries = [] } = data;
 
     return (
-        <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="max-w-6xl mx-auto sm:px-4 py-6">
             {/* Title */}
-            <h2 className="text-orange-500 font-semibold text-lg mb-2">
+            {/* <h2 className="text-orange-500 font-semibold text-lg mb-2">
                 {title}
-            </h2>
+            </h2> */}
 
-            <h3 className="text-xl font-medium text-gray-800 mb-6">
+            <h3 className="sm:text-xl sm:text-left text-center text-lg font-medium text-gray-800 mb-6">
                 The Qatar Airways Office in {city} Handles the Following
                 Inquiries
             </h3>

@@ -1,13 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import {
-    Check,
-    ArrowLeft,
-    User,
-    Calendar,
-} from "lucide-react";
+import { Check, User, Calendar, PhoneOutgoing } from "lucide-react";
 import { BLOG_CONTENT, BLOG_POSTS } from "@/components/constdata";
+import BlogAuthor from "./BlogAuthor";
 
 const BlogTemplate = () => {
     const router = useRouter();
@@ -16,7 +12,6 @@ const BlogTemplate = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Get blog ID from URL params
         if (!params) return;
 
         const blogId = params.id;
@@ -24,7 +19,6 @@ const BlogTemplate = () => {
             setPageData(BLOG_CONTENT[blogId]);
             setLoading(false);
         } else {
-            // Fallback to first blog if not found
             const firstBlogId = Object.keys(BLOG_CONTENT)[0];
             if (firstBlogId) {
                 setPageData(BLOG_CONTENT[firstBlogId]);
@@ -35,10 +29,10 @@ const BlogTemplate = () => {
 
     if (loading || !pageData) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50">
+            <div className="flex items-center justify-center min-h-screen bg-gray-50 px-2.5 sm:px-4">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600 text-sm sm:text-base">
+                    <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 border-b-2 border-blue-600 mx-auto mb-3 sm:mb-4"></div>
+                    <p className="text-gray-600 text-xs sm:text-sm md:text-base">
                         Loading blog content...
                     </p>
                 </div>
@@ -50,96 +44,88 @@ const BlogTemplate = () => {
         <div className="min-h-screen bg-white">
             {/* Header with Title and Meta */}
             <div className="bg-white border-b border-gray-200">
-                <div className="container mx-auto px-4 py-6">
-                    <button
-                        onClick={() => router.back()}
-                        className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors mb-4"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        <span className="text-sm font-medium">Back</span>
-                    </button>
-
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+                <div className="container mx-auto px-2.5 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
+                    <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight">
                         {pageData.title}
                     </h1>
 
                     {/* Author and Date */}
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                            <User className="w-4 h-4" />
-                            <span>Travel Expert Team</span>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4 text-[10px] sm:text-xs md:text-sm text-gray-600">
+                        <div className="flex items-center gap-1 sm:gap-1.5">
+                            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            <span>Travel Expert</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4" />
-                            <span>Mon Jan 05 2026</span>
+                        <div className="flex items-center gap-1 sm:gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            <span>Jan 05 2026</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-8">
-                <div className="grid lg:grid-cols-3 gap-8">
+            <div className="container mx-auto px-2.5 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-5 md:py-8 overflow-hidden">
+                <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
                     {/* Main Content */}
                     <div className="lg:col-span-2">
                         {/* Image Grid - Top Section */}
-                        <div className="bg-white rounded-lg overflow-hidden mb-8">
-                            <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-white rounded-lg overflow-hidden mb-4 sm:mb-6 md:mb-8">
+                            <div className="grid grid-cols-1">
                                 {/* Large Image */}
-                                <div className="col-span-2">
+                                <div className="">
                                     <img
                                         src={pageData.clubClass.image}
                                         alt={pageData.title}
-                                        className="w-full h-100 object-cover"
+                                        className="w-full h-40 sm:h-48 md:h-64 lg:h-80 xl:h-96 object-cover"
                                     />
                                 </div>
                             </div>
 
                             {/* Title overlay on grid */}
-                            <div className="bg-white py-4 text-center">
-                                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 uppercase tracking-wide">
+                            <div className="bg-white py-2.5 sm:py-3 md:py-4 px-2.5 sm:px-4 text-center">
+                                <h2 className="text-sm sm:text-base md:text-xl lg:text-2xl font-bold text-gray-900 uppercase tracking-wide leading-tight">
                                     {pageData.title}
                                 </h2>
                             </div>
                         </div>
 
                         {/* Content Sections */}
-                        <div className="space-y-6">
+                        <div className="space-y-4 sm:space-y-6 md:space-y-8">
                             {/* Introduction */}
                             <section>
-                                <p className="text-gray-700 text-base leading-relaxed mb-4">
+                                <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed mb-2 sm:mb-3">
                                     {pageData.intro.text}
                                 </p>
-                                <p className="text-gray-700 text-base leading-relaxed">
+                                <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed">
                                     {pageData.intro.additionalText}
                                 </p>
                             </section>
 
                             {/* Cabin Classes */}
                             <section id="cabin-classes">
-                                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+                                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
                                     {pageData.cabinClasses.title}
                                 </h2>
-                                <p className="text-gray-700 text-base leading-relaxed mb-6">
+                                <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed mb-3 sm:mb-4 md:mb-6">
                                     {pageData.cabinClasses.intro}
                                 </p>
 
-                                <div className="space-y-4">
+                                <div className="space-y-3 sm:space-y-4">
                                     {pageData.cabinClasses.classes.map(
                                         (classItem, idx) => (
                                             <div
                                                 key={idx}
-                                                className="border-l-2 border-gray-300 pl-4"
+                                                className="border-l-2 border-gray-300 pl-2.5 sm:pl-3 md:pl-4"
                                             >
-                                                <h3 className="text-lg font-bold text-gray-900 mb-1">
+                                                <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1">
                                                     {classItem.title}
                                                 </h3>
                                                 {classItem.subtitle && (
-                                                    <p className="text-gray-600 text-sm mb-2">
+                                                    <p className="text-gray-600 text-[10px] sm:text-xs md:text-sm mb-1 sm:mb-1.5">
                                                         {classItem.subtitle}
                                                     </p>
                                                 )}
                                                 {classItem.description && (
-                                                    <p className="text-gray-700 text-base">
+                                                    <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed">
                                                         {classItem.description}
                                                     </p>
                                                 )}
@@ -151,28 +137,28 @@ const BlogTemplate = () => {
 
                             {/* Club Class */}
                             <section id="club-class">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
                                     {pageData.clubClass.title}
                                 </h2>
-                                <p className="text-gray-700 text-[15px] leading-relaxed mb-4">
+                                <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed mb-2 sm:mb-3">
                                     {pageData.clubClass.description}
                                 </p>
-                                <h3 className="text-lg font-bold text-gray-900 mb-3">
+                                <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1.5 sm:mb-2">
                                     {pageData.clubClass.subtitle}
                                 </h3>
-                                <p className="text-gray-700 text-[15px] leading-relaxed mb-5">
+                                <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed mb-3 sm:mb-4 md:mb-5">
                                     {pageData.clubClass.additionalInfo}
                                 </p>
 
-                                <div className="grid sm:grid-cols-2 gap-4 bg-gray-50 p-5 rounded-lg">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 md:gap-4 bg-gray-50 p-3 sm:p-4 md:p-5 rounded-lg">
                                     {pageData.clubClass.benefits.map(
                                         (benefit, idx) => (
                                             <div
                                                 key={idx}
-                                                className="flex items-start gap-3"
+                                                className="flex items-start gap-1.5 sm:gap-2"
                                             >
-                                                <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                                                <span className="text-gray-700 text-[14px]">
+                                                <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                                <span className="text-gray-700 text-xs sm:text-sm leading-snug">
                                                     {benefit}
                                                 </span>
                                             </div>
@@ -183,24 +169,24 @@ const BlogTemplate = () => {
 
                             {/* Upgrade Methods */}
                             <section id="upgrade-methods">
-                                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+                                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
                                     {pageData.upgradeMethods.title}
                                 </h2>
-                                <p className="text-gray-700 text-base leading-relaxed mb-4">
+                                <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed mb-3 sm:mb-4">
                                     {pageData.upgradeMethods.intro}
                                 </p>
 
                                 {/* Online Method */}
-                                <div id="online" className="mb-6">
-                                    <h3 className="text-lg font-bold text-gray-900 mb-3">
+                                <div id="online" className="mb-4 sm:mb-5">
+                                    <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1.5 sm:mb-2">
                                         {pageData.upgradeMethods.online.title}
                                     </h3>
-                                    <div className="space-y-2">
+                                    <div className="space-y-1.5 sm:space-y-2">
                                         {pageData.upgradeMethods.online.steps.map(
                                             (step, idx) => (
                                                 <p
                                                     key={idx}
-                                                    className="text-gray-700 text-base"
+                                                    className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed"
                                                 >
                                                     {idx + 1}. {step}
                                                 </p>
@@ -211,29 +197,29 @@ const BlogTemplate = () => {
 
                                 {/* Auction Method */}
                                 <div id="auction">
-                                    <h3 className="text-lg font-bold text-gray-900 mb-3">
+                                    <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1.5 sm:mb-2">
                                         {pageData.upgradeMethods.auction.title}
                                     </h3>
-                                    <p className="text-gray-700 text-base leading-relaxed mb-3">
+                                    <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed mb-2">
                                         {
                                             pageData.upgradeMethods.auction
                                                 .description
                                         }
                                     </p>
-                                    <div className="space-y-2 mb-4">
+                                    <div className="space-y-1.5 sm:space-y-2 mb-2.5 sm:mb-3">
                                         {pageData.upgradeMethods.auction.steps.map(
                                             (step, idx) => (
                                                 <p
                                                     key={idx}
-                                                    className="text-gray-700 text-base"
+                                                    className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed"
                                                 >
                                                     {idx + 1}. {step}
                                                 </p>
                                             )
                                         )}
                                     </div>
-                                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3">
-                                        <p className="text-gray-700 text-sm">
+                                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-2.5 sm:p-3 md:p-4">
+                                        <p className="text-gray-700 text-[10px] sm:text-xs md:text-sm leading-relaxed">
                                             <strong>Note:</strong>{" "}
                                             {
                                                 pageData.upgradeMethods.auction
@@ -246,15 +232,15 @@ const BlogTemplate = () => {
 
                             {/* Is Upgrading Worth It */}
                             <section id="worth-it">
-                                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+                                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
                                     {pageData.worthIt.title}
                                 </h2>
-                                <div className="space-y-3">
+                                <div className="space-y-1.5 sm:space-y-2">
                                     {pageData.worthIt.points.map(
                                         (point, idx) => (
                                             <p
                                                 key={idx}
-                                                className="text-gray-700 text-base leading-relaxed"
+                                                className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed"
                                             >
                                                 • {point}
                                             </p>
@@ -265,40 +251,44 @@ const BlogTemplate = () => {
 
                             {/* Upgrade Cost */}
                             <section id="cost">
-                                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+                                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
                                     {pageData.upgradeCost.title}
                                 </h2>
-                                <p className="text-gray-700 text-base leading-relaxed">
+                                <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed">
                                     {pageData.upgradeCost.content}
                                 </p>
                             </section>
 
                             {/* Conclusion */}
                             <section>
-                                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+                                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
                                     {pageData.conclusion.title}
                                 </h2>
-                                <p className="text-gray-700 text-base leading-relaxed">
+                                <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed">
                                     {pageData.conclusion.content}
                                 </p>
                             </section>
 
                             {/* FAQ */}
                             <section id="faq">
-                                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+                                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
                                     Frequently Asked Questions
                                 </h2>
-                                <div className="space-y-4">
+                                <div className="space-y-3 sm:space-y-4">
                                     {pageData.faq.map((item, idx) => (
                                         <div key={idx}>
-                                            <h3 className="text-base font-bold text-gray-900 mb-1">
+                                            <h3 className="text-xs sm:text-sm md:text-base font-bold text-gray-900 mb-1">
                                                 {item.question}
                                             </h3>
-                                            <p className="text-gray-700 text-base">
+                                            <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed">
                                                 {item.answer}
                                             </p>
                                         </div>
                                     ))}
+                                </div>
+
+                                <div className="mt-4 sm:mt-6 md:mt-8">
+                                    <BlogAuthor />
                                 </div>
                             </section>
                         </div>
@@ -306,12 +296,12 @@ const BlogTemplate = () => {
 
                     {/* Sidebar - Related Blogs */}
                     <aside className="lg:col-span-1">
-                        <div className="sticky top-8">
-                            <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-                                <h3 className="text-xl font-bold text-gray-900 mb-6">
+                        <div className="lg:sticky lg:top-8">
+                            <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 md:p-6 shadow-sm">
+                                <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-3 sm:mb-4 md:mb-6">
                                     Related Blogs
                                 </h3>
-                                <div className="space-y-5">
+                                <div className="space-y-3 sm:space-y-4 md:space-y-5">
                                     {BLOG_POSTS.slice(0, 5).map((post) => (
                                         <div
                                             key={post.id}
@@ -320,24 +310,24 @@ const BlogTemplate = () => {
                                                 router.push(`/blogs/${post.id}`)
                                             }
                                         >
-                                            <div className="flex gap-3">
-                                                <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">
+                                            <div className="flex gap-2 sm:gap-3">
+                                                <div className="relative w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0 rounded-lg overflow-hidden">
                                                     <img
                                                         src={post.image}
                                                         alt={post.title}
                                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                                     />
                                                 </div>
-                                                <div className="flex-1">
-                                                    <span className="inline-block text-[10px] font-semibold text-blue-600 uppercase mb-1">
+                                                <div className="flex-1 min-w-0">
+                                                    <span className="inline-block text-[9px] sm:text-[10px] md:text-xs font-semibold text-blue-600 uppercase mb-0.5 sm:mb-1">
                                                         {post.category}
                                                     </span>
-                                                    <h4 className="text-sm font-bold text-gray-900 leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">
+                                                    <h4 className="text-xs sm:text-sm font-bold text-gray-900 leading-tight sm:leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors mb-0.5 sm:mb-1">
                                                         {post.title}
                                                     </h4>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <Calendar className="w-3 h-3 text-gray-400" />
-                                                        <span className="text-xs text-gray-500">
+                                                    <div className="flex items-center gap-1 sm:gap-1.5">
+                                                        <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-400" />
+                                                        <span className="text-[9px] sm:text-xs text-gray-500">
                                                             {post.date}
                                                         </span>
                                                     </div>
@@ -349,16 +339,27 @@ const BlogTemplate = () => {
                             </div>
 
                             {/* Newsletter Subscription Box */}
-                            <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 p-6 sm:p-8 rounded-3xl text-white shadow-2xl shadow-blue-200 mt-10">
-                                <h3 className="text-lg sm:text-xl font-black mb-2 sm:mb-3 italic break-words">
+                            <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 p-4 sm:p-5 md:p-6 lg:p-8 rounded-xl sm:rounded-2xl md:rounded-3xl text-white shadow-2xl shadow-blue-200 mt-4 sm:mt-6 md:mt-8 lg:mt-10">
+                                <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-black mb-1.5 sm:mb-2 italic">
                                     Need Help?
                                 </h3>
-                                <p className="text-xs sm:text-sm text-blue-50 mb-4 sm:mb-6 opacity-80 break-words">
+                                <p className="text-[10px] sm:text-xs md:text-sm text-blue-50 mb-3 sm:mb-4 md:mb-6 opacity-90 leading-relaxed">
                                     Our support team is available 24/7 for
                                     urgent ticketing and travel inquiries.
                                 </p>
-                                <button className="w-full bg-white text-blue-600 font-black py-3 sm:py-4 rounded-2xl hover:bg-blue-50 transition-colors shadow-lg text-sm sm:text-base">
-                                    📞 Call Now: +1-833-842-6011 (Toll-Free)
+                                <button className="w-full bg-white flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 md:gap-2 text-blue-600 font-black py-2.5 sm:py-3 md:py-4 rounded-lg sm:rounded-xl md:rounded-2xl hover:bg-blue-50 transition-colors shadow-lg text-xs sm:text-sm md:text-base">
+                                    <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2">
+                                        <PhoneOutgoing
+                                            size={14}
+                                            className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px] shrink-0"
+                                        />
+                                        <span className="text-[11px] sm:text-sm md:text-base break-all sm:whitespace-nowrap">
+                                            +1-833-842-6011
+                                        </span>
+                                    </div>
+                                    <span className="text-[9px] sm:text-xs font-normal text-blue-500">
+                                        (Toll-Free)
+                                    </span>
                                 </button>
                             </div>
                         </div>

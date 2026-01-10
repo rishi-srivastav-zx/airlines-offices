@@ -7,7 +7,7 @@ import SafeImage from "./safeImage";
 
 const OfficeCard = ({ office }) => {
     return (
-        <Link href={`/airlinespages/${office.id}`}>
+        <Link href={`directoryAirlines/airlinespages/${office.id}`}>
             <div className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 h-full flex flex-col cursor-pointer">
                 {/* Image Section */}
                 <div className="relative h-64 overflow-hidden bg-gray-100 flex-shrink-0">
@@ -30,22 +30,22 @@ const OfficeCard = ({ office }) => {
                 </div>
 
                 {/* Content Section */}
-                <div className="p-6 flex-grow flex flex-col bg-white">
+                <div className="p-4 flex-grow flex flex-col bg-white">
                     {/* Title */}
-                    <h3 className="text-2xl font-bold mb-6 text-gray-900 group-hover:text-[#00ADEF] transition-colors duration-300">
+                    <h3 className="text-2xl font-bold mb-4 text-gray-900 group-hover:text-[#00ADEF] transition-colors duration-300">
                         {office.city} Office
                     </h3>
 
                     {/* Info List */}
                     <div className="space-y-2 flex-grow">
-                        <div className="flex items-start gap-3">
+                        <div className="flex items-start  gap-2">
                             <div className="bg-blue-50 p-2.5 rounded-lg flex-shrink-0 mt-0.5">
                                 <MapPin
                                     className="h-5 w-5 text-[#00ADEF]"
                                     strokeWidth={2.5}
                                 />
                             </div>
-                            <span className="text-sm text-gray-700 leading-relaxed">
+                            <span className="text-sm mt-2 text-gray-700 leading-relaxed">
                                 {office.address}
                             </span>
                         </div>
@@ -89,9 +89,8 @@ const OfficeCard = ({ office }) => {
                         </div>
                     </div>
 
-
                     {/* CTA Link */}
-                    <div className="inline-flex items-center text-sm font-semibold text-[#00ADEF] mt-auto">
+                    <div className="inline-flex items-center text-sm font-semibold text-[#00ADEF] mt-2">
                         View Details
                         <ArrowRight
                             className="ml-2 h-5 w-5 transform group-hover:translate-x-2 transition-transform duration-300"

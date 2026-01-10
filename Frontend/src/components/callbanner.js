@@ -9,7 +9,7 @@ export default function CallBanner() {
             <div className="flex items-center justify-center gap-2 py-2 px-4 cursor-pointer">
                 <PhoneOutgoing size={18} className="text-black shrink-0" />
                 <span className="text-black font-semibold text-sm md:text-base">
-                    Call Now: <b>+1-833-842-6011</b> (Toll-Free)
+                 <b>+1-833-842-6011</b> (Toll-Free)
                 </span>
             </div>
         </Link>

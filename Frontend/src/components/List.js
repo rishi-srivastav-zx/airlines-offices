@@ -29,13 +29,6 @@ const OfficeCard = ({ office }) => {
                             {office.country}
                         </span>
                     </div>
-
-                    {/* Featured */}
-                    {/* {office.featured && (
-                        <span className="absolute top-4 right-4 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                            FEATURED
-                        </span>
-                    )} */}
                 </div>
 
                 {/* Content */}
@@ -85,6 +78,7 @@ const OfficeCard = ({ office }) => {
 
 export default function AirlineOfficesSection() {
     const pathname = usePathname();
+    
 
     // get current city from URL → /offices/dubai
     const currentCity = pathname?.split("/").pop();

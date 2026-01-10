@@ -1,33 +1,179 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+    --background: #ffffff;
+    --foreground: #171717;
 }
 
 * {
-  -webkit-font-smoothing: subpixel-antialiased;
-  -moz-osx-font-smoothing: auto;
+    -webkit-font-smoothing: subpixel-antialiased;
+    -moz-osx-font-smoothing: auto;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+    :root {
+        --background: white;
+        --foreground: #ededed;
+    }
 }
 
-
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.short {
+    margin-right: 125px;
+}
+
+@keyframes gentleShake {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-3px);
+    }
+    75% {
+        transform: translateX(3px);
+    }
+}
+
+@keyframes successPulse {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.neu-card {
+    box-shadow: 5px 5px 6px #bec3cf, -5px -5px 6px #ffffff;
+    transition: all 0.3s ease;
+}
+
+.neu-card:hover {
+    transform: translateY(-5px);
+}
+
+.neu-icon {
+    box-shadow: 8px 8px 20px #bec3cf, -8px -8px 20px #ffffff;
+}
+
+.neu-icon:hover {
+    box-shadow: 4px 4px 10px #bec3cf, -4px -4px 10px #ffffff,
+        inset 4px 4px 10px #bec3cf, inset -4px -4px 10px #ffffff;
+}
+
+.neu-input {
+    box-shadow: inset 8px 8px 16px #bec3cf, inset -8px -8px 16px #ffffff;
+    transition: all 0.3s ease;
+}
+
+.neu-input:focus-within {
+    box-shadow: inset 4px 4px 8px #bec3cf, inset -4px -4px 8px #ffffff;
+}
+
+.neu-input.error {
+    box-shadow: inset 8px 8px 16px #ffb8c4, inset -8px -8px 16px #ffffff,
+        0 0 0 2px #ff3b5c;
+}
+
+.neu-toggle {
+    box-shadow: 4px 4px 10px #bec3cf, -4px -4px 10px #ffffff;
+}
+
+.neu-toggle:active {
+    box-shadow: inset 2px 2px 5px #bec3cf, inset -2px -2px 5px #ffffff;
+}
+
+.neu-checkbox {
+    box-shadow: 3px 3px 8px #bec3cf, -3px -3px 8px #ffffff;
+}
+
+.neu-checkbox.checked {
+    box-shadow: inset 2px 2px 5px #bec3cf, inset -2px -2px 5px #ffffff;
+}
+
+.neu-button {
+    box-shadow: 8px 8px 20px #bec3cf, -8px -8px 20px #ffffff;
+    transition: all 0.3s ease;
+}
+
+.neu-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 12px 12px 30px #bec3cf, -12px -12px 30px #ffffff;
+}
+
+.neu-button:active {
+    transform: translateY(0);
+    box-shadow: inset 4px 4px 10px #bec3cf, inset -4px -4px 10px #ffffff;
+}
+
+.neu-button::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transition: left 0.5s ease;
+}
+
+.neu-button:hover::before {
+    left: 100%;
+}
+
+.error-message {
+    animation: gentleShake 0.5s ease-in-out;
+}
+
+.success-icon {
+    animation: successPulse 0.6s ease-out;
+}
+
+/* 🔒 LOCK AUTOFILL STYLES */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #e0e5ec inset !important;
+  box-shadow: 0 0 0 1000px #e0e5ec inset !important;
+  -webkit-text-fill-color: #3d4468 !important;
+  caret-color: #3d4468;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Prevent size jump */
+input {
+  line-height: 1.25rem;
 }

@@ -13,7 +13,7 @@ import {
     Layers,
     Star,
     Navigation,
-    PhoneOutgoing
+    PhoneOutgoing,
 } from "lucide-react";
 import {
     OFFICES,
@@ -25,7 +25,6 @@ import { officeInquiries } from "@/components/constdata";
 import SafeImage from "@/components/safeImage";
 import OfficeInquiryList from "@/components/InquiryTable";
 import AirlineOfficesSection from "@/components/List";
-
 
 // InfoTable Component
 const InfoTable = ({ icon: Icon, title, rows }) => {
@@ -59,7 +58,6 @@ const InfoTable = ({ icon: Icon, title, rows }) => {
 
 // MapSection Component
 const MapSection = ({ airlineName, city, address, country }) => {
-    // Generate Google Maps URLs
     const mapQuery = encodeURIComponent(`${address}, ${city}, ${country}`);
     const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
     // Using place search which works without API key for basic embeds
@@ -233,8 +231,6 @@ const OfficeTemplate = () => {
     const airportContact =
         selectedOffice.airportContact || selectedOffice.phone;
 
-
-
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col">
             <main className="flex-grow">
@@ -242,8 +238,7 @@ const OfficeTemplate = () => {
                 <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 py-6 xs:py-8 sm:py-10 md:py-14 lg:py-20 px-3 xs:px-4 sm:px-6">
                     <div className="container w-full mx-auto">
                         <div className="flex flex-col md:flex-row items-center md:items-start gap-3 xs:gap-4 sm:gap-6">
-                            {/* Logo - Small Circle */}
-                            <div className="flex-shrink-0">
+                            <div className="flex-shrink-0 ml-8">
                                 <div className="bg-white rounded-lg p-1.5 xs:p-2 sm:p-1 shadow-2xl md:mt-2 lg:mt-10">
                                     <div className="w-10 h-10 xs:w-12 xs:h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 flex items-center justify-center">
                                         {selectedOffice.logo ? (
@@ -287,7 +282,6 @@ const OfficeTemplate = () => {
                         </div>
                     </div>
                 </div>
-
                 {/* Content Container */}
                 <div className="container w-full mx-auto px-3 xs:px-4 sm:px-6 -mt-4 xs:-mt-6 sm:-mt-8 md:-mt-12 pb-8 xs:pb-12 sm:pb-16 md:pb-20">
                     <div className="grid lg:grid-cols-12 gap-4 xs:gap-5 sm:gap-6 md:gap-8">
@@ -342,10 +336,13 @@ const OfficeTemplate = () => {
                                         value: (
                                             <Link
                                                 href="tel:+18338426011"
-                                                className="bg-yellow-400 text-black hover:bg-yellow-600 flex items-center gap-1 break-all rounded-xl xs:rounded-2xl  sm:p-2 shadow-xl border border-yellow-100 transition-colors"
+                                                className=" inline-flex items-center gap-2 bg-yellow-400 text-black px-4 py-2 text-lg lg:text-sm font-semibold rounded-lg lg:rounded-xl shadow-md border border-yellow-200 hover:bg-yellow-500 transition-colors whitespace-nowrap"
                                             >
-                                                <PhoneOutgoing size={18} />
-                                                +1-833-842-6011(Toll Free)
+                                                <PhoneOutgoing className="w-5 h-5 sm:w-[18px] sm:h-[18px] shrink-0" />
+                                                <span>+1-833-842-6011</span>
+                                                <span className="hidden sm:inline">
+                                                    (Toll-Free)
+                                                </span>
                                             </Link>
                                         ),
                                     },
@@ -498,7 +495,7 @@ const OfficeTemplate = () => {
                             </div>
 
                             {/* Newsletter / CTA */}
-                            <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 p-4 xs:p-5 sm:p-6 md:p-8 rounded-2xl xs:rounded-3xl text-white shadow-2xl shadow-blue-200">
+                            <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 sticky top-24 p-4 xs:p-5 sm:p-6 md:p-8 rounded-2xl xs:rounded-3xl text-white shadow-2xl shadow-blue-200">
                                 <h3 className="text-base xs:text-lg sm:text-xl font-black mb-2 sm:mb-3 italic break-words">
                                     Need Help?
                                 </h3>

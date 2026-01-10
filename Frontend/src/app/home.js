@@ -20,6 +20,8 @@ export default function Home() {
     const [searchQuery, setSearchQuery] = useState("");
     const router = useRouter();
 
+
+
     const handleSearch = (e) => {
         e.preventDefault();
         if (searchQuery.trim()) {
@@ -161,7 +163,7 @@ export default function Home() {
                 </div>
 
                 <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {OFFICES.map((office) => (
+                    {OFFICES.slice(0, 8).map((office) => (
                         <OfficeCard key={office.id} office={office} />
                     ))}
                 </div>
@@ -255,7 +257,7 @@ export default function Home() {
                 </div>
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-12">
-                    {BLOG_POSTS.map((post) => (
+                    {BLOG_POSTS.slice(0, 4).map((post) => (
                         <div
                             key={post.id}
                             className="bg-white rounded-2xl overflow-hidden shadow-lg flex flex-col md:flex-row group cursor-pointer hover:shadow-2xl transition-all"

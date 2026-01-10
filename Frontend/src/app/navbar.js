@@ -52,6 +52,12 @@ export default function Navbar() {
                             >
                                 Blog
                             </Link>
+                            <Link
+                                href="/SignUp"
+                                className="text-sm font-semibold text-[#333333] hover:text-[#00ADEF]"
+                            >
+                            ADMIN-PANEL
+                            </Link>
                         </div>
 
                         <div className="flex items-center lg:hidden">

@@ -29,9 +29,9 @@ const BlogTemplate = () => {
 
     if (loading || !pageData) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50 px-2.5 sm:px-4">
+            <div className="flex items-center justify-center min-h-screen bg-gray-50 px-3 sm:px-4">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 border-b-2 border-blue-600 mx-auto mb-3 sm:mb-4"></div>
+                    <div className="animate-spin rounded-full h-10 sm:h-12 md:h-16 w-10 sm:w-12 md:w-16 border-b-2 border-blue-600 mx-auto mb-3 sm:mb-4"></div>
                     <p className="text-gray-600 text-xs sm:text-sm md:text-base">
                         Loading blog content...
                     </p>
@@ -44,26 +44,30 @@ const BlogTemplate = () => {
         <div className="min-h-screen bg-white">
             {/* Header with Title and Meta */}
             <div className="bg-white border-b border-gray-200">
-                <div className="container mx-auto px-2.5 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
-                    <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight">
+                <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
+                    <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight break-words">
                         {pageData.title}
                     </h1>
 
                     {/* Author and Date */}
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4 text-[10px] sm:text-xs md:text-sm text-gray-600">
                         <div className="flex items-center gap-1 sm:gap-1.5">
-                            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            <span>Travel Expert</span>
+                            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                            <span className="whitespace-nowrap">
+                                Travel Expert
+                            </span>
                         </div>
                         <div className="flex items-center gap-1 sm:gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            <span>Jan 05 2026</span>
+                            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                            <span className="whitespace-nowrap">
+                                Jan 05 2026
+                            </span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="container mx-auto px-2.5 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-5 md:py-8 overflow-hidden">
+            <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-5 md:py-8 overflow-hidden">
                 <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
                     {/* Main Content */}
                     <div className="lg:col-span-2">
@@ -71,7 +75,7 @@ const BlogTemplate = () => {
                         <div className="bg-white rounded-lg overflow-hidden mb-4 sm:mb-6 md:mb-8">
                             <div className="grid grid-cols-1">
                                 {/* Large Image */}
-                                <div className="">
+                                <div className="w-full">
                                     <img
                                         src={pageData.clubClass.image}
                                         alt={pageData.title}
@@ -81,8 +85,8 @@ const BlogTemplate = () => {
                             </div>
 
                             {/* Title overlay on grid */}
-                            <div className="bg-white py-2.5 sm:py-3 md:py-4 px-2.5 sm:px-4 text-center">
-                                <h2 className="text-sm sm:text-base md:text-xl lg:text-2xl font-bold text-gray-900 uppercase tracking-wide leading-tight">
+                            <div className="bg-white py-2.5 sm:py-3 md:py-4 px-3 sm:px-4 text-center">
+                                <h2 className="text-sm sm:text-base md:text-xl lg:text-2xl font-bold text-gray-900 uppercase tracking-wide leading-tight break-words">
                                     {pageData.title}
                                 </h2>
                             </div>
@@ -91,7 +95,7 @@ const BlogTemplate = () => {
                         {/* Content Sections */}
                         <div className="space-y-4 sm:space-y-6 md:space-y-8">
                             {/* Introduction */}
-                            <section>
+                            <section className="break-words">
                                 <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed mb-2 sm:mb-3">
                                     {pageData.intro.text}
                                 </p>
@@ -101,7 +105,7 @@ const BlogTemplate = () => {
                             </section>
 
                             {/* Cabin Classes */}
-                            <section id="cabin-classes">
+                            <section id="cabin-classes" className="break-words">
                                 <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
                                     {pageData.cabinClasses.title}
                                 </h2>
@@ -114,7 +118,7 @@ const BlogTemplate = () => {
                                         (classItem, idx) => (
                                             <div
                                                 key={idx}
-                                                className="border-l-2 border-gray-300 pl-2.5 sm:pl-3 md:pl-4"
+                                                className="border-l-2 border-gray-300 pl-2.5 sm:pl-3 md:pl-4 break-words"
                                             >
                                                 <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1">
                                                     {classItem.title}
@@ -136,7 +140,7 @@ const BlogTemplate = () => {
                             </section>
 
                             {/* Club Class */}
-                            <section id="club-class">
+                            <section id="club-class" className="break-words">
                                 <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
                                     {pageData.clubClass.title}
                                 </h2>
@@ -155,7 +159,7 @@ const BlogTemplate = () => {
                                         (benefit, idx) => (
                                             <div
                                                 key={idx}
-                                                className="flex items-start gap-1.5 sm:gap-2"
+                                                className="flex items-start gap-1.5 sm:gap-2 break-words"
                                             >
                                                 <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0 mt-0.5" />
                                                 <span className="text-gray-700 text-xs sm:text-sm leading-snug">
@@ -168,7 +172,10 @@ const BlogTemplate = () => {
                             </section>
 
                             {/* Upgrade Methods */}
-                            <section id="upgrade-methods">
+                            <section
+                                id="upgrade-methods"
+                                className="break-words"
+                            >
                                 <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
                                     {pageData.upgradeMethods.title}
                                 </h2>
@@ -218,7 +225,7 @@ const BlogTemplate = () => {
                                             )
                                         )}
                                     </div>
-                                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-2.5 sm:p-3 md:p-4">
+                                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-2.5 sm:p-3 md:p-4 break-words">
                                         <p className="text-gray-700 text-[10px] sm:text-xs md:text-sm leading-relaxed">
                                             <strong>Note:</strong>{" "}
                                             {
@@ -231,7 +238,7 @@ const BlogTemplate = () => {
                             </section>
 
                             {/* Is Upgrading Worth It */}
-                            <section id="worth-it">
+                            <section id="worth-it" className="break-words">
                                 <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
                                     {pageData.worthIt.title}
                                 </h2>
@@ -250,7 +257,7 @@ const BlogTemplate = () => {
                             </section>
 
                             {/* Upgrade Cost */}
-                            <section id="cost">
+                            <section id="cost" className="break-words">
                                 <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
                                     {pageData.upgradeCost.title}
                                 </h2>
@@ -260,7 +267,7 @@ const BlogTemplate = () => {
                             </section>
 
                             {/* Conclusion */}
-                            <section>
+                            <section className="break-words">
                                 <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
                                     {pageData.conclusion.title}
                                 </h2>
@@ -270,7 +277,7 @@ const BlogTemplate = () => {
                             </section>
 
                             {/* FAQ */}
-                            <section id="faq">
+                            <section id="faq" className="break-words">
                                 <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
                                     Frequently Asked Questions
                                 </h2>
@@ -322,12 +329,12 @@ const BlogTemplate = () => {
                                                     <span className="inline-block text-[9px] sm:text-[10px] md:text-xs font-semibold text-blue-600 uppercase mb-0.5 sm:mb-1">
                                                         {post.category}
                                                     </span>
-                                                    <h4 className="text-xs sm:text-sm font-bold text-gray-900 leading-tight sm:leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors mb-0.5 sm:mb-1">
+                                                    <h4 className="text-xs sm:text-sm font-bold text-gray-900 leading-tight sm:leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors mb-0.5 sm:mb-1 break-words">
                                                         {post.title}
                                                     </h4>
                                                     <div className="flex items-center gap-1 sm:gap-1.5">
-                                                        <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-400" />
-                                                        <span className="text-[9px] sm:text-xs text-gray-500">
+                                                        <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-400 flex-shrink-0" />
+                                                        <span className="text-[9px] sm:text-xs text-gray-500 whitespace-nowrap">
                                                             {post.date}
                                                         </span>
                                                     </div>

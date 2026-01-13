@@ -1,8 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 export default function ProfessionalLoginForm() {
+    const router = useRouter();
     const [formData, setFormData] = useState({
         email: "",
         password: "",
@@ -57,15 +61,42 @@ export default function ProfessionalLoginForm() {
         setIsLoading(true);
 
         try {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
+            const res = await axios.post(
+                "/api/auth/login",
+                { email: formData.email, password: formData.password },
+                { withCredentials: true }
+            );
+
+            const user = res.data.user;
+
+            if (!user) {
+                toast.error("Login failed");
+                setIsLoading(false);
+                return;
+            }
+
+            // Store user in localStorage for client-side access
+            if (typeof window !== "undefined") {
+                localStorage.setItem("user", JSON.stringify(user));
+            }
+
+            toast.success("Login successful");
             setShowSuccess(true);
+
+            // Wait a moment for cookie to be set, then redirect using window.location
+            // This ensures the cookie is available when the page loads
             setTimeout(() => {
-                console.log("Redirecting to dashboard...");
-            }, 2000);
-        } catch (error) {
+                window.location.href = "/dashboard";
+            }, 500);
+        } catch (err) {
+            toast.error(
+                err.response?.data?.message || "Invalid email or password"
+            );
             setErrors((prev) => ({
                 ...prev,
-                password: "Login failed. Please try again.",
+                password:
+                    err.response?.data?.message ||
+                    "Login failed. Please try again.",
             }));
         } finally {
             setIsLoading(false);
@@ -140,7 +171,7 @@ export default function ProfessionalLoginForm() {
                                         }
                                         onBlur={handleEmailBlur}
                                         onKeyPress={handleKeyPress}
-                                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                                        className={`w-full pl-10 pr-4 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 transition-all ${
                                             errors.email
                                                 ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                                                 : "border-slate-300 focus:ring-slate-900 focus:border-slate-900"
@@ -197,7 +228,7 @@ export default function ProfessionalLoginForm() {
                                         }
                                         onBlur={handlePasswordBlur}
                                         onKeyPress={handleKeyPress}
-                                        className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
+                                        className={`w-full pl-10 pr-12 py-3 border rounded-lg text-gray-900 focus:outline-none focus:ring-2 transition-all ${
                                             errors.password
                                                 ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                                                 : "border-slate-300 focus:ring-slate-900 focus:border-slate-900"

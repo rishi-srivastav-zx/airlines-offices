@@ -399,7 +399,7 @@ export default function BlogsPage() {
                                             required
                                             disabled={!isEditMode}
                                             placeholder="Enter a catchy headline..."
-                                            className="w-full px-4 py-3 text-lg rounded-xl border-2 border-slate-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none disabled:bg-gray-50 disabled:text-gray-600"
+                                            className="w-full px-4 py-3 text-lg text-gray-900 rounded-xl border-2 border-slate-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none disabled:bg-gray-50 disabled:text-gray-600"
                                             value={formData.title}
                                             onChange={(e) =>
                                                 setFormData({
@@ -439,7 +439,7 @@ export default function BlogsPage() {
                                                 disabled={!isEditMode}
                                                 rows={12}
                                                 placeholder="Start writing your story..."
-                                                className="w-full px-4 py-3 outline-none resize-none disabled:bg-gray-50 disabled:text-gray-600"
+                                                className="w-full px-4 py-3 outline-none resize-none disabled:bg-gray-50 text-gray-900 disabled:text-gray-600"
                                                 value={formData.content}
                                                 onChange={(e) =>
                                                     setFormData({
@@ -515,7 +515,7 @@ export default function BlogsPage() {
                                                 </label>
                                                 <input
                                                     disabled={!isEditMode}
-                                                    className="w-full px-3 py-1.5 text-xs rounded border focus:ring-2 focus:ring-indigo-500/20 disabled:bg-gray-50 disabled:text-gray-600"
+                                                    className="w-full px-3 py-1.5 text-gray-900 text-xs rounded border focus:ring-2 focus:ring-indigo-500/20 disabled:bg-gray-50 disabled:text-gray-600"
                                                     value={formData.seoSlug}
                                                     onChange={(e) =>
                                                         setFormData({
@@ -533,7 +533,7 @@ export default function BlogsPage() {
                                                 <textarea
                                                     disabled={!isEditMode}
                                                     rows={3}
-                                                    className="w-full px-3 py-1.5 text-xs rounded border focus:ring-2 focus:ring-indigo-500/20 disabled:bg-gray-50 disabled:text-gray-600"
+                                                    className="w-full px-3 py-1.5 text-gray-900 text-xs rounded border focus:ring-2 focus:ring-indigo-500/20 disabled:bg-gray-50 disabled:text-gray-600"
                                                     value={
                                                         formData.seoDescription
                                                     }

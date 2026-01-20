@@ -1,8 +1,11 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import errorMiddleware from "./middleware/error.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
+import approvalRoutes from "./routes/approval.routes.js";
+import officeRoutes from "./routes/officeroutes.js";
+import uploadRoutes from "./routes/uploads.routes.js";
 
 const app = express();
 
@@ -14,8 +17,10 @@ app.use(
     })
 );
 
-/* ✅ Body parser */
-app.use(express.json());
+app.use("/uploads", express.static("uploads"));
+
+app.use(express.json()); 
+app.use(express.urlencoded({ extended: true })); 
 
 /* ✅ Cookie parser */
 app.use(cookieParser());
@@ -27,8 +32,9 @@ app.get("/api", (req, res) => {
 
 /* ✅ Routes */
 app.use("/api/auth", authRoutes);
-
-/* ✅ Error middleware (LAST) */
-app.use(errorMiddleware);
+app.use("/api/users", userRoutes);
+app.use("/api/approval", approvalRoutes);
+app.use("/api/offices", officeRoutes);
+app.use("/api/upload", uploadRoutes);
 
 export default app;

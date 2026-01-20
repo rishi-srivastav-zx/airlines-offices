@@ -1,89 +1,180 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const officeSchema = new mongoose.Schema(
+const OfficeSchema = new mongoose.Schema(
     {
-        airlineId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Airline',
-            required: [true, 'Airline reference is required'],
-            index: true,
-        },
-        airlineName: {
+        slug: {
             type: String,
-            required: [true, 'Airline name is required'],
+            required: true,
+            unique: true,
             trim: true,
         },
-        city: {
+
+        firstName: {
             type: String,
-            required: [true, 'City is required'],
-            trim: true,
-            index: true,
-        },
-        country: {
-            type: String,
-            required: [true, 'Country is required'],
-            trim: true,
-            index: true,
-        },
-        address: {
-            type: String,
-            required: [true, 'Address is required'],
+            required: true,
             trim: true,
         },
-        phone: {
+
+        logo: {
             type: String,
-            required: [true, 'Phone number is required'],
-            trim: true,
         },
-        email: {
+
+        photo: {
             type: String,
-            required: [true, 'Email is required'],
-            trim: true,
-            lowercase: true,
-            match: [
-                /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                'Please provide a valid email',
-            ],
         },
-        hours: {
-            type: String,
-            trim: true,
+
+        officeOverview: {
+            airlineName: {
+                type: String,
+                required: true,
+                trim: true,
+            },
+
+            city: {
+                type: String,
+                required: true,
+                trim: true,
+            },
+
+            country: {
+                type: String,
+                required: true,
+                trim: true,
+            },
+
+            address: {
+                type: String,
+                required: true,
+            },
+
+            phone: {
+                type: String,
+            },
+
+            hours: {
+                start: {
+                    type: String,
+                    required: true,
+                },
+                end: {
+                    type: String,
+                    required: true,
+                },
+            },
+
+            website: {
+                type: String,
+            },
+
+            tollFreeNumber: {
+                type: String,
+            },
         },
-        image: {
-            type: String,
-            trim: true,
+
+        about: {
+            airlineId: {
+                type: String,
+            },
+
+            description: {
+                type: String,
+            },
+
+            history: {
+                type: String,
+            },
+
+            services: {
+                type: [String],
+                default: [],
+            },
+
+            additionalInfo: {
+                type: String,
+            },
         },
-        featured: {
-            type: Boolean,
-            default: false,
-            index: true,
+
+        airportLocation: {
+            airportName: {
+                type: String,
+            },
+
+            terminalInfo: {
+                type: String,
+            },
+
+            iataCode: {
+                type: String,
+            },
+
+            counterContact: {
+                type: String,
+            },
+
+            airportAddress: {
+                type: String,
+            },
         },
-        description: {
-            type: String,
-            trim: true,
-            maxlength: [500, 'Description cannot exceed 500 characters'],
-        },
-        coordinates: {
+
+        airportMapLocation: {
             latitude: {
                 type: Number,
-                min: -90,
-                max: 90,
             },
             longitude: {
                 type: Number,
-                min: -180,
-                max: 180,
+            },
+            mapQuery: {
+                type: String,
+            },
+            googleMapsUrl: {
+                type: String,
+            },
+            embedUrl: {
+                type: String,
             },
         },
-        rating: {
-            type: Number,
-            min: 0,
-            max: 5,
-            default: 0,
+
+        availableServices: {
+            type: [String],
+            default: [],
         },
-        isActive: {
-            type: Boolean,
-            default: true,
+
+        fleetOperations: {
+            aircraftTypes: {
+                type: [String],
+                default: [],
+            },
+
+            totalFleet: {
+                type: Number,
+            },
+
+            additionalDetails: {
+                type: String,
+            },
+        },
+
+        metadata: {
+            rating: {
+                type: Number,
+                min: 0,
+                max: 5,
+            },
+
+            reviewCount: {
+                type: Number,
+                default: 0,
+            },
+
+            verified: {
+                type: Boolean,
+                default: false,
+            },
+
+            lastUpdated: {
+                type: Date,
+                default: Date.now,
+            },
         },
     },
     {
@@ -91,12 +182,15 @@ const officeSchema = new mongoose.Schema(
     }
 );
 
-// Compound index for unique office per airline in a city
-officeSchema.index({ airlineId: 1, city: 1, country: 1 }, { unique: true });
+OfficeSchema.pre("save", function (next) {
+    const hours = this.officeOverview?.hours;
 
-// Index for search
-officeSchema.index({ city: 'text', country: 'text', airlineName: 'text' });
+    if (hours?.start && hours?.end && hours.start >= hours.end) {
+        return next(new Error("Office end time must be later than start time"));
+    }
 
-const Office = mongoose.model('Office', officeSchema);
+    next();
+});
 
-export default Office;
+
+export default mongoose.models.Office || mongoose.model("Office", OfficeSchema);

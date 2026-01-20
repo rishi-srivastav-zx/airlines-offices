@@ -83,7 +83,7 @@ export const Sidebar = ({ handleLogout }) => {
 //    };
 
     return (
-        <div className="w-64 h-screen bg-slate-900 flex flex-col shrink-0">
+        <div className="w-64 min-h-[100vh] overflow-y-auto bg-slate-900 flex flex-col shrink-0">
             {/* Logo */}
             <div className="p-6 flex items-center gap-3 border-b border-slate-800">
                 <div className="bg-blue-600 p-2 rounded-lg">

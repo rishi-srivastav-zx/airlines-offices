@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
 
 export default function ProfessionalLoginForm() {
-    const router = useRouter();
     const [formData, setFormData] = useState({
         email: "",
         password: "",
@@ -62,7 +60,7 @@ export default function ProfessionalLoginForm() {
 
         try {
             const res = await axios.post(
-                "/api/auth/login",
+                "http://localhost:3001/api/auth/login",
                 { email: formData.email, password: formData.password },
                 { withCredentials: true }
             );
@@ -78,6 +76,7 @@ export default function ProfessionalLoginForm() {
             // Store user in localStorage for client-side access
             if (typeof window !== "undefined") {
                 localStorage.setItem("user", JSON.stringify(user));
+                localStorage.setItem("token", res.data.token);
             }
 
             toast.success("Login successful");

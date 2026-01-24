@@ -101,45 +101,58 @@ const OfficeCard = ({ office }) => {
 /* ---------------- MAIN SECTION ---------------- */
 
 export default function AirlineOfficesSection() {
-  const pathname = usePathname();
+    const pathname = usePathname();
+    const currentCity = pathname?.split("/").pop()?.toLowerCase();
 
-  // get current city from URL → /offices/dubai
-  const currentCity = pathname?.split("/").pop();
+    // find current office
+    const currentOffice = OFFICES.find(
+        (office) => office.city.toLowerCase() === currentCity,
+    );
 
-  // remove current office (ex: Dubai)
-  const filteredOffices = OFFICES.filter(
-    (office) => office.city.toLowerCase() !== currentCity?.toLowerCase(),
-  );
+    // related offices = same country, different city
+    const relatedOffices = currentOffice
+        ? OFFICES.filter(
+              (office) =>
+                  office.country === currentOffice.country &&
+                  office.city.toLowerCase() !== currentCity,
+          )
+        : [];
 
-  // show only 2
-  const visibleOffices = filteredOffices.slice(0, 2);
+    // show only 2
+    const visibleOffices = relatedOffices.slice(0, 2);
 
-  return (
-    <section className="bg-gradient-to-br  from-blue-50 via-white to-indigo-50 rounded-lg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-3 lg:px-8 py-12">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="sm:text-2xl text-lg font-bold text-yellow-400">
-            Qatar Airways Office List
-          </h2>
+    return (
+        <section className="bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-lg">
+            <div className="max-w-7xl mx-auto px-4 sm:px-3 lg:px-8 py-12">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-8">
+                    <h2 className="sm:text-2xl text-lg font-bold text-yellow-400">
+                        Related Qatar Airways Offices
+                    </h2>
 
-          {filteredOffices.length > 2 && (
-            <Link
-              href="/directoryAirlines"
-              className="text-blue-600 font-semibold hover:underline"
-            >
-              View All
-            </Link>
-          )}
-        </div>
+                    {relatedOffices.length > 2 && (
+                        <Link
+                            href="/directoryAirlines"
+                            className="text-blue-600 font-semibold hover:underline"
+                        >
+                            View All
+                        </Link>
+                    )}
+                </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 sm:gap-12 gap-6 ">
-          {visibleOffices.map((office) => (
-            <OfficeCard key={office.id} office={office} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+                {/* Content */}
+                {visibleOffices.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 sm:gap-12 gap-6">
+                        {visibleOffices.map((office) => (
+                            <OfficeCard key={office.id} office={office} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-10 text-gray-500 font-medium">
+                        No related offices found
+                    </div>
+                )}
+            </div>
+        </section>
+    );
 }

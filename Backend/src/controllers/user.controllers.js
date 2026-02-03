@@ -30,6 +30,7 @@ export const createUser = async (req, res) => {
             password: hashedPassword,
             role,
             isActive: true,
+            avatar: req.file ? `/${req.file.path.replace(/\\/g, "/")}` : null,
         });
         // Professional email template
         const emailTemplate = `
@@ -180,6 +181,7 @@ export const createUser = async (req, res) => {
 export const getUsers = async (req, res) => {
     try {
         const users = await User.find().select("-password");
+        console.log("Users from database:", users.map(u => ({name: u.name, avatar: u.avatar})));
         res.json(users);
     } catch (error) {
         console.error(error);
@@ -188,24 +190,40 @@ export const getUsers = async (req, res) => {
 };
 
 export const updateUser = async (req, res) => {
-    const { id } = req.params;
-    const { name, email, role, password } = req.body;
     try {
-        const user = await User.findById(id);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
+        console.log("Update request body:", req.body);
+        console.log("Update request file:", req.file);
+        
+        const { name, password, role } = req.body;
+
+        const updateData = {};
+        if (name) updateData.name = name;
+        if (role) updateData.role = role;
+        if (req.file) {
+            updateData.avatar = `/${req.file.path.replace(/\\/g, "/")}`;
+            console.log("Avatar updated to:", updateData.avatar);
         }
-        user.name = name || user.name;
-        user.email = email || user.email;
-        user.role = role || user.role;
+
         if (password) {
-            user.password = await bcrypt.hash(password, 10);
+            const salt = await bcrypt.genSalt(10);
+            updateData.password = await bcrypt.hash(password, salt);
         }
-        await user.save();
-        res.json({ message: "User updated successfully" });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server error" });
+
+        console.log("Final updateData:", updateData);
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.params.id,
+            updateData,
+            { new: true },
+        ).select("-password");
+
+        res.status(200).json({
+            success: true,
+            user: updatedUser,
+        });
+    } catch (err) {
+        console.error("Update user error:", err);
+        res.status(500).json({ success: false, message: err.message });
     }
 };
 

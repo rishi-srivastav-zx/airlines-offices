@@ -6,6 +6,7 @@ import userRoutes from "./routes/user.routes.js";
 import approvalRoutes from "./routes/approval.routes.js";
 import officeRoutes from "./routes/officeroutes.js";
 import uploadRoutes from "./routes/uploads.routes.js";
+import blogRoutes from "./routes/blogs.routes.js";
 
 const app = express();
 
@@ -36,5 +37,6 @@ app.use("/api/users", userRoutes);
 app.use("/api/approval", approvalRoutes);
 app.use("/api/offices", officeRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/blogs", blogRoutes);
 
 export default app;

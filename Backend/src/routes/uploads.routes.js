@@ -1,6 +1,9 @@
 import express from "express";
 import { upload } from "../middleware/multer.js";
-import Office from "../model/officeSchema.js"; // Import the Office model
+import Office from "../model/officeSchema.js"; 
+import { updateOffice } from "../controllers/uploads.controllers.js";
+
+
 
 const router = express.Router();
 
@@ -66,5 +69,15 @@ router.post(
     }
   },
 );
+
+router.put(
+    "/offices/:slug",
+    upload.fields([
+        { name: "logo", maxCount: 1 },
+        { name: "photo", maxCount: 1 },
+    ]),
+    updateOffice,
+);
+
 
 export default router;

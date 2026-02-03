@@ -19,6 +19,11 @@ const userSchema = new mongoose.Schema(
             default: "editor",
         },
 
+        avatar: {
+            type: String,
+            default: null,
+        },
+
         isActive: {
             type: Boolean,
             default: true,

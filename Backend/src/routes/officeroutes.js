@@ -16,6 +16,7 @@ router.get("/", async (req, res) => {
       search,
       sortBy = "createdAt",
       order = "desc",
+      exclude,
     } = req.query;
 
     const query = {};
@@ -27,6 +28,14 @@ router.get("/", async (req, res) => {
       query["officeOverview.airlineName"] = new RegExp(airlineName, "i");
     if (verified !== undefined)
       query["metadata.verified"] = verified === "true";
+    
+    // Exclude specific airlines (for public frontend)
+    if (exclude) {
+      const excludeAirlines = exclude.split(',').map(airline => airline.trim());
+      query["officeOverview.airlineName"] = { 
+        $nin: excludeAirlines 
+      };
+    }
 
     // Search across multiple fields
     if (search) {

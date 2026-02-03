@@ -101,8 +101,6 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
   const [servicesText, setServicesText] = useState("");
   const [availableServicesText, setAvailableServicesText] = useState("");
 
-
-
   const [formData, setFormData] = useState(
     initialData || {
       slug: "",
@@ -180,49 +178,49 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
   }, []);
 
   const handleImageChange = (e) => {
-      const { name, files } = e.target;
+    const { name, files } = e.target;
 
-      if (!files || !files[0]) return;
+    if (!files || !files[0]) return;
 
-      const file = files[0];
+    const file = files[0];
 
-      // Optional: validate file type
-      if (!file.type.startsWith("image/")) {
-          setErrors((prev) => ({
-              ...prev,
-              [name]: "Only image files are allowed",
-          }));
-          return;
-      }
-
-    
-      // Optional: validate file size (2MB)
-      if (file.size > 5 * 1024 * 1024) {
-          setErrors((prev) => ({
-              ...prev,
-              [name]: "Image must be under 5MB",
-          }));
-          return;
-      }
-      if (name === "logo") {
-          setLogoFile(file);
-      } else if (name === "photo") {
-          setImageFile(file);
-      }
-
-      
-      // Show preview
-      setFormData((prev) => ({
-          ...prev,
-          [name]: URL.createObjectURL(file), // Use object URL for preview
+    // Optional: validate file type
+    if (!file.type.startsWith("image/")) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "Only image files are allowed",
       }));
+      return;
+    }
+
+    // Optional: validate file size (2MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "Image must be under 5MB",
+      }));
+      return;
+    }
+    if (name === "logo") {
+      setLogoFile(file);
+    } else if (name === "photo") {
+      setImageFile(file);
+    }
+
+    // Show preview
+    setFormData((prev) => ({
+      ...prev,
+      [name]: URL.createObjectURL(file),
+    }));
   };
 
-    useEffect(() => {
-        if (Array.isArray(formData.about.services)) {
-            setServicesText(formData.about.services.join(", "));
-        }
-    }, [formData.about.services]);
+  useEffect(() => {
+      if (Array.isArray(formData?.about?.services)) {
+          setServicesText(formData.about.services.join(", "));
+      } else {
+          setServicesText("");
+      }
+  }, [formData?.about?.services]);
 
 
   const handleInputChange = useCallback(
@@ -258,13 +256,6 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
         return updated;
       });
 
-      useEffect(() => {
-          if (Array.isArray(formData.availableServices)) {
-              setAvailableServicesText(formData.availableServices.join(", "));
-          }
-      }, [formData.availableServices]);
-
-
       // Validation
       if (touched[name]) {
         const err = validateField(name, newValue);
@@ -274,32 +265,49 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
     [touched, validateField, isSlugManual],
   );
 
+   useEffect(() => {
+        if (Array.isArray(formData.availableServices)) {
+          setAvailableServicesText(formData.availableServices.join(", "));
+        }
+      }, [formData.availableServices]);
+  const handleArrayInputChange = (path, value) => {
+    const keys = path.split("."); // ["about", "services"]
 
-   const handleArrayInputChange = (path, value) => {
-       const keys = path.split("."); // ["about", "services"]
+    setFormData((prev) => {
+      const updated = { ...prev };
+      let current = updated;
 
-       setFormData((prev) => {
-           const updated = { ...prev };
-           let current = updated;
+      // walk to parent
+      for (let i = 0; i < keys.length - 1; i++) {
+        current[keys[i]] = { ...current[keys[i]] };
+        current = current[keys[i]];
+      }
 
-           // walk to parent
-           for (let i = 0; i < keys.length - 1; i++) {
-               current[keys[i]] = { ...current[keys[i]] };
-               current = current[keys[i]];
-           }
+      // set final value as array
+      const finalValue = Array.isArray(value)
+        ? value
+        : value
+            .split(",")
+            .map((v) => v.trim())
+            .filter(Boolean);
 
-// set final value as array
-            const finalValue = Array.isArray(value) 
-                ? value 
-                : value.split(",").map((v) => v.trim()).filter(Boolean);
-            
-            current[keys[keys.length - 1]] = finalValue;
+      current[keys[keys.length - 1]] = finalValue;
 
-           return updated;
-       });
-   };
- 
+      return updated;
+    });
+  };
 
+  useEffect(() => {
+    if (formData?.about?.airlineName && !formData?.about?.airlineId) {
+      setFormData((prev) => ({
+        ...prev,
+        about: {
+          ...prev.about,
+          airlineId: generateAirlineId(prev.about.airlineName),
+        },
+      }));
+    }
+  }, [formData?.about?.airlineName]);
 
   const handleBlur = useCallback(
     (e) => {
@@ -449,7 +457,7 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
               />
               <span className="flex items-center gap-2 text-gray-900 font-semibold">
                 <Sparkles className="text-yellow-500" size={18} />
-                Verified Office
+                Verified airline
               </span>
             </label>
           </div>
@@ -457,339 +465,321 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
 
       case 1:
         return (
-            <div className="space-y-6 animate-fade-in">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputWrapper label="Airline Name" required>
-                        <input
-                            name="officeOverview.airlineName"
-                            value={formData.officeOverview.airlineName || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                        />
-                    </InputWrapper>
+          <div className="space-y-6 animate-fade-in">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InputWrapper label="Airline Name" required>
+                <input
+                  name="officeOverview.airlineName"
+                  value={formData.officeOverview.airlineName || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                />
+              </InputWrapper>
 
-                    <InputWrapper label="City" required>
-                        <input
-                            name="officeOverview.city"
-                            value={formData.officeOverview.city || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                        />
-                    </InputWrapper>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputWrapper label="Country" required>
-                        <input
-                            name="officeOverview.country"
-                            value={formData.officeOverview.country || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                        />
-                    </InputWrapper>
-
-                    <InputWrapper label="Phone" required>
-                        <input
-                            name="officeOverview.phone"
-                            value={formData.officeOverview.phone || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                        />
-                    </InputWrapper>
-                </div>
-
-                <InputWrapper label="Address" required>
-                    <textarea
-                        name="officeOverview.address"
-                        value={formData.officeOverview.address || ""}
-                        onChange={handleInputChange}
-                        className="input-ui text-gray-900"
-                        rows={3}
-                    />
-                </InputWrapper>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <InputWrapper label="Office Hours" required>
-                        <div className="relative group">
-                            <div className="flex items-center gap-6 rounded-xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 px-6 py-5 transition-all duration-200 hover:border-blue-300 hover:shadow-md focus-within:border-blue-500 focus-within:shadow-lg focus-within:ring-4 focus-within:ring-blue-100">
-                                <div className="flex flex-col flex-1">
-                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                                        Start Time
-                                    </label>
-                                    <input
-                                        type="time"
-                                        name="officeOverview.hours.start"
-                                        value={
-                                            formData.officeOverview.hours
-                                                .start || ""
-                                        }
-                                        onChange={handleInputChange}
-                                        className="w-full bg-transparent text-lg font-semibold text-gray-900 outline-none cursor-pointer"
-                                    />
-                                </div>
-
-                                <div className="flex items-center justify-center pt-6">
-                                    <div className="w-12 h-0.5 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full"></div>
-                                </div>
-
-                                <div className="flex flex-col flex-1">
-                                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                                        End Time
-                                    </label>
-                                    <input
-                                        type="time"
-                                        name="officeOverview.hours.end"
-                                        value={
-                                            formData.officeOverview.hours.end ||
-                                            ""
-                                        }
-                                        onChange={handleInputChange}
-                                        className="w-full bg-transparent text-lg font-semibold text-gray-900 outline-none cursor-pointer"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </InputWrapper>
-
-                    {officeHours && (
-                        <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 p-0.5">
-                                <div className="bg-white rounded-2xl p-6">
-                                    <div className="flex items-start gap-4">
-                                        <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                                            <svg
-                                                className="w-6 h-6 text-white"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                                />
-                                            </svg>
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                                                Current Schedule
-                                            </p>
-                                            <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                                                {officeHours}
-                                            </p>
-                                            <p className="text-sm text-gray-600 mt-2">
-                                                Your office will be available
-                                                during these hours
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    <InputWrapper label="Website" required>
-                        <input
-                            name="officeOverview.website"
-                            value={formData.officeOverview.website || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            placeholder="https://example.com"
-                        />
-                    </InputWrapper>
-                </div>
-
-                <InputWrapper label="Toll Free Number">
-                    <input
-                        name="officeOverview.tollFreeNumber"
-                        value={formData.officeOverview.tollFreeNumber || ""}
-                        onChange={handleInputChange}
-                        className="input-ui text-gray-900"
-                    />
-                </InputWrapper>
-
-                <div className="space-y-4 p-4 bg-blue-50 rounded-xl">
-                    <h3 className="font-semibold text-blue-900">
-                        About Section
-                    </h3>
-
-                    <InputWrapper label="Airline ID" required>
-                        <input
-                            name="about.airlineId"
-                            value={formData.about.airlineId || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            placeholder="e.g., AA, DL, UA"
-                        />
-                    </InputWrapper>
-
-                    <InputWrapper label="Office Location" required>
-                        <textarea
-                            name="about.location"
-                            value={formData.about.location || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            rows={2}
-                            placeholder="Describe the office location..."
-                        />
-                    </InputWrapper>
-
-                    <InputWrapper label="Overview" required>
-                        <textarea
-                            name="about.overview"
-                            value={formData.about.overview || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            rows={4}
-                            placeholder="General overview of the airline..."
-                        />
-                    </InputWrapper>
-
-                    <InputWrapper label="Network">
-                        <textarea
-                            name="about.network"
-                            value={formData.about.network || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            rows={3}
-                            placeholder="Information about the airline's route network..."
-                        />
-                    </InputWrapper>
-
-                    <InputWrapper label="Fleet">
-                        <textarea
-                            name="about.fleet"
-                            value={formData.about.fleet || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            rows={3}
-                            placeholder="Details about the aircraft fleet..."
-                        />
-                    </InputWrapper>
-
-                    <InputWrapper label="Cabins">
-                        <textarea
-                            name="about.cabins"
-                            value={formData.about.cabins || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            rows={3}
-                            placeholder="Description of cabin classes and amenities..."
-                        />
-                    </InputWrapper>
-
-                    <InputWrapper label="Alliance">
-                        <textarea
-                            name="about.alliance"
-                            value={formData.about.alliance || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            rows={2}
-                            placeholder="Information about airline alliances..."
-                        />
-                    </InputWrapper>
-
-                    <InputWrapper label="Services">
-                        <textarea
-                            name="about.services"
-                            value={formData.about.services || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            rows={3}
-                            placeholder="Services offered by the airline..."
-                        />
-                    </InputWrapper>
-
-                    <InputWrapper label="Baggage">
-                        <textarea
-                            name="about.baggage"
-                            value={formData.about.baggage || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            rows={3}
-                            placeholder="Baggage policies and allowances..."
-                        />
-                    </InputWrapper>
-
-                    <InputWrapper label="Loyalty Program">
-                        <textarea
-                            name="about.loyalty"
-                            value={formData.about.loyalty || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            rows={3}
-                            placeholder="Details about the loyalty program..."
-                        />
-                    </InputWrapper>
-
-                    <InputWrapper label="Airport Services">
-                        <textarea
-                            name="about.airportServices"
-                            value={formData.about.airportServices || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            rows={3}
-                            placeholder="Services available at the airport..."
-                        />
-                    </InputWrapper>
-
-                    <InputWrapper label="Target Customers">
-                        <textarea
-                            name="about.targetCustomers"
-                            value={formData.about.targetCustomers || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            rows={3}
-                            placeholder="Information about target customer segments..."
-                        />
-                    </InputWrapper>
-
-                    <InputWrapper label="Support">
-                        <textarea
-                            name="about.support"
-                            value={formData.about.support || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            rows={3}
-                            placeholder="Customer support information..."
-                        />
-                    </InputWrapper>
-
-                    <InputWrapper label="Description">
-                        <textarea
-                            name="about.description"
-                            value={formData.about.description || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            rows={4}
-                            placeholder="Additional description..."
-                        />
-                    </InputWrapper>
-
-                    <InputWrapper label="History">
-                        <textarea
-                            name="about.history"
-                            value={formData.about.history || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            rows={3}
-                            placeholder="Historical information about the airline..."
-                        />
-                    </InputWrapper>
-
-                    <InputWrapper label="Additional Info">
-                        <textarea
-                            name="about.additionalInfo"
-                            value={formData.about.additionalInfo || ""}
-                            onChange={handleInputChange}
-                            className="input-ui text-gray-900"
-                            rows={2}
-                            placeholder="Any additional information..."
-                        />
-                    </InputWrapper>
-                </div>
+              <InputWrapper label="City" required>
+                <input
+                  name="officeOverview.city"
+                  value={formData.officeOverview.city || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                />
+              </InputWrapper>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InputWrapper label="Country" required>
+                <input
+                  name="officeOverview.country"
+                  value={formData.officeOverview.country || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Phone" required>
+                <input
+                  name="officeOverview.phone"
+                  value={formData.officeOverview.phone || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                />
+              </InputWrapper>
+            </div>
+
+            <InputWrapper label="Address" required>
+              <textarea
+                name="officeOverview.address"
+                value={formData.officeOverview.address || ""}
+                onChange={handleInputChange}
+                className="input-ui text-gray-900"
+                rows={3}
+              />
+            </InputWrapper>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InputWrapper label="Office Hours" required>
+                <div className="relative group">
+                  <div className="flex items-center gap-6 rounded-xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 px-6 py-5 transition-all duration-200 hover:border-blue-300 hover:shadow-md focus-within:border-blue-500 focus-within:shadow-lg focus-within:ring-4 focus-within:ring-blue-100">
+                    <div className="flex flex-col flex-1">
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        Start Time
+                      </label>
+                      <input
+                        type="time"
+                        name="officeOverview.hours.start"
+                        value={formData.officeOverview.hours.start || ""}
+                        onChange={handleInputChange}
+                        className="w-full bg-transparent text-lg font-semibold text-gray-900 outline-none cursor-pointer"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-center pt-6">
+                      <div className="w-12 h-0.5 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full"></div>
+                    </div>
+
+                    <div className="flex flex-col flex-1">
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        End Time
+                      </label>
+                      <input
+                        type="time"
+                        name="officeOverview.hours.end"
+                        value={formData.officeOverview.hours.end || ""}
+                        onChange={handleInputChange}
+                        className="w-full bg-transparent text-lg font-semibold text-gray-900 outline-none cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </InputWrapper>
+
+              {officeHours && (
+                <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 p-0.5">
+                    <div className="bg-white rounded-2xl p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                          <svg
+                            className="w-6 h-6 text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                            Current Schedule
+                          </p>
+                          <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                            {officeHours}
+                          </p>
+                          <p className="text-sm text-gray-600 mt-2">
+                            Your office will be available during these hours
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <InputWrapper label="Website" required>
+                <input
+                  name="officeOverview.website"
+                  value={formData.officeOverview.website || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  placeholder="https://example.com"
+                />
+              </InputWrapper>
+            </div>
+
+            <div className="space-y-4 p-4 bg-blue-50 rounded-xl">
+              <h3 className="font-semibold text-blue-900">About Section</h3>
+
+              <InputWrapper label="Airline ID" required>
+                <input
+                  name="about.airlineId"
+                  value={formData.about.airlineId || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  placeholder="Auto generated"
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Office Location" required>
+                <textarea
+                  name="about.location"
+                  value={formData.about.location || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  rows={2}
+                  placeholder="Describe the office location..."
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Overview" required>
+                <textarea
+                  name="about.overview"
+                  value={formData.about.overview || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  rows={4}
+                  placeholder="General overview of the airline..."
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Network">
+                <textarea
+                  name="about.network"
+                  value={formData.about.network || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  rows={3}
+                  placeholder="Information about the airline's route network..."
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Fleet">
+                <textarea
+                  name="about.fleet"
+                  value={formData.about.fleet || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  rows={3}
+                  placeholder="Details about the aircraft fleet..."
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Cabins">
+                <textarea
+                  name="about.cabins"
+                  value={formData.about.cabins || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  rows={3}
+                  placeholder="Description of cabin classes and amenities..."
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Alliance">
+                <textarea
+                  name="about.alliance"
+                  value={formData.about.alliance || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  rows={2}
+                  placeholder="Information about airline alliances..."
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Services">
+                <textarea
+                  name="about.services"
+                  value={formData.about.services || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  rows={3}
+                  placeholder="Services offered by the airline..."
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Baggage">
+                <textarea
+                  name="about.baggage"
+                  value={formData.about.baggage || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  rows={3}
+                  placeholder="Baggage policies and allowances..."
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Loyalty Program">
+                <textarea
+                  name="about.loyalty"
+                  value={formData.about.loyalty || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  rows={3}
+                  placeholder="Details about the loyalty program..."
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Airport Services">
+                <textarea
+                  name="about.airportServices"
+                  value={formData.about.airportServices || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  rows={3}
+                  placeholder="Services available at the airport..."
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Target Customers">
+                <textarea
+                  name="about.targetCustomers"
+                  value={formData.about.targetCustomers || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  rows={3}
+                  placeholder="Information about target customer segments..."
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Support">
+                <textarea
+                  name="about.support"
+                  value={formData.about.support || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  rows={3}
+                  placeholder="Customer support information..."
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Description">
+                <textarea
+                  name="about.description"
+                  value={formData.about.description || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  rows={4}
+                  placeholder="Additional description..."
+                />
+              </InputWrapper>
+
+              <InputWrapper label="History">
+                <textarea
+                  name="about.history"
+                  value={formData.about.history || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  rows={3}
+                  placeholder="Historical information about the airline..."
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Additional Info">
+                <textarea
+                  name="about.additionalInfo"
+                  value={formData.about.additionalInfo || ""}
+                  onChange={handleInputChange}
+                  className="input-ui text-gray-900"
+                  rows={2}
+                  placeholder="Any additional information..."
+                />
+              </InputWrapper>
+            </div>
+          </div>
         );
 
       case 2:
@@ -929,223 +919,202 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
 
       case 4:
         return (
-            <div className="space-y-6 animate-fade-in">
-                <InputWrapper
-                    label="Available Services (comma-separated)"
-                    required
-                >
-                    <input
-                        type="text"
-                        value={availableServicesText}
-                        onChange={(e) =>
-                            setAvailableServicesText(e.target.value)
-                        }
-                        onBlur={() => {
-                            const servicesArray = availableServicesText
-                                .split(',')
-                                .map((s) => s.trim())
-                                .filter(Boolean);
+          <div className="space-y-6 animate-fade-in">
+            <InputWrapper label="Available Services (comma-separated)" required>
+              <input
+                type="text"
+                value={availableServicesText}
+                onChange={(e) => setAvailableServicesText(e.target.value)}
+                onBlur={() => {
+                  const servicesArray = availableServicesText
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean);
 
-                            handleArrayInputChange(
-                                "availableServices",
-                                servicesArray,
-                            );
-                        }}
-                        className="input-ui text-gray-900"
-                        placeholder="Check-in, Baggage, Lounge, Assistance"
-                    />
+                  handleArrayInputChange("availableServices", servicesArray);
+                }}
+                className="input-ui text-gray-900"
+                placeholder="Check-in, Baggage, Lounge, Assistance"
+              />
+            </InputWrapper>
+
+            <div className="space-y-4 p-4 bg-purple-50 rounded-xl">
+              <h3 className="font-semibold text-purple-900">
+                Fleet Operations
+              </h3>
+
+              <InputWrapper label="Aircraft Types (comma-separated)" required>
+                <input
+                  value={formData.fleetOperations.aircraftTypes.join(", ")}
+                  onChange={(e) => {
+                    const array = e.target.value
+                      .split(",")
+                      .map((item) => item.trim())
+                      .filter(Boolean);
+                    setFormData((prev) => ({
+                      ...prev,
+                      fleetOperations: {
+                        ...prev.fleetOperations,
+                        aircraftTypes: array,
+                      },
+                    }));
+                  }}
+                  className="input-ui text-gray-900"
+                  placeholder="Boeing 777, Airbus A380"
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Total Fleet">
+                <input
+                  type="number"
+                  value={formData.fleetOperations.totalFleet || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      fleetOperations: {
+                        ...prev.fleetOperations,
+                        totalFleet: e.target.value
+                          ? parseInt(e.target.value)
+                          : null,
+                      },
+                    }))
+                  }
+                  className="input-ui text-gray-900"
+                />
+              </InputWrapper>
+
+              <InputWrapper label="Additional Details">
+                <textarea
+                  value={formData.fleetOperations.additionalDetails || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      fleetOperations: {
+                        ...prev.fleetOperations,
+                        additionalDetails: e.target.value,
+                      },
+                    }))
+                  }
+                  className="input-ui text-gray-900"
+                  rows={3}
+                />
+              </InputWrapper>
+            </div>
+
+            <div className="space-y-4 p-4 bg-green-50 rounded-xl">
+              <h3 className="font-semibold text-green-900">SEO Metadata</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* ⭐ Rating Value */}
+                <InputWrapper label="Rating (0–5)">
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="5"
+                    value={formData.metadata?.rating?.value || ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        metadata: {
+                          ...prev.metadata,
+                          rating: {
+                            ...prev.metadata?.rating,
+                            value: e.target.value
+                              ? parseFloat(e.target.value)
+                              : 0,
+                          },
+                        },
+                      }))
+                    }
+                    className="input-ui text-gray-900"
+                  />
                 </InputWrapper>
 
-                <div className="space-y-4 p-4 bg-purple-50 rounded-xl">
-                    <h3 className="font-semibold text-purple-900">
-                        Fleet Operations
-                    </h3>
+                {/* 🧾 Review Count */}
+                <InputWrapper label="Review Count">
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.metadata?.reviewCount || ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        metadata: {
+                          ...prev.metadata,
+                          reviewCount: e.target.value
+                            ? parseInt(e.target.value)
+                            : 0,
+                        },
+                      }))
+                    }
+                    className="input-ui text-gray-900"
+                  />
+                </InputWrapper>
 
-                    <InputWrapper
-                        label="Aircraft Types (comma-separated)"
-                        required
-                    >
-                        <input
-                            value={formData.fleetOperations.aircraftTypes.join(
-                                ", ",
-                            )}
-                            onChange={(e) => {
-                                const array = e.target.value
-                                    .split(",")
-                                    .map((item) => item.trim())
-                                    .filter(Boolean);
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    fleetOperations: {
-                                        ...prev.fleetOperations,
-                                        aircraftTypes: array,
-                                    },
-                                }));
-                            }}
-                            className="input-ui text-gray-900"
-                            placeholder="Boeing 777, Airbus A380"
-                        />
-                    </InputWrapper>
+                {/* 📝 Review Summary (Meta Description) */}
+                <InputWrapper label="Review Summary (SEO)">
+                  <textarea
+                    maxLength={160}
+                    value={formData.metadata?.reviewSummary || ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        metadata: {
+                          ...prev.metadata,
+                          reviewSummary: e.target.value,
+                        },
+                      }))
+                    }
+                    className="input-ui text-gray-900 resize-none"
+                    placeholder="Short SEO-friendly description (max 160 chars)"
+                  />
+                </InputWrapper>
 
-                    <InputWrapper label="Total Fleet">
-                        <input
-                            type="number"
-                            value={formData.fleetOperations.totalFleet || ""}
-                            onChange={(e) =>
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    fleetOperations: {
-                                        ...prev.fleetOperations,
-                                        totalFleet: e.target.value
-                                            ? parseInt(e.target.value)
-                                            : null,
-                                    },
-                                }))
-                            }
-                            className="input-ui text-gray-900"
-                        />
-                    </InputWrapper>
+                {/* 🏷️ SEO Keywords */}
+                <InputWrapper label="SEO Keywords (comma separated)">
+                  <input
+                    type="text"
+                    value={(formData.metadata?.keywords || []).join(", ")}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        metadata: {
+                          ...prev.metadata,
+                          keywords: e.target.value
+                            .split(",")
+                            .map((k) => k.trim())
+                            .filter(Boolean),
+                        },
+                      }))
+                    }
+                    className="input-ui text-gray-900"
+                    placeholder="qatar airways dubai office, contact number"
+                  />
+                </InputWrapper>
 
-                    <InputWrapper label="Additional Details">
-                        <textarea
-                            value={
-                                formData.fleetOperations.additionalDetails || ""
-                            }
-                            onChange={(e) =>
-                                setFormData((prev) => ({
-                                    ...prev,
-                                    fleetOperations: {
-                                        ...prev.fleetOperations,
-                                        additionalDetails: e.target.value,
-                                    },
-                                }))
-                            }
-                            className="input-ui text-gray-900"
-                            rows={3}
-                        />
-                    </InputWrapper>
-                </div>
-
-                <div className="space-y-4 p-4 bg-green-50 rounded-xl">
-                    <h3 className="font-semibold text-green-900">
-                        SEO Metadata
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* ⭐ Rating Value */}
-                        <InputWrapper label="Rating (0–5)">
-                            <input
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                max="5"
-                                value={formData.metadata?.rating?.value || ""}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        metadata: {
-                                            ...prev.metadata,
-                                            rating: {
-                                                ...prev.metadata?.rating,
-                                                value: e.target.value
-                                                    ? parseFloat(e.target.value)
-                                                    : 0,
-                                            },
-                                        },
-                                    }))
-                                }
-                                className="input-ui text-gray-900"
-                            />
-                        </InputWrapper>
-
-                        {/* 🧾 Review Count */}
-                        <InputWrapper label="Review Count">
-                            <input
-                                type="number"
-                                min="0"
-                                value={formData.metadata?.reviewCount || ""}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        metadata: {
-                                            ...prev.metadata,
-                                            reviewCount: e.target.value
-                                                ? parseInt(e.target.value)
-                                                : 0,
-                                        },
-                                    }))
-                                }
-                                className="input-ui text-gray-900"
-                            />
-                        </InputWrapper>
-
-                        {/* 📝 Review Summary (Meta Description) */}
-                        <InputWrapper label="Review Summary (SEO)">
-                            <textarea
-                                maxLength={160}
-                                value={formData.metadata?.reviewSummary || ""}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        metadata: {
-                                            ...prev.metadata,
-                                            reviewSummary: e.target.value,
-                                        },
-                                    }))
-                                }
-                                className="input-ui text-gray-900 resize-none"
-                                placeholder="Short SEO-friendly description (max 160 chars)"
-                            />
-                        </InputWrapper>
-
-                        {/* 🏷️ SEO Keywords */}
-                        <InputWrapper label="SEO Keywords (comma separated)">
-                            <input
-                                type="text"
-                                value={(formData.metadata?.keywords || []).join(
-                                    ", ",
-                                )}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        metadata: {
-                                            ...prev.metadata,
-                                            keywords: e.target.value
-                                                .split(",")
-                                                .map((k) => k.trim())
-                                                .filter(Boolean),
-                                        },
-                                    }))
-                                }
-                                className="input-ui text-gray-900"
-                                placeholder="qatar airways dubai office, contact number"
-                            />
-                        </InputWrapper>
-
-                        {/* ✅ Verified */}
-                        <InputWrapper label="Verified Listing">
-                            <select
-                                value={
-                                    formData.metadata?.verified ? "yes" : "no"
-                                }
-                                onChange={(e) =>
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        metadata: {
-                                            ...prev.metadata,
-                                            verified: e.target.value === "yes",
-                                        },
-                                    }))
-                                }
-                                className="input-ui text-gray-900"
-                            >
-                                <option value="no">No</option>
-                                <option value="yes">Yes</option>
-                            </select>
-                        </InputWrapper>
-                    </div>
-                </div>
+                {/* ✅ Verified */}
+                <InputWrapper label="Verified Listing">
+                  <select
+                    value={formData.metadata?.verified ? "yes" : "no"}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        metadata: {
+                          ...prev.metadata,
+                          verified: e.target.value === "yes",
+                        },
+                      }))
+                    }
+                    className="input-ui text-gray-900"
+                  >
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                  </select>
+                </InputWrapper>
+              </div>
             </div>
+          </div>
         );
 
       default:
@@ -1360,13 +1329,15 @@ export default function OfficesPage() {
           config,
         );
       } else {
-        // Create new office
-        response = await api.post("/upload", formData, config);
+        // Submit new office for approval
+        response = await api.post("/approval/submit", formData, config);
       }
 
       if (response.data.success) {
         toast.success(
-          `Office ${selectedOffice ? "updated" : "created"} successfully!`,
+          selectedOffice
+            ? "Office updated successfully!"
+            : "Office submitted for approval successfully!",
         );
         await fetchOffices(
           selectedOffice ? pagination.currentPage : 1,
@@ -1397,7 +1368,7 @@ export default function OfficesPage() {
   };
 
   const handleDelete = async (slug) => {
-    if (!confirm("Are you sure you want to delete this office?")) return;
+    if (!confirm("Are you sure you want to delete this airline?")) return;
 
     try {
       const response = await api.delete(`/offices/${slug}`);
@@ -1405,7 +1376,7 @@ export default function OfficesPage() {
         toast.success("Office deleted successfully!");
         await fetchOffices(pagination.currentPage, searchQuery);
       } else {
-        toast.error(response.data.message || "Failed to delete office");
+        toast.error(response.data.message || "Failed to delete airline");
       }
     } catch (err) {
       const errorMessage =
@@ -1435,7 +1406,7 @@ export default function OfficesPage() {
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all shadow-lg shadow-blue-900/20"
           >
             <Plus size={20} />
-            Add Office
+            Add airline
           </button>
         </div>
 
@@ -1454,7 +1425,7 @@ export default function OfficesPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <button className="flex items-center gap-2 px-4 py-3 font-medium text-slate-600 bg-white border-2 border-slate-200 rounded-xl hover:bg-slate-50">
+            <button className="flex items-center gap-2 px-4 text-gray-900 py-3 font-medium bg-white border-2 border-slate-200 rounded-xl hover:bg-slate-50">
               <Filter size={16} />
               Filters
             </button>

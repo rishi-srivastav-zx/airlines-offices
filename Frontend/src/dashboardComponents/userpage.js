@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import EditUserModal from "./user.editmodel";
+
 
 const UserRole = {
     SUPERADMIN: "SUPERADMIN",
@@ -22,6 +24,8 @@ export default function Usermanagement() {
     const [users, setUsers] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [isEditOpen, setIsEditOpen] = useState(false);
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -49,6 +53,7 @@ export default function Usermanagement() {
             });
 
             const data = res.data;
+            console.log("Fetched users data:", data);
 
             if (Array.isArray(data)) {
                 const normalizedUsers = data.map((user) => ({
@@ -56,6 +61,7 @@ export default function Usermanagement() {
                     _id: user._id || user.id,
                     role: normalizeRole(user.role),
                 }));
+                console.log("Setting users state:", normalizedUsers);
                 setUsers(normalizedUsers);
             } else {
                 setUsers([]);
@@ -180,7 +186,9 @@ export default function Usermanagement() {
 
             {/* Users Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {users.map((user) => (
+                {users.map((user) => {
+                    console.log("Rendering user:", user.name, "Avatar:", user.avatar);
+                    return (
                     <div
                         key={user._id}
                         className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all group relative"
@@ -192,13 +200,34 @@ export default function Usermanagement() {
                         </div>
 
                         <div className="flex items-center gap-4 mb-6">
-                            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-xl font-bold text-slate-600 border-2 border-white shadow-inner">
-                                {user.name
+                            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-slate-100 to-slate-50 overflow-hidden flex items-center justify-center text-xl font-bold text-slate-600 border-2 border-white shadow-inner">
+                                {user.avatar ? (
+                                    <img
+                                        src={user.avatar.startsWith('http') || user.avatar.startsWith('blob:') ? user.avatar : `http://localhost:3001${user.avatar}`}
+                                        alt={`${user.name}'s avatar`}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            console.log("Image failed to load:", user.avatar);
+                                            // Fallback to initials if image fails
+                                            const parent = e.target.parentElement;
+                                            if (parent) {
+                                                parent.innerHTML = `<span class="text-xl font-bold text-slate-600">${user.name ? user.name.split(" ").map(n => n[0]).join("") : "NN"}</span>`;
+                                            }
+                                        }}
+                                        onLoad={() => {
+                                            console.log("Image loaded successfully:", user.avatar);
+                                        }}
+                                    />
+                                ) : (
+                                    <span className="text-xl font-bold text-slate-600">
+                                        {user.name ? user.name.split(" ").map(n => n[0]).join("") : "NN"}
+                                    </span>
+                                )}
                                     ? user.name
                                           .split(" ")
-                                          .map((n) => n[0])
+                                          .map((n) ={">"} n[0])
                                           .join("")
-                                    : "NN"}
+                                    : "NN"{"}"}
                             </div>
                             <div>
                                 <h3 className="font-bold text-slate-900 text-lg leading-tight">
@@ -210,9 +239,9 @@ export default function Usermanagement() {
                                         UserRole.SUPERADMIN
                                             ? "bg-indigo-50 text-indigo-700 border-indigo-100"
                                             : normalizeRole(user.role) ===
-                                              UserRole.MANAGER
-                                            ? "bg-amber-50 text-amber-700 border-amber-100"
-                                            : "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                                UserRole.MANAGER
+                                              ? "bg-amber-50 text-amber-700 border-amber-100"
+                                              : "bg-emerald-50 text-emerald-700 border-emerald-100"
                                     }`}
                                 >
                                     {normalizeRole(user.role)}
@@ -232,9 +261,32 @@ export default function Usermanagement() {
                         </div>
 
                         <div className="mt-6 flex gap-2">
-                            <button className="flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors">
+                            <button
+                                onClick={() => {
+                                    setSelectedUser(user);
+                                    setIsEditOpen(true);
+                                }}
+                                className="flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg transition-colors"
+                            >
                                 <Edit2 size={14} /> Edit
                             </button>
+                            {isEditOpen && selectedUser && (
+                                <EditUserModal
+                                    key={selectedUser._id}
+                                    user={selectedUser}
+                                    onClose={() => setIsEditOpen(false)}
+                                    onUpdate={(updatedUser) => {
+                                        console.log("Updated user received:", updatedUser);
+                                        console.log("Updated user avatar:", updatedUser.avatar);
+                                        setIsEditOpen(false);
+                                        // Force a refresh to get the latest data from server
+                                        setTimeout(() => {
+                                            fetchUsers();
+                                        }, 500);
+                                    }}
+                                />
+                            )}
+
                             <button
                                 onClick={() => deleteUser(user._id)}
                                 className="w-10 flex items-center justify-center py-2 text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
@@ -243,7 +295,8 @@ export default function Usermanagement() {
                             </button>
                         </div>
                     </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* Modal */}
@@ -343,9 +396,9 @@ export default function Usermanagement() {
                                                         UserRole.SUPERADMIN
                                                             ? "Full administrative control"
                                                             : role ===
-                                                              UserRole.MANAGER
-                                                            ? "Content approval and moderation"
-                                                            : "Create and edit submissions"}
+                                                                UserRole.MANAGER
+                                                              ? "Content approval and moderation"
+                                                              : "Create and edit submissions"}
                                                     </p>
                                                 </div>
                                             </label>

@@ -77,6 +77,37 @@ export default function Home() {
     const [offices, setOffices] = useState([]);
     const [airlines, setAirlines] = useState([]);
     const [loading, setLoading] = useState(true);
+    const CITIES_PER_VIEW = 5;
+
+    const [visibleCities, setVisibleCities] = useState([]);
+    const [startIndex, setStartIndex] = useState(0);
+
+    useEffect(() => {
+        if (offices.length === 0) return;
+        
+       
+        const allCities = [...new Set(offices.map(office => office.officeOverview?.city))].filter(Boolean);
+        setVisibleCities(allCities.slice(0, CITIES_PER_VIEW));
+
+        
+        if (allCities.length <= 10) return;
+
+        const interval = setInterval(() => {
+            setStartIndex((prev) => {
+                const nextIndex = prev + CITIES_PER_VIEW;
+                const resetIndex =
+                    nextIndex >= allCities.length ? 0 : nextIndex;
+
+                setVisibleCities(
+                    allCities.slice(resetIndex, resetIndex + CITIES_PER_VIEW),
+                );
+
+                return resetIndex;
+            });
+        }, 4000); // 4 sec me change
+
+        return () => clearInterval(interval);
+    }, [offices]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -84,7 +115,9 @@ export default function Home() {
             try {
                 const officesRes = await axios.get(
                     "http://localhost:3001/api/offices",
+                   
                 );
+                
                 setOffices(officesRes.data.data);
 
                 const uniqueAirlines = [
@@ -151,7 +184,7 @@ export default function Home() {
                         </span>
                     </h1>
 
-                    <p className="text-base md:text-lg text-white/90 mb-10 max-w-2xl mx-auto">
+                    <div className="text-base md:text-lg text-white/90 mb-10 max-w-2xl mx-auto">
                         Get instant access to contact details, locations, and
                         office hours for
                         <br />
@@ -160,7 +193,9 @@ export default function Home() {
                         ) : (
                             `${airlines.length}+ major airlines across ${offices.length}+ cities.`
                         )}
-                    </p>
+                        
+
+                    </div>
 
                     <form
                         onSubmit={handleSearch}
@@ -185,21 +220,19 @@ export default function Home() {
                     </form>
 
                     <div className="mt-8 flex flex-wrap justify-center gap-3">
-                        {["Dubai", "London", "New York", "Manila", "Doha"].map(
-                            (city) => (
-                                <button
-                                    key={city}
-                                    onClick={() =>
-                                        router.push(
-                                            `/directoryAirlines?city=${city}`,
-                                        )
-                                    }
-                                    className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-5 py-2 rounded-full text-sm border border-white/20 transition-all"
-                                >
-                                    {city}
-                                </button>
-                            ),
-                        )}
+                        {visibleCities.map((city) => (
+                            <button
+                                key={city}
+                                onClick={() =>
+                                    router.push(
+                                        `/directoryAirlines?city=${city}`,
+                                    )
+                                }
+                                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-5 py-2 rounded-full text-sm border border-white/20 transition-all"
+                            >
+                                {city}
+                            </button>
+                        ))}
                     </div>
                 </div>
             </section>
@@ -219,7 +252,7 @@ export default function Home() {
                             ? Array.from({ length: 8 }).map((_, index) => (
                                   <AirlineCardSkeleton key={index} />
                               ))
-                            : airlines.slice(0, 8).map((airline) => (
+                            : airlines.length > 0 ? airlines.slice(0, 8).map((airline) => (
                                   <div
                                       key={airline.id}
                                       onClick={() =>
@@ -241,7 +274,11 @@ export default function Home() {
                                           {airline.name}
                                       </p>
                                   </div>
-                              ))}
+                              )) : (
+                                  <div className="col-span-full text-center py-8">
+                                      <p className="text-gray-500">No airlines available</p>
+                                  </div>
+                              )}
                     </div>
                 </div>
             </section>
@@ -274,14 +311,18 @@ export default function Home() {
                             ? Array.from({ length: 8 }).map((_, index) => (
                                   <OfficeCardSkeleton key={index} />
                               ))
-                            : offices
+                            : offices.length > 0 ? offices
                                   .slice(0, 8)
                                   .map((office) => (
                                       <OfficeCard
                                           key={office._id || office.slug}
                                           office={office}
                                       />
-                                  ))}
+                                  )) : (
+                                      <div className="col-span-full text-center py-8">
+                                          <p className="text-gray-500">No offices available</p>
+                                      </div>
+                                  )}
                     </div>
                 </div>
             </section>

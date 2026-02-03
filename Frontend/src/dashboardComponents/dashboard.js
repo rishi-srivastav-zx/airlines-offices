@@ -140,8 +140,8 @@ export const DashboardPage = () => {
                         </h3>
                         <TrendingUp size={20} className="text-slate-400" />
                     </div>
-                    <div className="h-80 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
+<div className="h-80 w-full">
+                        <ResponsiveContainer width="100%" height={320}>
                             <AreaChart data={MOCK_CHART_DATA}>
                                 <defs>
                                     <linearGradient

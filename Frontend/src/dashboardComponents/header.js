@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Bell, X, Camera } from "lucide-react";
+import { userService } from "../services/api.js";
 
 export default function HeaderBar() {
     const [mounted, setMounted] = useState(false);
@@ -9,22 +10,59 @@ export default function HeaderBar() {
     const [email, setEmail] = useState("");
     const [userName, setUserName] = useState("User");
     const [userRole, setUserRole] = useState("editor");
+    const [userId, setUserId] = useState(null);
+    const [uploadedImageFile, setUploadedImageFile] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         setMounted(true);
         
-        try {
+try {
             const storedUser = localStorage.getItem("user");
             if (storedUser) {
                 const user = JSON.parse(storedUser);
+                console.log('Stored user from localStorage:', user);
+                console.log('User avatar field:', user?.avatar);
                 setUserName(user?.name || "User");
                 setUserRole(user?.role || "editor");
                 setEmail(user?.email || "");
+                setUserId(user?.id || user?._id || null);
+                
+                // Check and set profile image from backend
+                if (user?.avatar) {
+                    console.log('User has avatar, calling checkAndSetProfileImage with:', user.avatar);
+                    checkAndSetProfileImage(user.avatar);
+                } else {
+                    console.log('User has no avatar field');
+                }
             }
         } catch (error) {
             console.error("Error reading user from localStorage:", error);
         }
     }, []);
+
+    const checkAndSetProfileImage = async (avatarUrl) => {
+        console.log('checkAndSetProfileImage called with:', avatarUrl);
+        if (!avatarUrl) {
+            console.log('No avatarUrl provided');
+            return;
+        }
+        
+        try {
+            console.log('Checking if image exists...');
+            const imageExists = await userService.checkImageExists(avatarUrl);
+            console.log('Image exists result:', imageExists);
+            if (imageExists) {
+                const fullImageUrl = userService.getImageUrl(avatarUrl);
+                console.log('Setting profile image to:', fullImageUrl);
+                setProfileImage(fullImageUrl);
+            } else {
+                console.log('Image does not exist on server');
+            }
+        } catch (error) {
+            console.error("Error checking profile image:", error);
+        }
+    };
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -34,13 +72,67 @@ export default function HeaderBar() {
         return () => clearInterval(timer);
     }, []);
 
-    const handleSaveProfile = () => {
-        setIsProfileOpen(false);
+    const handleSaveProfile = async () => {
+        console.log('handleSaveProfile called');
+        console.log('userId:', userId);
+        console.log('userName:', userName);
+        console.log('uploadedImageFile:', uploadedImageFile);
+        console.log('localStorage token:', localStorage.getItem('token')?.substring(0, 20) + '...');
+        
+        if (!userId) {
+            console.error("No user ID found");
+            // Try to get user ID from localStorage again
+            const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+            console.log('Attempting to get user ID from storedUser:', storedUser);
+            setUserId(storedUser?.id || storedUser?._id);
+            return;
+        }
+
+        setIsLoading(true);
+        
+        try {
+            const userData = {
+                name: userName,
+            };
+
+            console.log('Calling userService.updateProfile...');
+            const response = await userService.updateProfile(userId, userData, uploadedImageFile);
+            
+            if (response.success && response.user) {
+                // Update localStorage with new user data
+                const updatedUser = {
+                    ...JSON.parse(localStorage.getItem("user") || "{}"),
+                    name: response.user.name,
+                    avatar: response.user.avatar,
+                };
+                localStorage.setItem("user", JSON.stringify(updatedUser));
+                
+                // Update local state
+                setUserName(response.user.name);
+                if (response.user.avatar) {
+                    const imageUrl = userService.getImageUrl(response.user.avatar);
+                    setProfileImage(imageUrl);
+                }
+                
+                console.log("Profile updated successfully");
+            }
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            // You could show an error message to the user here
+        } finally {
+            setIsLoading(false);
+            setIsProfileOpen(false);
+            setUploadedImageFile(null);
+        }
     };
 
     const handleImageUpload = (e) => {
         const file = e.target.files[0];
         if (file) {
+            // Store the actual file for backend upload
+            setUploadedImageFile(file);
+            
+            // Create preview immediately
             const reader = new FileReader();
             reader.onloadend = () => {
                 setProfileImage(reader.result);
@@ -115,7 +207,7 @@ export default function HeaderBar() {
 
             {/* Profile Edit Popup */}
             {isProfileOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-white/50 backdrop-blur-sm flex g-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
                         {/* Header */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
@@ -186,9 +278,8 @@ export default function HeaderBar() {
                                 <input
                                     type="email"
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    disabled // ← NOT changeable
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
-                                    placeholder="Enter your email"
                                 />
                             </div>
 
@@ -218,9 +309,10 @@ export default function HeaderBar() {
                             </button>
                             <button
                                 onClick={handleSaveProfile}
-                                className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+                                disabled={isLoading}
+                                className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Save Changes
+                                {isLoading ? "Saving..." : "Save Changes"}
                             </button>
                         </div>
                     </div>

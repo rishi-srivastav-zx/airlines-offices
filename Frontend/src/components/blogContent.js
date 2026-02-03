@@ -2,32 +2,54 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Check, User, Calendar, PhoneOutgoing } from "lucide-react";
-import { BLOG_CONTENT, BLOG_POSTS } from "@/components/constdata";
+import { BLOG_POSTS } from "@/components/constdata";
 import BlogAuthor from "./BlogAuthor";
+import axios from "axios";
+import { toast, Toaster } from "react-hot-toast";
 
 const BlogTemplate = () => {
     const router = useRouter();
     const params = useParams();
     const [pageData, setPageData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    const api = axios.create({
+        baseURL: "http://localhost:3001/api",
+        withCredentials: true,
+        headers: {
+            "Content-Type": "application/json",
+        },
+    });
+
+    const fetchBlogContent = async (slug) => {
+        try {
+            setLoading(true);
+            const response = await api.get(`/blogs/posts/${slug}`);
+            if (response.data.success) {
+                setPageData(response.data.data.post);
+                setError("");
+            } else {
+                setError("Failed to load blog content");
+                toast.error("Failed to load blog content");
+            }
+        } catch (err) {
+            console.error("Error fetching blog content:", err);
+            setError("Failed to load blog content");
+            toast.error("Failed to load blog content");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        if (!params) return;
+        if (!params || !params.id) return;
 
-        const blogId = params.id;
-        if (blogId && BLOG_CONTENT[blogId]) {
-            setPageData(BLOG_CONTENT[blogId]);
-            setLoading(false);
-        } else {
-            const firstBlogId = Object.keys(BLOG_CONTENT)[0];
-            if (firstBlogId) {
-                setPageData(BLOG_CONTENT[firstBlogId]);
-                setLoading(false);
-            }
-        }
+        const blogSlug = params.id;
+        fetchBlogContent(blogSlug);
     }, [params]);
 
-    if (loading || !pageData) {
+    if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gray-50 px-3 sm:px-4">
                 <div className="text-center">
@@ -40,8 +62,32 @@ const BlogTemplate = () => {
         );
     }
 
-    return (
-        <div className="min-h-screen bg-white">
+    if (error || !pageData) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-50 px-3 sm:px-4">
+                <div className="text-center">
+                    <div className="text-red-500 mb-4">
+                        <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Blog</h3>
+                    <p className="text-gray-600 text-sm">{error}</p>
+                    <button 
+                        onClick={() => router.push('/')} 
+                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        Back to Home
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+  return (
+    <>
+      <Toaster position="top-center" reverseOrder={false} />
+      <div className="min-h-screen bg-white">
             {/* Header with Title and Meta */}
             <div className="bg-white border-b border-gray-200">
                 <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
@@ -54,13 +100,13 @@ const BlogTemplate = () => {
                         <div className="flex items-center gap-1 sm:gap-1.5">
                             <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                             <span className="whitespace-nowrap">
-                                Travel Expert
+                                {pageData.author?.name || "Admin"}
                             </span>
                         </div>
                         <div className="flex items-center gap-1 sm:gap-1.5">
                             <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                             <span className="whitespace-nowrap">
-                                Jan 05 2026
+                                {new Date(pageData.createdAt).toLocaleDateString()}
                             </span>
                         </div>
                     </div>
@@ -71,233 +117,87 @@ const BlogTemplate = () => {
                 <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
                     {/* Main Content */}
                     <div className="lg:col-span-2">
-                        {/* Image Grid - Top Section */}
+                        {/* Featured Image */}
                         <div className="bg-white rounded-lg overflow-hidden mb-4 sm:mb-6 md:mb-8">
                             <div className="grid grid-cols-1">
-                                {/* Large Image */}
                                 <div className="w-full">
-                                    <img
-                                        src={pageData.clubClass.image}
-                                        alt={pageData.title}
-                                        className="w-full h-40 sm:h-48 md:h-64 lg:h-80 xl:h-96 object-cover"
-                                    />
+                                    {pageData.featuredImage ? (
+                                        <img
+                                            src={pageData.featuredImage}
+                                            alt={pageData.title}
+                                            className="w-full h-40 sm:h-48 md:h-64 lg:h-80 xl:h-96 object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-40 sm:h-48 md:h-64 lg:h-80 xl:h-96 bg-gray-200 flex items-center justify-center">
+                                            <span className="text-gray-500">No image available</span>
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-
-                            {/* Title overlay on grid */}
-                            <div className="bg-white py-2.5 sm:py-3 md:py-4 px-3 sm:px-4 text-center">
-                                <h2 className="text-sm sm:text-base md:text-xl lg:text-2xl font-bold text-gray-900 uppercase tracking-wide leading-tight break-words">
-                                    {pageData.title}
-                                </h2>
                             </div>
                         </div>
 
-                        {/* Content Sections */}
+                        {/* Blog Content */}
                         <div className="space-y-4 sm:space-y-6 md:space-y-8">
                             {/* Introduction */}
                             <section className="break-words">
-                                <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed mb-2 sm:mb-3">
-                                    {pageData.intro.text}
-                                </p>
                                 <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed">
-                                    {pageData.intro.additionalText}
+                                    {pageData.introduction || "No introduction available."}
                                 </p>
                             </section>
 
-                            {/* Cabin Classes */}
-                            <section id="cabin-classes" className="break-words">
-                                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
-                                    {pageData.cabinClasses.title}
-                                </h2>
-                                <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed mb-3 sm:mb-4 md:mb-6">
-                                    {pageData.cabinClasses.intro}
-                                </p>
-
-                                <div className="space-y-3 sm:space-y-4">
-                                    {pageData.cabinClasses.classes.map(
-                                        (classItem, idx) => (
-                                            <div
-                                                key={idx}
-                                                className="border-l-2 border-gray-300 pl-2.5 sm:pl-3 md:pl-4 break-words"
-                                            >
-                                                <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1">
-                                                    {classItem.title}
-                                                </h3>
-                                                {classItem.subtitle && (
-                                                    <p className="text-gray-600 text-[10px] sm:text-xs md:text-sm mb-1 sm:mb-1.5">
-                                                        {classItem.subtitle}
-                                                    </p>
-                                                )}
-                                                {classItem.description && (
-                                                    <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed">
-                                                        {classItem.description}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        )
-                                    )}
-                                </div>
-                            </section>
-
-                            {/* Club Class */}
-                            <section id="club-class" className="break-words">
-                                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
-                                    {pageData.clubClass.title}
-                                </h2>
-                                <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed mb-2 sm:mb-3">
-                                    {pageData.clubClass.description}
-                                </p>
-                                <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1.5 sm:mb-2">
-                                    {pageData.clubClass.subtitle}
-                                </h3>
-                                <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed mb-3 sm:mb-4 md:mb-5">
-                                    {pageData.clubClass.additionalInfo}
-                                </p>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 md:gap-4 bg-gray-50 p-3 sm:p-4 md:p-5 rounded-lg">
-                                    {pageData.clubClass.benefits.map(
-                                        (benefit, idx) => (
-                                            <div
-                                                key={idx}
-                                                className="flex items-start gap-1.5 sm:gap-2 break-words"
-                                            >
-                                                <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                                                <span className="text-gray-700 text-xs sm:text-sm leading-snug">
-                                                    {benefit}
-                                                </span>
-                                            </div>
-                                        )
-                                    )}
-                                </div>
-                            </section>
-
-                            {/* Upgrade Methods */}
-                            <section
-                                id="upgrade-methods"
-                                className="break-words"
-                            >
-                                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
-                                    {pageData.upgradeMethods.title}
-                                </h2>
-                                <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed mb-3 sm:mb-4">
-                                    {pageData.upgradeMethods.intro}
-                                </p>
-
-                                {/* Online Method */}
-                                <div id="online" className="mb-4 sm:mb-5">
-                                    <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1.5 sm:mb-2">
-                                        {pageData.upgradeMethods.online.title}
-                                    </h3>
-                                    <div className="space-y-1.5 sm:space-y-2">
-                                        {pageData.upgradeMethods.online.steps.map(
-                                            (step, idx) => (
-                                                <p
-                                                    key={idx}
-                                                    className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed"
-                                                >
-                                                    {idx + 1}. {step}
-                                                </p>
-                                            )
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Auction Method */}
-                                <div id="auction">
-                                    <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1.5 sm:mb-2">
-                                        {pageData.upgradeMethods.auction.title}
-                                    </h3>
-                                    <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed mb-2">
-                                        {
-                                            pageData.upgradeMethods.auction
-                                                .description
-                                        }
-                                    </p>
-                                    <div className="space-y-1.5 sm:space-y-2 mb-2.5 sm:mb-3">
-                                        {pageData.upgradeMethods.auction.steps.map(
-                                            (step, idx) => (
-                                                <p
-                                                    key={idx}
-                                                    className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed"
-                                                >
-                                                    {idx + 1}. {step}
-                                                </p>
-                                            )
-                                        )}
-                                    </div>
-                                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-2.5 sm:p-3 md:p-4 break-words">
-                                        <p className="text-gray-700 text-[10px] sm:text-xs md:text-sm leading-relaxed">
-                                            <strong>Note:</strong>{" "}
-                                            {
-                                                pageData.upgradeMethods.auction
-                                                    .note
-                                            }
-                                        </p>
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* Is Upgrading Worth It */}
-                            <section id="worth-it" className="break-words">
-                                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
-                                    {pageData.worthIt.title}
-                                </h2>
-                                <div className="space-y-1.5 sm:space-y-2">
-                                    {pageData.worthIt.points.map(
-                                        (point, idx) => (
-                                            <p
-                                                key={idx}
-                                                className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed"
-                                            >
-                                                • {point}
-                                            </p>
-                                        )
-                                    )}
-                                </div>
-                            </section>
-
-                            {/* Upgrade Cost */}
-                            <section id="cost" className="break-words">
-                                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
-                                    {pageData.upgradeCost.title}
-                                </h2>
-                                <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed">
-                                    {pageData.upgradeCost.content}
-                                </p>
-                            </section>
-
-                            {/* Conclusion */}
+                            {/* Content */}
                             <section className="break-words">
-                                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
-                                    {pageData.conclusion.title}
-                                </h2>
-                                <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed">
-                                    {pageData.conclusion.content}
-                                </p>
+                                <div className="prose prose-sm sm:prose-base md:prose-lg max-w-none">
+                                    {pageData.content ? (
+                                        <div dangerouslySetInnerHTML={{ __html: pageData.content }} />
+                                    ) : (
+                                        <p className="text-gray-500">No content available.</p>
+                                    )}
+                                </div>
                             </section>
+
+                            {/* Tags */}
+                            {pageData.tags && pageData.tags.length > 0 && (
+                                <section className="break-words">
+                                    <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-3">
+                                        Tags
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {pageData.tags.map((tag, idx) => (
+                                            <span
+                                                key={idx}
+                                                className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                                            >
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
 
                             {/* FAQ */}
-                            <section id="faq" className="break-words">
-                                <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
-                                    Frequently Asked Questions
-                                </h2>
-                                <div className="space-y-3 sm:space-y-4">
-                                    {pageData.faq.map((item, idx) => (
-                                        <div key={idx}>
-                                            <h3 className="text-xs sm:text-sm md:text-base font-bold text-gray-900 mb-1">
-                                                {item.question}
-                                            </h3>
-                                            <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed">
-                                                {item.answer}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
+                            {pageData.faq && pageData.faq.length > 0 && (
+                                <section id="faq" className="break-words">
+                                    <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4">
+                                        Frequently Asked Questions
+                                    </h2>
+                                    <div className="space-y-3 sm:space-y-4">
+                                        {pageData.faq.map((item, idx) => (
+                                            <div key={idx} className="border-b pb-3 sm:pb-4">
+                                                <h3 className="text-xs sm:text-sm md:text-base font-bold text-gray-900 mb-1">
+                                                    {item.question}
+                                                </h3>
+                                                <p className="text-gray-700 text-xs sm:text-sm md:text-base leading-relaxed">
+                                                    {item.answer}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
 
-                                <div className="mt-4 sm:mt-6 md:mt-8">
-                                    <BlogAuthor />
-                                </div>
-                            </section>
+                            {/* Author Info */}
+
                         </div>
                     </div>
 
@@ -372,9 +272,10 @@ const BlogTemplate = () => {
                         </div>
                     </aside>
                 </div>
-            </div>
         </div>
-    );
+      </div>
+    </>
+  );
 };
 
 export default BlogTemplate;

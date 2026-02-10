@@ -27,7 +27,7 @@ export const AIRLINES = [
     category: "Premium",
   },
   {
-    id: "saudia",
+    id: "saudi",
     name: "Saudia",
     logo: "https://images.kiwi.com/airlines/64/SV.png",
     category: "Major",

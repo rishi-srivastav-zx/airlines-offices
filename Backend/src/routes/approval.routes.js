@@ -51,27 +51,28 @@ router.get("/pending", async (req, res) => {
 router.post(
   "/submit",
   upload.fields([
-    { name: "logo", maxCount: 1 },
-    { name: "image", maxCount: 1 },
+    { name: "photo", maxCount: 1 },
+    { name: "ogImage", maxCount: 1 },
   ]),
   async (req, res) => {
     try {
-      if (!req.body.officeData) {
-        return res
-          .status(400)
-          .json({ success: false, message: "officeData field is missing." });
+      let officeData;
+      if (req.body.officeData) {
+        officeData = JSON.parse(req.body.officeData);
+      } else {
+        officeData = { ...req.body };
       }
 
-      const officeData = JSON.parse(req.body.officeData);
-      const logoFile = req.files?.logo?.[0];
-      const imageFile = req.files?.image?.[0];
+      const photoFile = req.files?.photo?.[0];
+      const ogImageFile = req.files?.ogImage?.[0];
 
-      if (logoFile) {
-        officeData.logo = ("/" + logoFile.path).replace(/\\/g, "/");
+      if (photoFile) {
+        officeData.photo = ("/" + photoFile.path).replace(/\\/g, "/");
       }
 
-      if (imageFile) {
-        officeData.photo = ("/" + imageFile.path).replace(/\\/g, "/");
+      if (ogImageFile) {
+        if (!officeData.seo) officeData.seo = {};
+        officeData.seo.ogImage = ("/" + ogImageFile.path).replace(/\\/g, "/");
       }
 
       // Add submission metadata
@@ -130,21 +131,14 @@ router.put("/:id/approve", async (req, res) => {
 
     // Create new office in main collection
     const officeData = pendingOffice.toObject();
-    delete officeData._id;
-    delete officeData.status;
-    delete officeData.submittedBy;
-    delete officeData.submittedAt;
-    delete officeData.reviewedBy;
-    delete officeData.reviewedAt;
-    delete officeData.rejectionReason;
-    delete officeData.__v;
-    delete officeData.createdAt;
-    delete officeData.updatedAt;
-
-    // Convert about.services from array to string for main office schema
-    if (officeData.about && Array.isArray(officeData.about.services)) {
-      officeData.about.services = officeData.about.services.join(', ');
-    }
+    
+    // Clean up approval fields
+    const fieldsToRemove = [
+      "_id", "status", "submittedBy", "submittedAt", 
+      "reviewedBy", "reviewedAt", "rejectionReason", 
+      "__v", "createdAt", "updatedAt"
+    ];
+    fieldsToRemove.forEach(field => delete officeData[field]);
 
     const newOffice = new Office(officeData);
     const savedOffice = await newOffice.save();
@@ -243,10 +237,11 @@ router.put("/:id/update", upload.any(), async (req, res) => {
         if (req.files && req.files.length > 0) {
             req.files.forEach(file => {
                 const filePath = ("/" + file.path).replace(/\\/g, "/");
-                if (file.fieldname === 'logo') {
-                    updateData.logo = filePath;
-                } else if (file.fieldname === 'image') {
+                if (file.fieldname === 'photo') {
                     updateData.photo = filePath;
+                } else if (file.fieldname === 'ogImage') {
+                    if (!updateData.seo) updateData.seo = {};
+                    updateData.seo.ogImage = filePath;
                 }
             });
         }

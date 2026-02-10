@@ -16,60 +16,7 @@ import toast, { Toaster } from "react-hot-toast";
 import WorldMap from "@/components/worldMap";
 import SafeImage from "@/components/safeImage";
 import OfficeCard from "@/components/officeCard";
-
-const BLOG_POSTS = [
-    {
-        id: 1,
-        title: "How to Contact Airlines During Travel Disruptions",
-        excerpt:
-            "Essential tips for reaching airline support when your plans change unexpectedly.",
-        date: "Jan 15, 2025",
-        image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc0f?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-        id: 2,
-        title: "Understanding Global Airline Office Hours",
-        excerpt:
-            "Navigate time zones and office schedules to get help when you need it most.",
-        date: "Jan 10, 2025",
-        image: "https://images.unsplash.com/photo-1569629743817-70d8db6c323b?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-        id: 3,
-        title: "Best Practices for Booking Changes",
-        excerpt:
-            "Learn the most efficient ways to modify your flight reservations.",
-        date: "Jan 5, 2025",
-        image: "https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?auto=format&fit=crop&q=80&w=800",
-    },
-    {
-        id: 4,
-        title: "Finding Local Airline Representatives",
-        excerpt:
-            "Tips for locating and contacting airline offices in your destination city.",
-        date: "Dec 28, 2024",
-        image: "https://images.unsplash.com/photo-1540962351504-03099e0a754b?auto=format&fit=crop&q=80&w=800",
-    },
-];
-
-// Skeleton Components
-const AirlineCardSkeleton = () => (
-    <div className="group flex flex-col items-center p-6 rounded-2xl border border-gray-100 animate-pulse">
-        <div className="h-16 w-16 bg-gray-200 rounded-full mb-4"></div>
-        <div className="h-4 w-20 bg-gray-200 rounded"></div>
-    </div>
-);
-
-const OfficeCardSkeleton = () => (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-lg animate-pulse">
-        <div className="h-48 bg-gray-200"></div>
-        <div className="p-6">
-            <div className="h-6 bg-gray-200 rounded mb-3 w-3/4"></div>
-            <div className="h-4 bg-gray-200 rounded mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-        </div>
-    </div>
-);
+import { blogService } from "@/services/api";
 
 export default function Home() {
     const [searchQuery, setSearchQuery] = useState("");
@@ -77,21 +24,47 @@ export default function Home() {
     const [offices, setOffices] = useState([]);
     const [airlines, setAirlines] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [blogPosts, setBlogPosts] = useState([]);
+    const [blogLoading, setBlogLoading] = useState(true);
     const CITIES_PER_VIEW = 5;
 
     const [visibleCities, setVisibleCities] = useState([]);
     const [startIndex, setStartIndex] = useState(0);
 
+    const fetchBlogsFromBackend = async () => {
+        try {
+            setBlogLoading(true);
+            const response = await blogService.getAllPosts({ limit: 4 });
+            
+            if (response.success && response.data) {
+                // Map backend data to match home component expectations
+                const mappedPosts = response.data.map((blog, index) => ({
+                    id: blog._id || index + 1,
+                    title: blog.title,
+                    excerpt: blog.introduction || "Read more about this blog post...",
+                    date: new Date(blog.createdAt).toLocaleDateString(),
+                    image: blog.featuredImage || "/placeholder-blog.jpg"
+                }));
+                setBlogPosts(mappedPosts);
+            } else {
+                setBlogPosts([]);
+            }
+        } catch (error) {
+            console.error("Error fetching blogs:", error);
+            setBlogPosts([]);
+        } finally {
+            setBlogLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (offices.length === 0) return;
         
-       
         const allCities = [...new Set(offices.map(office => office.officeOverview?.city))].filter(Boolean);
         setVisibleCities(allCities.slice(0, CITIES_PER_VIEW));
-
         
         if (allCities.length <= 10) return;
-
+        
         const interval = setInterval(() => {
             setStartIndex((prev) => {
                 const nextIndex = prev + CITIES_PER_VIEW;
@@ -115,25 +88,26 @@ export default function Home() {
             try {
                 const officesRes = await axios.get(
                     "http://localhost:3001/api/offices",
-                   
+                    
                 );
                 
                 setOffices(officesRes.data.data);
 
                 const uniqueAirlines = [
                     ...new Map(
-                        officesRes.data.data.map((item) => [
-                            item.about?.airlineId,
-                            {
-                                id: item.about?.airlineId,
-                                name: item.officeOverview?.airlineName,
-                                logo:
-                                    item.logo ||
-                                    `https://via.placeholder.com/40x40/00ADEF/FFFFFF?text=${item.officeOverview?.airlineName?.charAt(0) || "✈"}`,
-                            },
-                        ]),
+                        officesRes.data.data
+                            .filter((item) => item.airline) // Only include offices with populated airline
+                            .map((item) => [
+                                item.airline._id, // Use airline's _id as the unique key
+                                {
+                                    id: item.airline._id,
+                                    name: item.airline.airlineName,
+                                    logo: item.airline.logo || 
+                                        `https://via.placeholder.com/40x40/00ADEF/FFFFFF?text=${item.airline.airlineName?.charAt(0) || "✈"}`,
+                                },
+                            ]),
                     ).values(),
-                ].filter((airline) => airline.id);
+                ];
 
                 setAirlines(uniqueAirlines);
             } catch (err) {
@@ -144,6 +118,7 @@ export default function Home() {
         };
 
         fetchData();
+        fetchBlogsFromBackend();
     }, []);
 
     const handleSearch = (e) => {
@@ -154,6 +129,38 @@ export default function Home() {
             );
         }
     };
+
+    // Skeleton Components
+    const AirlineCardSkeleton = () => (
+        <div className="group flex flex-col items-center p-6 rounded-2xl border border-gray-100 animate-pulse">
+            <div className="h-16 w-16 bg-gray-200 rounded-full mb-4"></div>
+            <div className="h-4 w-20 bg-gray-200 rounded"></div>
+        </div>
+    );
+
+    const OfficeCardSkeleton = () => (
+        <div className="bg-white rounded-2xl overflow-hidden shadow-lg animate-pulse">
+            <div className="h-48 bg-gray-200"></div>
+            <div className="p-6">
+                <div className="h-6 bg-gray-200 rounded mb-3 w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            </div>
+        </div>
+    );
+
+    const BlogCardSkeleton = () => (
+        <div className="bg-white rounded-2xl overflow-hidden shadow-lg flex flex-col md:flex-row group cursor-pointer hover:shadow-2xl transition-all">
+            <div className="md:w-1/3 overflow-hidden bg-gray-100">
+                <div className="w-full h-48 bg-gray-200 animate-pulse"></div>
+            </div>
+            <div className="p-8 md:w-2/3 flex flex-col justify-center">
+                <div className="h-6 bg-gray-200 rounded mb-4 w-3/4"></div>
+                <div className="h-8 bg-gray-200 rounded w-full mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded w-full"></div>
+            </div>
+        </div>
+    );
 
     return (
         <div className="flex flex-col">
@@ -180,7 +187,7 @@ export default function Home() {
                         Find Airline Offices
                         <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
-                            Anywhere in the World
+                            Anywhere in World
                         </span>
                     </h1>
 
@@ -194,7 +201,6 @@ export default function Home() {
                             `${airlines.length}+ major airlines across ${offices.length}+ cities.`
                         )}
                         
-
                     </div>
 
                     <form
@@ -258,7 +264,7 @@ export default function Home() {
                                       onClick={() =>
                                           router.push(
                                               `/directoryAirlines?airline=${airline.id}`,
-                                          )
+                                              )
                                       }
                                       className="group cursor-pointer flex flex-col items-center p-6 rounded-2xl border border-gray-100 hover:border-[#00ADEF] hover:shadow-xl transition-all"
                                   >
@@ -353,7 +359,7 @@ export default function Home() {
                         backgroundImage:
                             "url('https://images.unsplash.com/photo-1529070538774-1843cb3265df?auto=format&fit=crop&w=2000&q=80')",
                     }}
-                />
+                ></div>
                 <div className="absolute inset-0 bg-black/70" />
 
                 <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -412,36 +418,51 @@ export default function Home() {
                 </div>
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-12">
-                    {BLOG_POSTS.slice(0, 4).map((post) => (
-                        <div
-                            key={post.id}
-                            className="bg-white rounded-2xl overflow-hidden shadow-lg flex flex-col md:flex-row group cursor-pointer hover:shadow-2xl transition-all"
-                        >
-                            <div className="md:w-1/3 overflow-hidden bg-gray-100">
-                                <SafeImage
-                                    src={post.image}
-                                    alt={post.title}
-                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                    fallbackSrc="https://images.unsplash.com/photo-1436491865332-7a61a109cc0f?auto=format&fit=crop&q=80&w=800"
-                                />
+                    {blogLoading ? (
+                        // Blog Loading Skeletons
+                        Array.from({ length: 4 }).map((_, index) => (
+                            <BlogCardSkeleton key={index} />
+                        ))
+                    ) : blogPosts.length > 0 ? (
+                        blogPosts.map((post) => (
+                            <div
+                                key={post.id}
+                                onClick={() => router.push(`/blogs/${post.title.toLowerCase().replace(/\s+/g, '-')}`)}
+                                className="bg-white rounded-2xl overflow-hidden shadow-lg flex flex-col md:flex-row group cursor-pointer hover:shadow-2xl transition-all"
+                            >
+                                <div className="md:w-1/3 overflow-hidden bg-gray-100">
+                                    <SafeImage
+                                        src={post.image}
+                                        alt={post.title}
+                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                        fallbackSrc="https://images.unsplash.com/photo-1436491865332-7a61a109cc0f?auto=format&fit=crop&q=80&w=800"
+                                    />
+                                </div>
+                                <div className="p-8 md:w-2/3 flex flex-col justify-center">
+                                    <p className="text-[#00ADEF] text-xs font-bold uppercase tracking-wider mb-2">
+                                        {post.date}
+                                    </p>
+                                    <h3 className="text-xl font-bold mb-4 text-[#333333] group-hover:text-[#00ADEF] transition-colors">
+                                        {post.title}
+                                    </h3>
+                                    <p className="text-gray-500 text-sm mb-4 line-clamp-2">
+                                        {post.excerpt}
+                                    </p>
+                                    <span 
+                                        className="text-sm font-bold text-[#333333] flex items-center cursor-pointer"
+                                        onClick={() => router.push(`/blogs/${post.title.toLowerCase().replace(/\s+/g, '-')}`)}
+                                    >
+                                        Read More{" "}
+                                        <ArrowRight className="ml-1 h-4 w-4" />
+                                    </span>
+                                </div>
                             </div>
-                            <div className="p-8 md:w-2/3 flex flex-col justify-center">
-                                <p className="text-[#00ADEF] text-xs font-bold uppercase tracking-wider mb-2">
-                                    {post.date}
-                                </p>
-                                <h3 className="text-xl font-bold mb-4 text-[#333333] group-hover:text-[#00ADEF] transition-colors">
-                                    {post.title}
-                                </h3>
-                                <p className="text-gray-500 text-sm mb-4 line-clamp-2">
-                                    {post.excerpt}
-                                </p>
-                                <span className="text-sm font-bold text-[#333333] flex items-center">
-                                    Read More{" "}
-                                    <ArrowRight className="ml-1 h-4 w-4" />
-                                </span>
-                            </div>
+                        ))
+                    ) : (
+                        <div className="col-span-full text-center py-8">
+                            <p className="text-gray-500">No blog posts available</p>
                         </div>
-                    ))}
+                    )}
                 </div>
             </section>
 

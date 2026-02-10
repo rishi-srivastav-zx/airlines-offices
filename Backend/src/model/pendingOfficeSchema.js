@@ -2,43 +2,56 @@ import mongoose from "mongoose";
 
 const PendingOfficeSchema = new mongoose.Schema(
   {
+    airline: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Airline",
+      required: true,
+      index: true,
+    },
+    continent: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Continent",
+      required: true,
+    },
+    country: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Country",
+      required: true,
+    },
+    city: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "City",
+      required: true,
+    },
+
     slug: {
       type: String,
       required: true,
       trim: true,
     },
 
-    firstName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    logo: {
-      type: String,
-    },
-
     photo: {
       type: String,
     },
 
-    officeOverview: {
-      airlineName: {
-        type: String,
-        required: true,
-        trim: true,
-      },
+    website: {
+      type: String,
+    },
 
-      city: {
+    officeOverview: {
+      continent: {
         type: String,
         required: true,
-        trim: true,
       },
 
       country: {
         type: String,
         required: true,
-        trim: true,
+      },
+
+      city: {
+        type: String,
+        required: true,
       },
 
       address: {
@@ -51,101 +64,18 @@ const PendingOfficeSchema = new mongoose.Schema(
       },
 
       hours: {
-        start: {
-          type: String,
-          required: true,
-        },
-        end: {
-          type: String,
-          required: true,
-        },
-      },
-
-      website: {
-        type: String,
-      },
-
-      tollFreeNumber: {
-        type: String,
+        start: { type: String },
+        end: { type: String },
       },
     },
 
-    about: {
-      airlineId: {
-        type: String,
-      },
-
-      location: {
-        type: String,
-        trim: true,
-      },
-
-      overview: {
-        type: String,
-        trim: true,
-      },
-
-      network: {
-        type: String,
-        trim: true,
-      },
-
-      fleet: {
-        type: String,
-        trim: true,
-      },
-
-      cabins: {
-        type: String,
-        trim: true,
-      },
-
-      alliance: {
-        type: String,
-        trim: true,
-      },
-
-      services: {
-        type: String,
-        trim: true,
-      },
-
-      baggage: {
-        type: String,
-        trim: true,
-      },
-
-      loyalty: {
-        type: String,
-        trim: true,
-      },
-
-      airportServices: {
-        type: String,
-        trim: true,
-      },
-
-      targetCustomers: {
-        type: String,
-        trim: true,
-      },
-
-      support: {
-        type: String,
-        trim: true,
-      },
-
+    aboutOffice: {
       description: {
         type: String,
       },
 
-      history: {
-        type: String,
-      },
-
       services: {
-        type: [String],
-        default: [],
+        type: String,
       },
 
       additionalInfo: {
@@ -156,68 +86,53 @@ const PendingOfficeSchema = new mongoose.Schema(
     airportLocation: {
       airportName: {
         type: String,
+        required: true,
       },
-
-      terminalInfo: {
-        type: String,
-      },
-
-      iataCode: {
-        type: String,
-      },
-
-      counterContact: {
-        type: String,
-      },
-
-      airportAddress: {
-        type: String,
-      },
+      terminalInfo: String,
+      iataCode: String,
+      counterContact: String,
+      airportAddress: String,
     },
 
     airportMapLocation: {
-      latitude: {
-        type: Number,
-      },
-
-      longitude: {
-        type: Number,
-      },
-
-      mapQuery: {
-        type: String,
-      },
-
-      googleMapsUrl: {
-        type: String,
-      },
-
-      embedUrl: {
-        type: String,
-      },
+      latitude: Number,
+      longitude: Number,
+      mapQuery: String,
+      googleMapsUrl: String,
+      embedUrl: String,
     },
 
-    availableServices: {
-      type: [String],
-      default: [],
-    },
+    seo: {
+      metaTitle: {
+        type: String,
+        required: true,
+        maxlength: 60,
+      },
 
-    fleetOperations: {
-      aircraftTypes: {
+      metaDescription: {
+        type: String,
+        required: true,
+        maxlength: 160,
+      },
+
+      keywords: {
         type: [String],
+        lowercase: true,
         default: [],
       },
 
-      totalFleet: {
-        type: Number,
-      },
-
-      additionalDetails: {
-        type: String,
-      },
+      canonicalUrl: String,
+      ogTitle: String,
+      ogDescription: String,
+      ogImage: String,
     },
 
     metadata: {
+      verified: {
+        type: Boolean,
+        default: false,
+      },
+
       rating: {
         value: {
           type: Number,
@@ -225,42 +140,11 @@ const PendingOfficeSchema = new mongoose.Schema(
           max: 5,
           default: 0,
         },
-
-        bestRating: {
+        reviewCount: {
           type: Number,
-          default: 5,
-        },
-
-        worstRating: {
-          type: Number,
-          default: 1,
+          default: 0,
         },
       },
-
-      reviewCount: {
-        type: Number,
-        default: 0,
-      },
-
-      verified: {
-        type: Boolean,
-        default: false,
-      },
-
-      reviewSummary: {
-        type: String,
-        trim: true,
-        maxlength: 160,
-      },
-
-      keywords: [
-        {
-          type: String,
-          lowercase: true,
-          trim: true,
-        },
-      ],
-
       lastUpdated: {
         type: Date,
         default: Date.now,

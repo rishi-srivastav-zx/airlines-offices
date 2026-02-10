@@ -7,6 +7,10 @@ import approvalRoutes from "./routes/approval.routes.js";
 import officeRoutes from "./routes/officeroutes.js";
 import uploadRoutes from "./routes/uploads.routes.js";
 import blogRoutes from "./routes/blogs.routes.js";
+import { getRelatedBlogs } from "./controllers/getrelatedblog.js";
+
+import airlineRoutes from "./routes/airlineroutes.js";
+import geoRoutes from "./routes/georoutes.js";
 
 const app = express();
 
@@ -36,7 +40,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/approval", approvalRoutes);
 app.use("/api/offices", officeRoutes);
+app.use("/api/airlines", airlineRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/blogs", blogRoutes);
+app.use("/api/getrelatedblog", getRelatedBlogs);
+app.use("/api/geo", geoRoutes);
 
 export default app;

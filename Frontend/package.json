@@ -8,7 +8,9 @@
     "start": "next start"
   },
   "dependencies": {
+    "@tinymce/tinymce-react": "^6.3.0",
     "axios": "^1.13.2",
+    "dompurify": "^3.3.1",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.562.0",
     "next": "16.1.1",

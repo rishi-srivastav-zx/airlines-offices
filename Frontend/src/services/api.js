@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// Explicitly set the backend URL to avoid any confusion
+const API_BASE_URL = 'http://localhost:3001/api';
+
+console.log('API Service initialized with base URL:', API_BASE_URL);
 
 // Create axios instance with default config
 const api = axios.create({
@@ -13,6 +16,7 @@ const api = axios.create({
 
 // Add auth token to requests
 api.interceptors.request.use((config) => {
+  console.log('API Request:', config.baseURL + config.url);
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -38,12 +42,80 @@ api.interceptors.response.use(
   }
 );
 
+export const blogService = {
+  // Get all published blog posts
+  getAllPosts: async (params = {}) => {
+    try {
+      const url = `/blogs/posts`;
+      console.log('Fetching blog posts from:', `${API_BASE_URL}${url}`);
+      const response = await api.get(url, { params });
+      console.log('Blog posts response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching blog posts:', error);
+      throw error;
+    }
+  },
+
+  // Get single blog post by slug
+  getPostBySlug: async (slug) => {
+    try {
+      const url = `/blogs/posts/${slug}`;
+      console.log('Fetching blog post from:', `${API_BASE_URL}${url}`);
+      const response = await api.get(url);
+      console.log('Blog post response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching blog post:', error);
+      throw error;
+    }
+  },
+
+  // Like a blog post
+  likePost: async (slug) => {
+    try {
+      const url = `/blogs/posts/${slug}/like`;
+      const response = await api.post(url);
+      return response.data;
+    } catch (error) {
+      console.error('Error liking blog post:', error);
+      throw error;
+    }
+  },
+
+  // Get related blog posts (for future use)
+  getRelatedBlogs: async (currentSlug, category, limit = 3) => {
+    try {
+      const url = `/blogs/posts`;
+      const response = await api.get(url, { 
+        params: { 
+          category,
+          limit: limit + 1 // Get one extra to filter out current post
+        } 
+      });
+      
+      if (response.data?.data) {
+        // Filter out current blog and return related ones
+        const relatedBlogs = response.data.data.filter(blog => blog.slug !== currentSlug);
+        return {
+          success: true,
+          data: relatedBlogs.slice(0, limit)
+        };
+      }
+      return { success: true, data: [] };
+    } catch (error) {
+      console.error('Error fetching related blogs:', error);
+      throw error;
+    }
+  }
+};
+
 export const userService = {
   // Get current user profile
   getCurrentUser: async () => {
     try {
       // Since there's no /me endpoint, we'll get all users and find current user
-      const response = await api.get('/api/users');
+      const response = await api.get('/users');
       const users = response.data;
       const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
       const currentUser = users.find(user => user.email === storedUser.email);
@@ -87,11 +159,11 @@ export const userService = {
         formData.append('avatar', imageFile);
       }
 
-      console.log('Sending FormData to:', `/api/users/${userId}`);
+      console.log('Sending FormData to:', `/users/${userId}`);
       
       // Use axios directly with same config as login page
       const response = await axios.put(
-        `${API_BASE_URL}/api/users/${userId}`, 
+        `${API_BASE_URL}/users/${userId}`, 
         formData, 
         {
           headers: {

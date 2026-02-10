@@ -2,54 +2,72 @@
 import React from "react";
 
 const BlogAuthor = ({ author }) => {
+    
     const {
-        name = "User",
-        image = null,
-        website = null,
-        facebook = null,
-        twitter = null,
-        linkedin = null,
-        instagram = null,
+        name = "Travel Expert",
+        role = "Content Writer", 
+        avatar,
+        website,
+        facebook,
+        twitter,
+        linkedin,
+        instagram,
+        bio = "Passionate about travel and helping people explore the world with confidence and ease."
     } = author || {};
+    
+    
+    const hasSocialLinks = website || facebook || twitter || linkedin || instagram;
 
     return (
-        <div className="bg-gray-100 rounded-lg p-8">
-            <div className="flex items-start gap-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                 {/* Author Image */}
-                <div className="flex-shrink-0">
-                    {image ? (
-                        <img
-                            src={image}
-                            alt={name}
-                            className="w-24 h-24 object-cover"
-                        />
+                <div className="flex-shrink-0 relative">
+                    {avatar ? (
+                        <div className="relative group">
+                            <img
+                                src={avatar}
+                                alt={name}
+                                className="w-24 h-24 md:w-32 md:h-32 rounded-lg object-cover border border-gray-200 dark:border-gray-700"
+                            />
+
+                        </div>
                     ) : (
-                        <div className="w-24 h-24 rounded-sm bg-gray-400 flex items-center justify-center">
-                            <svg
-                                className="w-16 h-16 text-gray-300"
-                                fill="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                            </svg>
+                        <div className="relative group">
+                            <div className="w-24 h-24 md:w-32 md:h-32 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center">
+                                <svg
+                                    className="w-14 h-14 md:w-20 md:h-20 text-gray-400 dark:text-gray-600"
+                                    fill="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                                </svg>
+                            </div>
                         </div>
                     )}
                 </div>
-
                 {/* Author Info */}
-                <div className="flex-1 mx-8">
-                    <h3 className="text-3xl font-semibold text-gray-700 mb-3">
-                        {name}
-                    </h3>
+                <div className="flex-1 text-center md:text-left">
+                    <div className="mb-4">
+                        <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
+                            {name}
+                        </h3>
+                        <p className="text-sm md:text-base font-medium text-blue-600 mb-3">
+                            {role}
+                        </p>
+                        <p className="text-gray-600 text-sm md:text-base leading-relaxed max-w-2xl">
+                            {bio}
+                        </p>
+                    </div>
 
                     {/* Social Links */}
-                    <div className="flex items-center gap-3">
-                        {website && (
+                    <div className="flex items-center justify-center md:justify-start gap-3">
+                        {(website || website) && (
                             <a
-                                href={website}
+                                href={website || website}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-gray-500 hover:text-gray-700 transition-colors"
+                                className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 transition-colors"
                                 aria-label="Website"
                             >
                                 <svg
@@ -68,12 +86,12 @@ const BlogAuthor = ({ author }) => {
                             </a>
                         )}
 
-                        {facebook && (
+                        {(facebook || facebook) && (
                             <a
-                                href={facebook}
+                                href={facebook || facebook}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-gray-500 hover:text-blue-600 transition-colors"
+                                className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-600 hover:text-blue-800 transition-colors"
                                 aria-label="Facebook"
                             >
                                 <svg
@@ -86,12 +104,12 @@ const BlogAuthor = ({ author }) => {
                             </a>
                         )}
 
-                        {twitter && (
+                        {(twitter || twitter) && (
                             <a
-                                href={twitter}
+                                href={twitter || twitter}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-gray-500 hover:text-blue-400 transition-colors"
+                                className="p-2 rounded-lg bg-sky-100 hover:bg-sky-200 text-sky-600 hover:text-sky-800 transition-colors"
                                 aria-label="Twitter"
                             >
                                 <svg
@@ -104,12 +122,12 @@ const BlogAuthor = ({ author }) => {
                             </a>
                         )}
 
-                        {linkedin && (
+                        {(linkedin || linkedin) && (
                             <a
-                                href={linkedin}
+                                href={linkedin || linkedin}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-gray-500 hover:text-blue-700 transition-colors"
+                                className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-700 hover:text-blue-900 transition-colors"
                                 aria-label="LinkedIn"
                             >
                                 <svg
@@ -122,12 +140,12 @@ const BlogAuthor = ({ author }) => {
                             </a>
                         )}
 
-                        {instagram && (
+                        {(instagram || instagram) && (
                             <a
-                                href={instagram}
+                                href={instagram || instagram}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-gray-500 hover:text-pink-600 transition-colors"
+                                className="p-2 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-600 hover:text-pink-800 transition-colors"
                                 aria-label="Instagram"
                             >
                                 <svg
@@ -146,25 +164,4 @@ const BlogAuthor = ({ author }) => {
     );
 };
 
-// Demo with all social links to verify icons show
-export default function App() {
-    const authorData = {
-        name: "User",
-        image: null,
-        website: "https://example.com",
-        facebook: "https://facebook.com/vandanakothiyal",
-        twitter: "https://twitter.com/vandanakothiyal",
-        linkedin: "https://linkedin.com/in/vandanakothiyal",
-        instagram: "https://instagram.com/vandanakothiyal",
-    };
-
-    return (
-        <div className="bg-white mt-8">
-            <div className="max-w-8xl mx-auto">
-                <BlogAuthor author={authorData} />
-            </div>
-        </div>
-    );
-}
-
-
+export default BlogAuthor;

@@ -8,6 +8,8 @@ import fs from "fs";
 const FIELD_MAP = {
     logo: "logos",
     image: "images",
+    photo: "images",
+    ogImage: "images",
     avatar: "users",
 };
 

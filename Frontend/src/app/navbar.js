@@ -27,7 +27,7 @@ export default function Navbar() {
               {AIRLINES.slice(0, 7).map((airline) => (
                 <Link
                   key={airline.id}
-                  href={`/directoryAirlines?airline=${airline.id}`}
+                  href={`/directoryAirlines?airline=${airline?.slug}`}
                   className="text-sm font-semibold text-[#333333] hover:text-[#00ADEF] transition-colors"
                 >
                   {airline.name}
@@ -73,8 +73,8 @@ export default function Navbar() {
           <div className="lg:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-1">
             {AIRLINES.map((airline) => (
               <Link
-                key={airline.id}
-                href={`/directoryAirlines?airline=${airline.id}`}
+                key={airline.slug}
+                href={`/directoryAirlines?airline=${airline.slug}`}
                 className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-[#00ADEF] hover:bg-gray-50"
                 onClick={() => setIsOpen(false)}
               >

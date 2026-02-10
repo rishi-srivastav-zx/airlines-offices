@@ -1,10 +1,9 @@
-import AirTransatUpgradePage from "@/components/blogContent";
+import BlogContent from "@/components/blogContent";
 
-
-export default function() {
-    return(
-        <>
-          <AirTransatUpgradePage/>
-        </>
-    )
+export default function Page() {
+  return (
+    <>
+      <BlogContent />
+    </>
+  );
 }

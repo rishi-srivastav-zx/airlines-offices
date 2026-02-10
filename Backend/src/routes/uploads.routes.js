@@ -2,10 +2,47 @@ import express from "express";
 import { upload } from "../middleware/multer.js";
 import Office from "../model/officeSchema.js"; 
 import { updateOffice } from "../controllers/uploads.controllers.js";
+import path from "path";
 
 
 
 const router = express.Router();
+
+// Simple image upload route for blog images
+router.post(
+  "/image",
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      console.log("=== IMAGE UPLOAD REQUEST RECEIVED ===");
+      console.log("File:", req.file);
+
+      if (!req.file) {
+        return res
+          .status(400)
+          .json({ success: false, message: "No image file provided." });
+      }
+
+      // Create public URL for the uploaded image
+      const imageUrl = ("http://localhost:3001/" + req.file.path).replace(/\\/g, "/");
+      
+      console.log("✅ Image uploaded successfully:", imageUrl);
+
+      res.status(201).json({
+        success: true,
+        message: "Image uploaded successfully",
+        url: imageUrl,
+      });
+    } catch (error) {
+      console.error("❌ IMAGE UPLOAD ERROR:", error.message);
+      res.status(500).json({
+        success: false,
+        message: "Failed to upload image",
+        error: error.message,
+      });
+    }
+  },
+);
 
 router.post(
   "/",

@@ -1,4 +1,5 @@
 
+import { Suspense } from "react";
 import Directory from "@/components/Directory";
 import CallBanner from "@/components/callbanner";
 
@@ -6,7 +7,9 @@ import CallBanner from "@/components/callbanner";
 export default function() {
     return(
         <>
-          <Directory/>
+          <Suspense fallback={<div>Loading...</div>}>
+            <Directory/>
+          </Suspense>
           <div className="pb-10">
          
           <CallBanner/>

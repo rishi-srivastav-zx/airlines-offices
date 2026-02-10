@@ -12,6 +12,7 @@ import {
     ChevronRight,
     ChevronLeft,
 } from "lucide-react";
+import TinyMCEEditor from "./tinymceditor";
 
 // Mock generateSEOData function
 const generateSEOData = async (type, content) => {
@@ -29,13 +30,34 @@ const generateSEOData = async (type, content) => {
     };
 };
 
-    // Simplified image upload - return file URL directly
-    // In production, upload to server and get URL back
-    const uploadImage = async (file) => {
-        // For now, simulate upload and return placeholder URL
-        // Replace with actual upload logic that returns a URL, not base64
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        return `https://picsum.photos/seed/${Date.now()}/400/300.jpg`;
+const uploadImage = async (file) => {
+        try {
+            const formData = new FormData();
+            formData.append("image", file);
+
+            const response = await fetch("http://localhost:3001/api/upload/image", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error("Upload failed");
+            }
+
+            const result = await response.json();
+            
+            if (result.success && result.url) {
+                return result.url;
+            } else {
+                // Fallback to mock URL if upload fails
+                console.warn("Upload failed, using mock URL");
+                return `https://picsum.photos/seed/${Date.now()}/400/300.jpg`;
+            }
+        } catch (error) {
+            console.error("Upload error:", error);
+            // Fallback to mock URL
+            return `https://picsum.photos/seed/${Date.now()}/400/300.jpg`;
+        }
     };
 
 export default function BlogFormModal({ mode, blog, onSave, onClose }) {
@@ -46,22 +68,43 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
     const [keywordInput, setKeywordInput] = useState("");
     const fileInputRef = useRef(null);
 
-    const steps = ["basic", "content", "pricing", "seo"];
+const steps = ["basic", "content", "cabin", "pricing", "seo"];
     const stepTitles = {
         basic: "Basic Information",
         content: "Content Details",
+        cabin: "Cabin Classes & Upgrades",
         pricing: "Pricing",
         seo: "SEO Optimization",
     };
 
-    const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
         title: "",
         slug: "",
         featuredImage: "",
         category: "",
         tags: [],
         introduction: "",
-        author: { name: "", role: "", avatar: "" },
+        content: "",
+        author: { 
+            name: "", 
+            role: "", 
+            avatar: "",
+            bio: "",
+            website: "",
+            facebook: "",
+            twitter: "",
+            linkedin: "",
+            instagram: ""
+        },
+        cabinClasses: {
+            economy: {
+                seatTypes: [],
+            },
+            club: {
+                advantages: [],
+            },
+        },
+        upgradeOptions: [],
         pricing: {
             range: { min: 0, max: 0, currency: "INR" },
         },
@@ -73,15 +116,15 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
             metaDescription: "",
             keywords: [],
         },
-        status: "draft",
-        publishDate: new Date().toISOString().split("T")[0],
+        status: "pending",
+        publishDate: new Date(),
     });
 
     const isEditMode = mode === "edit" || mode === "create";
     const isViewMode = mode === "view";
     const activeTab = steps[currentStep];
 
-    useEffect(() => {
+useEffect(() => {
         if (blog) {
             setFormData({
                 title: blog.title || "",
@@ -90,7 +133,27 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
                 category: blog.category || "",
                 tags: blog.tags || [],
                 introduction: blog.introduction || "",
-                author: blog.author || { name: "", role: "", avatar: "" },
+                content: blog.content || "",
+                author: blog.author || { 
+                    name: "", 
+                    role: "", 
+                    avatar: "",
+                    bio: "",
+                    website: "",
+                    facebook: "",
+                    twitter: "",
+                    linkedin: "",
+                    instagram: ""
+                },
+                cabinClasses: blog.cabinClasses || {
+                    economy: {
+                        seatTypes: [],
+                    },
+                    club: {
+                        advantages: [],
+                    },
+                },
+                upgradeOptions: blog.upgradeOptions || [],
                 pricing: blog.pricing || {
                     range: { min: 0, max: 0, currency: "INR" },
                 },
@@ -102,27 +165,60 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
                     metaDescription: "",
                     keywords: [],
                 },
-                status: blog.status || "draft",
-                publishDate:
-                    blog.publishDate?.split("T")[0] ||
-                    new Date().toISOString().split("T")[0],
+                status: blog.status || "pending",
+                publishDate: blog.publishDate || new Date(),
             });
         }
     }, [blog, mode]);
 
-    useEffect(() => {
+const handleAuthorAvatarUpload = async (file) => {
+        try {
+            // Validate file type
+            if (!file.type.startsWith("image/")) {
+                alert("Please upload a valid image file (JPG, PNG, GIF, WebP)");
+                return;
+            }
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert("Image size should be less than 5MB");
+                return;
+            }
+
+            // Use the same upload method as featured image
+            const avatarUrl = await uploadImage(file);
+            
+            setFormData((prev) => ({
+                ...prev,
+                author: {
+                    ...prev.author,
+                    avatar: avatarUrl, 
+                },
+            }));
+        } catch (error) {
+            alert("Failed to upload avatar. Please try again.");
+        }
+    };
+
+
+useEffect(() => {
         if (isEditMode && formData.title && !blog) {
             const slug = formData.title
                 .toLowerCase()
-                .replace(/[^a-z0-9]+/g, "-")
-                .replace(/^-|-$/g, "");
+                .replace(/[^a-z0-9\s]+/g, " ") // Replace special chars with space first
+                .trim()
+                .replace(/\s+/g, "-") // Replace spaces with hyphens
+                .replace(/^-|-$/g, "")
+                .replace(/[()]/g, ""); // Remove parentheses
             setFormData((prev) => ({ ...prev, slug }));
         }
     }, [formData.title, isEditMode, blog]);
 
-    const handleImageUpload = async (e) => {
+const handleImageUpload = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
+
+        console.log("Image upload started:", file.name, file.type, file.size);
 
         // Validate file type
         if (!file.type.startsWith("image/")) {
@@ -139,11 +235,13 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
         setIsUploadingImage(true);
         try {
             const imageUrl = await uploadImage(file);
+            console.log("Upload completed, URL:", imageUrl);
             setFormData((prev) => ({
                 ...prev,
                 featuredImage: imageUrl,
             }));
         } catch (error) {
+            console.error("Upload failed:", error);
             alert("Failed to upload image. Please try again.");
         } finally {
             setIsUploadingImage(false);
@@ -208,7 +306,7 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
         setCurrentStep((prev) => Math.max(prev - 1, 0));
     };
 
-    const handleSubmit = (e) => {
+const handleSubmit = (e) => {
         e.preventDefault();
         
         // Validate required fields before submission
@@ -217,7 +315,7 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
             return;
         }
         if (!formData.featuredImage || formData.featuredImage.trim() === "") {
-            alert("Please provide a featured image URL or upload an image before submitting.");
+            alert("Please upload a featured image before submitting.");
             return;
         }
         if (!formData.introduction || formData.introduction.trim() === "") {
@@ -225,17 +323,60 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
             return;
         }
         
-        // Send all form data but ensure no large image base64 data
-        const submitData = { ...formData };
+        // Prepare clean data that matches the backend schema
+        const submitData = {
+            title: formData.title.trim(),
+            slug: formData.slug.trim(),
+            featuredImage: formData.featuredImage.trim(),
+            category: formData.category?.trim() || "",
+            tags: formData.tags.filter(tag => tag?.trim()),
+            introduction: formData.introduction.trim(),
+            content: formData.content?.trim() || "",
+            author: {
+                name: formData.author.name?.trim() || "",
+                role: formData.author.role?.trim() || "",
+                avatar: formData.author.avatar?.trim() || "",
+                bio: formData.author.bio?.trim() || "",
+                website: formData.author.website?.trim() || "",
+                facebook: formData.author.facebook?.trim() || "",
+                twitter: formData.author.twitter?.trim() || "",
+                linkedin: formData.author.linkedin?.trim() || "",
+                instagram: formData.author.instagram?.trim() || ""
+            },
+            cabinClasses: {
+                economy: {
+                    seatTypes: formData.cabinClasses.economy.seatTypes.filter(seat => seat?.type?.trim())
+                },
+                club: {
+                    advantages: formData.cabinClasses.club.advantages.filter(adv => adv?.feature?.trim())
+                }
+            },
+            upgradeOptions: formData.upgradeOptions.filter(option => option?.method?.trim()).map(option => ({
+                method: option.method.trim(),
+                steps: option.steps?.filter(step => step?.instruction?.trim()) || [],
+                notes: option.notes?.filter(note => note?.trim()) || []
+            })),
+            pricing: {
+                range: {
+                    min: formData.pricing.range.min || 0,
+                    max: formData.pricing.range.max || 0,
+                    currency: formData.pricing.range.currency || "INR"
+                }
+            },
+            benefits: formData.benefits.filter(benefit => benefit?.trim()),
+            faq: formData.faq.filter(item => item?.question?.trim() && item?.answer?.trim()),
+            relatedAirlines: formData.relatedAirlines.filter(airline => airline?.name?.trim()),
+            seo: {
+                metaTitle: formData.seo.metaTitle?.trim() || "",
+                metaDescription: formData.seo.metaDescription?.trim() || "",
+                keywords: formData.seo.keywords.filter(keyword => keyword?.trim())
+            },
+            status: mode === "create" ? "pending" : formData.status,
+            publishDate: formData.publishDate || new Date()
+        };
         
-        // Remove any potential image base64 data that's too large
-        if (submitData.featuredImage && submitData.featuredImage.startsWith('data:image/')) {
-            // Replace base64 with URL to avoid payload size issues
-            submitData.featuredImage = `https://picsum.photos/seed/${Date.now()}/400/300.jpg`;
-        }
-        
-        // Remove any potential 'image' field that might cause backend error
-        delete submitData.image;
+        console.log("=== FRONTEND SUBMITTING DATA ===");
+        console.log(JSON.stringify(submitData, null, 2));
         
         onSave(submitData);
     };
@@ -447,7 +588,7 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
                                         disabled={isViewMode}
                                         placeholder="Enter a catchy headline..."
                                         className="w-full px-4 py-3 text-lg rounded-xl border-2 border-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 text-gray-900 transition-all outline-none disabled:bg-gray-50"
-                                         value={formData.title || ''}
+                                        value={formData.title || ""}
                                         onChange={(e) =>
                                             setFormData({
                                                 ...formData,
@@ -466,7 +607,7 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
                                         disabled={isViewMode}
                                         placeholder="blog-post-slug"
                                         className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                         value={formData.slug || ''}
+                                        value={formData.slug || ""}
                                         onChange={(e) =>
                                             setFormData({
                                                 ...formData,
@@ -484,7 +625,7 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
                                         disabled={isViewMode}
                                         placeholder="Travel Tips"
                                         className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                         value={formData.category || ''}
+                                        value={formData.category || ""}
                                         onChange={(e) =>
                                             setFormData({
                                                 ...formData,
@@ -499,11 +640,10 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
                                         Featured Image *
                                     </label>
 
-                                    {/* Image Upload Options */}
+{/* Image Upload Only */}
                                     <div className="space-y-3">
                                         <p className="text-xs text-slate-500 mb-2">
-                                            Enter a valid image URL or upload an
-                                            image file
+                                            Upload an image file for the featured image
                                         </p>
                                         {/* Upload Button */}
                                         {isEditMode && (
@@ -531,52 +671,17 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
                                             </div>
                                         )}
 
-                                        {/* OR Divider */}
-                                        {isEditMode && (
-                                            <div className="relative">
-                                                <div className="absolute inset-0 flex items-center">
-                                                    <div className="w-full border-t border-slate-200"></div>
-                                                </div>
-                                                <div className="relative flex justify-center text-sm">
-                                                    <span className="px-2 bg-white text-slate-500">
-                                                        OR
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* URL Input */}
-                                        <div className="relative">
-                                            <ImageIcon
-                                                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                                                size={18}
-                                            />
-                                            <input
-                                                required
-                                                disabled={isViewMode}
-                                                className="w-full pl-10 pr-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                                placeholder="Or paste image URL..."
-                                                value={formData.featuredImage || ''}
-                                                onChange={(e) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        featuredImage:
-                                                            e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
-
-                                        {/* Image Preview */}
+{/* Image Preview */}
                                         {formData.featuredImage && (
                                             <div className="relative">
                                                 <img
                                                     src={formData.featuredImage}
                                                     alt="Preview"
                                                     className="w-full h-64 object-cover rounded-lg"
+                                                    onLoad={() => console.log("Image loaded successfully")}
                                                     onError={(e) => {
-                                                        e.target.style.display =
-                                                            "none";
+                                                        console.error("Image failed to load:", formData.featuredImage);
+                                                        e.target.style.display = "none";
                                                     }}
                                                 />
                                                 {isEditMode && (
@@ -660,7 +765,7 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
                                         rows={4}
                                         placeholder="Write a brief introduction..."
                                         className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none resize-none disabled:bg-gray-50"
-                                         value={formData.introduction || ''}
+                                        value={formData.introduction || ""}
                                         onChange={(e) =>
                                             setFormData({
                                                 ...formData,
@@ -671,120 +776,431 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
                                 </div>
 
                                 <div className="lg:col-span-2">
-                                    <h3 className="text-lg font-bold text-slate-900 mb-4">
+                                    <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                                        <svg
+                                            className="w-5 h-5 text-indigo-600"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                            />
+                                        </svg>
                                         Author Information
                                     </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                                Name
-                                            </label>
-                                            <input
-                                                disabled={isViewMode}
-                                                placeholder="John Doe"
-                                                className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                                value={formData.author?.name || ''}
-                                                onChange={(e) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        author: {
-                                                            ...formData.author,
-                                                            name: e.target
-                                                                .value,
-                                                        },
-                                                    })
-                                                }
-                                            />
+
+                                    <div className="space-y-6">
+                                        {/* Name, Role, and Avatar */}
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            {/* Name */}
+                                            <div>
+                                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                                    Full Name{" "}
+                                                    <span className="text-red-500">
+                                                        *
+                                                    </span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    disabled={isViewMode}
+                                                    placeholder="Enter author name"
+                                                    className={`w-full px-4 py-2.5 rounded-lg border-2 transition-all text-slate-900 placeholder:text-slate-400 ${
+                                                        isViewMode
+                                                            ? "border-slate-200 bg-slate-50 cursor-not-allowed"
+                                                            : "border-slate-300 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                                                    }`}
+                                                    value={
+                                                        formData.author?.name ||
+                                                        ""
+                                                    }
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            author: {
+                                                                ...formData.author,
+                                                                name: e.target
+                                                                    .value,
+                                                            },
+                                                        })
+                                                    }
+                                                />
+                                            </div>
+
+                                            {/* Role */}
+                                            <div>
+                                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                                    Role / Title
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    disabled={isViewMode}
+                                                    placeholder="e.g., Senior Writer"
+                                                    className={`w-full px-4 py-2.5 rounded-lg border-2 transition-all text-slate-900 placeholder:text-slate-400 ${
+                                                        isViewMode
+                                                            ? "border-slate-200 bg-slate-50 cursor-not-allowed"
+                                                            : "border-slate-300 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                                                    }`}
+                                                    value={
+                                                        formData.author?.role ||
+                                                        ""
+                                                    }
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            author: {
+                                                                ...formData.author,
+                                                                role: e.target
+                                                                    .value,
+                                                            },
+                                                        })
+                                                    }
+                                                />
+                                            </div>
+
+                                            {/* Avatar Upload */}
+                                            <div>
+                                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                                    Profile Picture
+                                                </label>
+
+                                                <div className="flex items-start gap-4">
+                                                    {/* Avatar Preview */}
+                                                    <div className="relative">
+                                                        {formData.author
+                                                            ?.avatar ? (
+                                                            <div className="relative group">
+                                                                <img
+                                                                    src={
+                                                                        formData
+                                                                            .author
+                                                                            .avatar
+                                                                    }
+                                                                    alt="Author avatar preview"
+                                                                    className="w-20 h-20 rounded-full object-cover border-2 border-slate-300 shadow-sm"
+                                                                />
+                                                                {!isViewMode && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            setFormData(
+                                                                                {
+                                                                                    ...formData,
+                                                                                    author: {
+                                                                                        ...formData.author,
+                                                                                        avatar: null,
+                                                                                    },
+                                                                                },
+                                                                            )
+                                                                        }
+                                                                        className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all opacity-0 group-hover:opacity-100"
+                                                                        title="Remove image"
+                                                                    >
+                                                                        <svg
+                                                                            className="w-3.5 h-3.5"
+                                                                            fill="none"
+                                                                            stroke="currentColor"
+                                                                            viewBox="0 0 24 24"
+                                                                        >
+                                                                            <path
+                                                                                strokeLinecap="round"
+                                                                                strokeLinejoin="round"
+                                                                                strokeWidth={
+                                                                                    2
+                                                                                }
+                                                                                d="M6 18L18 6M6 6l12 12"
+                                                                            />
+                                                                        </svg>
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-20 h-20 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center">
+                                                                <svg
+                                                                    className="w-8 h-8 text-slate-400"
+                                                                    fill="none"
+                                                                    stroke="currentColor"
+                                                                    viewBox="0 0 24 24"
+                                                                >
+                                                                    <path
+                                                                        strokeLinecap="round"
+                                                                        strokeLinejoin="round"
+                                                                        strokeWidth={
+                                                                            2
+                                                                        }
+                                                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                                                    />
+                                                                </svg>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Upload Input */}
+                                                    <div className="flex-1">
+                                                        <label
+                                                            className={`block cursor-pointer ${isViewMode ? "cursor-not-allowed" : ""}`}
+                                                        >
+                                                            <div
+                                                                className={`border-2 border-dashed rounded-lg p-4 text-center transition-all ${
+                                                                    isViewMode
+                                                                        ? "border-slate-200 bg-slate-50"
+                                                                        : "border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/50"
+                                                                }`}
+                                                            >
+                                                                <svg
+                                                                    className="mx-auto h-8 w-8 text-slate-400 mb-2"
+                                                                    fill="none"
+                                                                    stroke="currentColor"
+                                                                    viewBox="0 0 24 24"
+                                                                >
+                                                                    <path
+                                                                        strokeLinecap="round"
+                                                                        strokeLinejoin="round"
+                                                                        strokeWidth={
+                                                                            2
+                                                                        }
+                                                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                                                                    />
+                                                                </svg>
+                                                                <p className="text-sm font-medium text-slate-700 mb-1">
+                                                                    {formData
+                                                                        .author
+                                                                        ?.avatar
+                                                                        ? "Change picture"
+                                                                        : "Upload a picture"}
+                                                                </p>
+                                                                <p className="text-xs text-slate-500">
+                                                                    PNG, JPG up
+                                                                    to 5MB
+                                                                </p>
+                                                            </div>
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                disabled={
+                                                                    isViewMode
+                                                                }
+                                                                onChange={(
+                                                                    e,
+                                                                ) => {
+                                                                    const file =
+                                                                        e.target
+                                                                            .files?.[0];
+                                                                    if (file) {
+                                                                        handleAuthorAvatarUpload(
+                                                                            file,
+                                                                        );
+                                                                    }
+                                                                }}
+                                                                className="hidden"
+                                                            />
+                                                        </label>
+
+                                                        {formData.author
+                                                            ?.avatar &&
+                                                            !isViewMode && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        setFormData(
+                                                                            {
+                                                                                ...formData,
+                                                                                author: {
+                                                                                    ...formData.author,
+                                                                                    avatar: null,
+                                                                                },
+                                                                            },
+                                                                        )
+                                                                    }
+                                                                    className="mt-2 text-sm text-red-600 hover:text-red-700 font-medium transition-colors flex items-center gap-1"
+                                                                >
+                                                                    <svg
+                                                                        className="w-4 h-4"
+                                                                        fill="none"
+                                                                        stroke="currentColor"
+                                                                        viewBox="0 0 24 24"
+                                                                    >
+                                                                        <path
+                                                                            strokeLinecap="round"
+                                                                            strokeLinejoin="round"
+                                                                            strokeWidth={
+                                                                                2
+                                                                            }
+                                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                                        />
+                                                                    </svg>
+                                                                    Remove
+                                                                    picture
+                                                                </button>
+                                                            )}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
+
+                                        {/* Bio */}
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                                Role
+                                            <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                                Biography
                                             </label>
-                                            <input
+                                            <textarea
+                                                rows={4}
                                                 disabled={isViewMode}
-                                                placeholder="Travel Expert"
-                                                className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                                value={formData.author?.role || ''}
+                                                placeholder="Write a brief bio about the author..."
+                                                className={`w-full px-4 py-3 rounded-lg border-2 transition-all resize-none text-slate-900 placeholder:text-slate-400 ${
+                                                    isViewMode
+                                                        ? "border-slate-200 bg-slate-50 cursor-not-allowed"
+                                                        : "border-slate-300 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                                                }`}
+                                                value={
+                                                    formData.author?.bio || ""
+                                                }
                                                 onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
                                                         author: {
                                                             ...formData.author,
-                                                            role: e.target
-                                                                .value,
+                                                            bio: e.target.value,
                                                         },
                                                     })
                                                 }
                                             />
+                                            <p className="mt-1 text-xs text-slate-500">
+                                                {formData.author?.bio?.length ||
+                                                    0}{" "}
+                                                / 500 characters
+                                            </p>
                                         </div>
+
+                                        {/* Social Links */}
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                                Avatar URL
+                                            <label className="block text-sm font-semibold text-slate-700 mb-3">
+                                                Social Media Links
                                             </label>
-                                            <input
-                                                disabled={isViewMode}
-                                                placeholder="https://..."
-                                                className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                                value={formData.author?.avatar || ''}
-                                                onChange={(e) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        author: {
-                                                            ...formData.author,
-                                                            avatar: e.target
-                                                                .value,
-                                                        },
-                                                    })
-                                                }
-                                            />
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                {[
+                                                    {
+                                                        field: "website",
+                                                        label: "Website",
+                                                        icon: "🌐",
+                                                        placeholder:
+                                                            "https://example.com",
+                                                    },
+                                                    {
+                                                        field: "facebook",
+                                                        label: "Facebook",
+                                                        icon: "📘",
+                                                        placeholder:
+                                                            "https://facebook.com/username",
+                                                    },
+                                                    {
+                                                        field: "twitter",
+                                                        label: "Twitter/X",
+                                                        icon: "🐦",
+                                                        placeholder:
+                                                            "https://twitter.com/username",
+                                                    },
+                                                    {
+                                                        field: "linkedin",
+                                                        label: "LinkedIn",
+                                                        icon: "💼",
+                                                        placeholder:
+                                                            "https://linkedin.com/in/username",
+                                                    },
+                                                    {
+                                                        field: "instagram",
+                                                        label: "Instagram",
+                                                        icon: "📷",
+                                                        placeholder:
+                                                            "https://instagram.com/username",
+                                                    },
+
+                                                ].map(
+                                                    ({
+                                                        field,
+                                                        label,
+                                                        icon,
+                                                        placeholder,
+                                                    }) => (
+                                                        <div key={field}>
+                                                            <label className="block text-xs font-medium text-slate-600 mb-1.5 flex items-center gap-1">
+                                                                <span>
+                                                                    {icon}
+                                                                </span>
+                                                                {label}
+                                                            </label>
+                                                            <input
+                                                                type="url"
+                                                                disabled={
+                                                                    isViewMode
+                                                                }
+                                                                placeholder={
+                                                                    placeholder
+                                                                }
+                                                                className={`w-full px-3 py-2 rounded-lg border-2 transition-all text-sm text-slate-900 placeholder:text-slate-400 ${
+                                                                    isViewMode
+                                                                        ? "border-slate-200 bg-slate-50 cursor-not-allowed"
+                                                                        : "border-slate-300 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                                                                }`}
+                                                                value={
+                                                                    formData
+                                                                        .author?.[
+                                                                        field
+                                                                    ] || ""
+                                                                }
+                                                                onChange={(e) =>
+                                                                    setFormData(
+                                                                        {
+                                                                            ...formData,
+                                                                            author: {
+                                                                                ...formData.author,
+                                                                                [field]:
+                                                                                    e
+                                                                                        .target
+                                                                                        .value,
+                                                                            },
+                                                                        },
+                                                                    )
+                                                                }
+                                                            />
+                                                        </div>
+                                                    ),
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">
-                                        Status
-                                    </label>
-                                    <select
-                                        disabled={isViewMode}
-                                        className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                        value={formData.status}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                status: e.target.value,
-                                            })
-                                        }
-                                    >
-                                        <option value="pending">
-                                            Pending Approval
-                                        </option>
-                                    </select>
-                                </div>
 
-                                <div>
-                                    <label className="block text-sm font-bold text-slate-900 mb-2">
-                                        Publish Date
-                                    </label>
-                                    <input
-                                        type="date"
-                                        disabled={isViewMode}
-                                        className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                         value={formData.publishDate || ''}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                publishDate: e.target.value,
-                                            })
-                                        }
-                                    />
-                                </div>
+
+
                             </div>
                         )}
 
-                        {/* Content Tab */}
+{/* Content Tab */}
                         {activeTab === "content" && (
                             <div className="space-y-6">
+                                {/* Main Content Editor */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-4">
+                                        Blog Content
+                                    </h3>
+                                    <TinyMCEEditor
+                                        value={formData.content}
+                                        onChange={(content) =>
+                                            setFormData({
+                                                ...formData,
+                                                content: content,
+                                            })
+                                        }
+                                        height={400}
+                                        placeholder="Write your blog content here..."
+                                    />
+                                </div>
+
                                 <div>
                                     <div className="flex justify-between items-center mb-4">
                                         <h3 className="text-lg font-bold text-slate-900">
@@ -976,6 +1392,433 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
                             </div>
                         )}
 
+                        {/* Cabin Classes & Upgrades Tab */}
+                        {activeTab === "cabin" && (
+                            <div className="space-y-8">
+                                {/* Economy Class */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-4">
+                                        Economy Class Seat Types
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {formData.cabinClasses.economy.seatTypes.map((seatType, index) => (
+                                            <div key={index} className="p-4 border-2 border-slate-200 rounded-lg space-y-3">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm font-bold text-slate-700">
+                                                        Seat Type {index + 1}
+                                                    </span>
+                                                    {isEditMode && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const newSeatTypes = [...formData.cabinClasses.economy.seatTypes];
+                                                                newSeatTypes.splice(index, 1);
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    cabinClasses: {
+                                                                        ...formData.cabinClasses,
+                                                                        economy: {
+                                                                            ...formData.cabinClasses.economy,
+                                                                            seatTypes: newSeatTypes
+                                                                        }
+                                                                    }
+                                                                });
+                                                            }}
+                                                            className="text-red-600 hover:text-red-700"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                    <input
+                                                        disabled={isViewMode}
+                                                        placeholder="Seat Type Name"
+                                                        className="px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                        value={seatType.type || ""}
+                                                        onChange={(e) => {
+                                                            const newSeatTypes = [...formData.cabinClasses.economy.seatTypes];
+                                                            newSeatTypes[index] = { ...seatType, type: e.target.value };
+                                                            setFormData({
+                                                                ...formData,
+                                                                cabinClasses: {
+                                                                    ...formData.cabinClasses,
+                                                                    economy: {
+                                                                        ...formData.cabinClasses.economy,
+                                                                        seatTypes: newSeatTypes
+                                                                    }
+                                                                }
+                                                            });
+                                                        }}
+                                                    />
+                                                    <input
+                                                        disabled={isViewMode}
+                                                        placeholder="Description"
+                                                        className="px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                        value={seatType.description || ""}
+                                                        onChange={(e) => {
+                                                            const newSeatTypes = [...formData.cabinClasses.economy.seatTypes];
+                                                            newSeatTypes[index] = { ...seatType, description: e.target.value };
+                                                            setFormData({
+                                                                ...formData,
+                                                                cabinClasses: {
+                                                                    ...formData.cabinClasses,
+                                                                    economy: {
+                                                                        ...formData.cabinClasses.economy,
+                                                                        seatTypes: newSeatTypes
+                                                                    }
+                                                                }
+                                                            });
+                                                        }}
+                                                    />
+                                                    <input
+                                                        disabled={isViewMode}
+                                                        placeholder="Legroom"
+                                                        className="px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                        value={seatType.legroom || ""}
+                                                        onChange={(e) => {
+                                                            const newSeatTypes = [...formData.cabinClasses.economy.seatTypes];
+                                                            newSeatTypes[index] = { ...seatType, legroom: e.target.value };
+                                                            setFormData({
+                                                                ...formData,
+                                                                cabinClasses: {
+                                                                    ...formData.cabinClasses,
+                                                                    economy: {
+                                                                        ...formData.cabinClasses.economy,
+                                                                        seatTypes: newSeatTypes
+                                                                    }
+                                                                }
+                                                            });
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {isEditMode && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setFormData({
+                                                        ...formData,
+                                                        cabinClasses: {
+                                                            ...formData.cabinClasses,
+                                                            economy: {
+                                                                ...formData.cabinClasses.economy,
+                                                                seatTypes: [...formData.cabinClasses.economy.seatTypes, { type: "", description: "", legroom: "" }]
+                                                            }
+                                                        }
+                                                    });
+                                                }}
+                                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2"
+                                            >
+                                                <Plus size={16} /> Add Seat Type
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Club Class */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-4">
+                                        Club Class Advantages
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {formData.cabinClasses.club.advantages.map((advantage, index) => (
+                                            <div key={index} className="p-4 border-2 border-slate-200 rounded-lg space-y-3">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm font-bold text-slate-700">
+                                                        Advantage {index + 1}
+                                                    </span>
+                                                    {isEditMode && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const newAdvantages = [...formData.cabinClasses.club.advantages];
+                                                                newAdvantages.splice(index, 1);
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    cabinClasses: {
+                                                                        ...formData.cabinClasses,
+                                                                        club: {
+                                                                            ...formData.cabinClasses.club,
+                                                                            advantages: newAdvantages
+                                                                        }
+                                                                    }
+                                                                });
+                                                            }}
+                                                            className="text-red-600 hover:text-red-700"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    <input
+                                                        disabled={isViewMode}
+                                                        placeholder="Feature Name"
+                                                        className="px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                        value={advantage.feature || ""}
+                                                        onChange={(e) => {
+                                                            const newAdvantages = [...formData.cabinClasses.club.advantages];
+                                                            newAdvantages[index] = { ...advantage, feature: e.target.value };
+                                                            setFormData({
+                                                                ...formData,
+                                                                cabinClasses: {
+                                                                    ...formData.cabinClasses,
+                                                                    club: {
+                                                                        ...formData.cabinClasses.club,
+                                                                        advantages: newAdvantages
+                                                                    }
+                                                                }
+                                                            });
+                                                        }}
+                                                    />
+                                                    <input
+                                                        disabled={isViewMode}
+                                                        placeholder="Description"
+                                                        className="px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                        value={advantage.description || ""}
+                                                        onChange={(e) => {
+                                                            const newAdvantages = [...formData.cabinClasses.club.advantages];
+                                                            newAdvantages[index] = { ...advantage, description: e.target.value };
+                                                            setFormData({
+                                                                ...formData,
+                                                                cabinClasses: {
+                                                                    ...formData.cabinClasses,
+                                                                    club: {
+                                                                        ...formData.cabinClasses.club,
+                                                                        advantages: newAdvantages
+                                                                    }
+                                                                }
+                                                            });
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {isEditMode && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setFormData({
+                                                        ...formData,
+                                                        cabinClasses: {
+                                                            ...formData.cabinClasses,
+                                                            club: {
+                                                                ...formData.cabinClasses.club,
+                                                                advantages: [...formData.cabinClasses.club.advantages, { feature: "", description: "" }]
+                                                            }
+                                                        }
+                                                    });
+                                                }}
+                                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2"
+                                            >
+                                                <Plus size={16} /> Add Advantage
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Upgrade Options */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-4">
+                                        Upgrade Options
+                                    </h3>
+                                    <div className="space-y-4">
+                                        {formData.upgradeOptions.map((option, index) => (
+                                            <div key={index} className="p-4 border-2 border-slate-200 rounded-lg space-y-4">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm font-bold text-slate-700">
+                                                        Upgrade Method {index + 1}
+                                                    </span>
+                                                    {isEditMode && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const newOptions = [...formData.upgradeOptions];
+                                                                newOptions.splice(index, 1);
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    upgradeOptions: newOptions
+                                                                });
+                                                            }}
+                                                            className="text-red-600 hover:text-red-700"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <input
+                                                    disabled={isViewMode}
+                                                    placeholder="Upgrade Method"
+                                                    className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                    value={option.method || ""}
+                                                    onChange={(e) => {
+                                                        const newOptions = [...formData.upgradeOptions];
+                                                        newOptions[index] = { ...option, method: e.target.value };
+                                                        setFormData({
+                                                            ...formData,
+                                                            upgradeOptions: newOptions
+                                                        });
+                                                    }}
+                                                />
+                                                
+                                                {/* Steps */}
+                                                <div>
+                                                    <h4 className="text-sm font-semibold text-slate-700 mb-2">Steps</h4>
+                                                    <div className="space-y-2">
+                                                        {option.steps?.map((step, stepIndex) => (
+                                                            <div key={stepIndex} className="flex gap-2 items-center">
+                                                                <input
+                                                                    disabled={isViewMode}
+                                                                    type="number"
+                                                                    placeholder="#"
+                                                                    className="w-16 px-2 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                                    value={step.stepNumber || ""}
+                                                                    onChange={(e) => {
+                                                                        const newOptions = [...formData.upgradeOptions];
+                                                                        if (!newOptions[index].steps) newOptions[index].steps = [];
+                                                                        newOptions[index].steps[stepIndex] = { ...step, stepNumber: parseInt(e.target.value) || 0 };
+                                                                        setFormData({
+                                                                            ...formData,
+                                                                            upgradeOptions: newOptions
+                                                                        });
+                                                                    }}
+                                                                />
+                                                                <input
+                                                                    disabled={isViewMode}
+                                                                    placeholder="Instruction"
+                                                                    className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                                    value={step.instruction || ""}
+                                                                    onChange={(e) => {
+                                                                        const newOptions = [...formData.upgradeOptions];
+                                                                        if (!newOptions[index].steps) newOptions[index].steps = [];
+                                                                        newOptions[index].steps[stepIndex] = { ...step, instruction: e.target.value };
+                                                                        setFormData({
+                                                                            ...formData,
+                                                                            upgradeOptions: newOptions
+                                                                        });
+                                                                    }}
+                                                                />
+                                                                {isEditMode && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const newOptions = [...formData.upgradeOptions];
+                                                                            if (!newOptions[index].steps) newOptions[index].steps = [];
+                                                                            newOptions[index].steps.splice(stepIndex, 1);
+                                                                            setFormData({
+                                                                                ...formData,
+                                                                                upgradeOptions: newOptions
+                                                                            });
+                                                                        }}
+                                                                        className="text-red-600 hover:text-red-700"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                        {isEditMode && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newOptions = [...formData.upgradeOptions];
+                                                                    if (!newOptions[index].steps) newOptions[index].steps = [];
+                                                                    newOptions[index].steps.push({ stepNumber: 0, instruction: "" });
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        upgradeOptions: newOptions
+                                                                    });
+                                                                }}
+                                                                className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 text-sm"
+                                                            >
+                                                                Add Step
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Notes */}
+                                                <div>
+                                                    <h4 className="text-sm font-semibold text-slate-700 mb-2">Notes</h4>
+                                                    <div className="space-y-2">
+                                                        {option.notes?.map((note, noteIndex) => (
+                                                            <div key={noteIndex} className="flex gap-2">
+                                                                <input
+                                                                    disabled={isViewMode}
+                                                                    placeholder="Note"
+                                                                    className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                                    value={note || ""}
+                                                                    onChange={(e) => {
+                                                                        const newOptions = [...formData.upgradeOptions];
+                                                                        if (!newOptions[index].notes) newOptions[index].notes = [];
+                                                                        newOptions[index].notes[noteIndex] = e.target.value;
+                                                                        setFormData({
+                                                                            ...formData,
+                                                                            upgradeOptions: newOptions
+                                                                        });
+                                                                    }}
+                                                                />
+                                                                {isEditMode && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const newOptions = [...formData.upgradeOptions];
+                                                                            if (!newOptions[index].notes) newOptions[index].notes = [];
+                                                                            newOptions[index].notes.splice(noteIndex, 1);
+                                                                            setFormData({
+                                                                                ...formData,
+                                                                                upgradeOptions: newOptions
+                                                                            });
+                                                                        }}
+                                                                        className="text-red-600 hover:text-red-700"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                        {isEditMode && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newOptions = [...formData.upgradeOptions];
+                                                                    if (!newOptions[index].notes) newOptions[index].notes = [];
+                                                                    newOptions[index].notes.push("");
+                                                                    setFormData({
+                                                                        ...formData,
+                                                                        upgradeOptions: newOptions
+                                                                    });
+                                                                }}
+                                                                className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 text-sm"
+                                                            >
+                                                                Add Note
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {isEditMode && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setFormData({
+                                                        ...formData,
+                                                        upgradeOptions: [...formData.upgradeOptions, { method: "", steps: [], notes: [] }]
+                                                    });
+                                                }}
+                                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2"
+                                            >
+                                                <Plus size={16} /> Add Upgrade Option
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Pricing Tab */}
                         {activeTab === "pricing" && (
                             <div className="space-y-6">
@@ -992,7 +1835,9 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
                                             disabled={isViewMode}
                                             placeholder="0"
                                             className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                             value={formData.pricing.range.min || ''}
+                                            value={
+                                                formData.pricing.range.min || ""
+                                            }
                                             onChange={(e) =>
                                                 setFormData({
                                                     ...formData,
@@ -1020,7 +1865,9 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
                                             disabled={isViewMode}
                                             placeholder="0"
                                             className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                             value={formData.pricing.range.max || ''}
+                                            value={
+                                                formData.pricing.range.max || ""
+                                            }
                                             onChange={(e) =>
                                                 setFormData({
                                                     ...formData,
@@ -1073,6 +1920,8 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
                             </div>
                         )}
 
+
+
                         {/* SEO Tab */}
                         {activeTab === "seo" && (
                             <div className="space-y-6">
@@ -1106,7 +1955,7 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
                                         disabled={isViewMode}
                                         placeholder="SEO optimized title..."
                                         className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                         value={formData.seo.metaTitle || ''}
+                                        value={formData.seo.metaTitle || ""}
                                         onChange={(e) =>
                                             setFormData({
                                                 ...formData,
@@ -1128,7 +1977,9 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
                                         rows={3}
                                         placeholder="Brief description for search engines..."
                                         className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                         value={formData.seo.metaDescription || ''}
+                                        value={
+                                            formData.seo.metaDescription || ""
+                                        }
                                         onChange={(e) =>
                                             setFormData({
                                                 ...formData,

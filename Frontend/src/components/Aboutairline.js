@@ -16,7 +16,7 @@ export default function AboutAirline({ officeId, officeSlug, airlineName, city }
         const response = await axios.get(
           `http://localhost:3001/api/offices/${officeSlug || officeId}`,
         );
-        setData(response.data.data.about);
+        setData(response.data.data.aboutOffice);
         setError(null);
       } catch (err) {
         console.error("Error fetching office data:", err);
@@ -122,20 +122,20 @@ export default function AboutAirline({ officeId, officeSlug, airlineName, city }
         }`}
       >
         <div className="space-y-3 sm:text-lg text-sm text-gray-600 text-justify">
-          {data?.description && <p>{data.description}</p>}
-          {data?.overview && <p>{data.overview}</p>}
-          {data?.history && <p>{data.history}</p>}
-          {data?.network && <p>{data.network}</p>}
-          {data?.fleet && <p>{data.fleet}</p>}
-          {data?.cabins && <p>{data.cabins}</p>}
-          {data?.alliance && <p>{data.alliance}</p>}
-          {data?.services && <p>{data.services}</p>}
-          {data?.baggage && <p>{data.baggage}</p>}
-          {data?.loyalty && <p>{data.loyalty}</p>}
-          {data?.airportServices && <p>{data.airportServices}</p>}
-          {data?.targetCustomers && <p>{data.targetCustomers}</p>}
-          {data?.support && <p>{data.support}</p>}
-          {data?.additionalInfo && <p>{data.additionalInfo}</p>}
+          {data?.description && <div dangerouslySetInnerHTML={{ __html: data.description }} />}
+          {data?.overview && <div dangerouslySetInnerHTML={{ __html: data.overview }} />}
+          {data?.history && <div dangerouslySetInnerHTML={{ __html: data.history }} />}
+          {data?.network && <div dangerouslySetInnerHTML={{ __html: data.network }} />}
+          {data?.fleet && <div dangerouslySetInnerHTML={{ __html: data.fleet }} />}
+          {data?.cabins && <div dangerouslySetInnerHTML={{ __html: data.cabins }} />}
+          {data?.alliance && <div dangerouslySetInnerHTML={{ __html: data.alliance }} />}
+          {data?.services && <div dangerouslySetInnerHTML={{ __html: data.services }} />}
+          {data?.baggage && <div dangerouslySetInnerHTML={{ __html: data.baggage }} />}
+          {data?.loyalty && <div dangerouslySetInnerHTML={{ __html: data.loyalty }} />}
+          {data?.airportServices && <div dangerouslySetInnerHTML={{ __html: data.airportServices }} />}
+          {data?.targetCustomers && <div dangerouslySetInnerHTML={{ __html: data.targetCustomers }} />}
+          {data?.support && <div dangerouslySetInnerHTML={{ __html: data.support }} />}
+          {data?.additionalInfo && <div dangerouslySetInnerHTML={{ __html: data.additionalInfo }} />}
         </div>
 
         {/* Fade overlay when collapsed */}

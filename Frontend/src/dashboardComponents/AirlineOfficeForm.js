@@ -18,7 +18,11 @@ import {
     AlertCircle,
     Check,
 } from "lucide-react";
-import { formatOfficeHours, generateAirlineId, slugify } from "@/utils/slugifyhelper";
+import {
+    formatOfficeHours,
+    generateAirlineId,
+    slugify,
+} from "@/utils/slugifyhelper";
 
 // ==================== FORM COMPONENT ====================
 const InputWrapper = ({ children, error, label, required = false }) => {
@@ -57,6 +61,7 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
             photo: "",
             officeOverview: {
                 airlineName: "",
+                continent: "",
                 city: "",
                 country: "",
                 address: "",
@@ -120,10 +125,14 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
 
         // Basic validations
         if (name === "slug" && !value.trim()) error = "Slug is required";
-        if (name === "firstName" && !value.trim()) error = "First name is required";
+        // File validation
+        if (name === "logo" && !logoFile && !formData.logo) error = "Logo is required";
+        if (name === "photo" && !imageFile && !formData.photo) error = "Photo is required";
+        if (name === "firstName" && !value.trim())
+            error = "First name is required";
 
         return error;
-    }, []);
+    }, [logoFile, formData.logo, imageFile, formData.photo]);
 
     const handleImageChange = (e) => {
         const { name, files } = e.target;
@@ -233,9 +242,9 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
             const finalValue = Array.isArray(value)
                 ? value
                 : value
-                    .split(",")
-                    .map((v) => v.trim())
-                    .filter(Boolean);
+                      .split(",")
+                      .map((v) => v.trim())
+                      .filter(Boolean);
 
             current[keys[keys.length - 1]] = finalValue;
 
@@ -347,7 +356,11 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Logo Upload */}
-                            <InputWrapper label="Logo" required error={errors.logo}>
+                            <InputWrapper
+                                label="Logo"
+                                required
+                                error={errors.logo}
+                            >
                                 <input
                                     type="file"
                                     name="logo"
@@ -370,7 +383,11 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                             </InputWrapper>
 
                             {/* Photo Upload */}
-                            <InputWrapper label="Photo" required error={errors.photo}>
+                            <InputWrapper
+                                label="Photo"
+                                required
+                                error={errors.photo}
+                            >
                                 <input
                                     type="file"
                                     name="photo"
@@ -402,7 +419,10 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                                 className="w-4 h-4 text-gray-900"
                             />
                             <span className="flex items-center gap-2 text-gray-900 font-semibold">
-                                <Sparkles className="text-yellow-500" size={18} />
+                                <Sparkles
+                                    className="text-yellow-500"
+                                    size={18}
+                                />
                                 Verified airline
                             </span>
                         </label>
@@ -416,7 +436,10 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                             <InputWrapper label="Airline Name" required>
                                 <input
                                     name="officeOverview.airlineName"
-                                    value={formData.officeOverview.airlineName || ""}
+                                    value={
+                                        formData.officeOverview.airlineName ||
+                                        ""
+                                    }
                                     onChange={handleInputChange}
                                     className="input-ui text-gray-900"
                                 />
@@ -436,10 +459,50 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                             <InputWrapper label="Country" required>
                                 <input
                                     name="officeOverview.country"
-                                    value={formData.officeOverview.country || ""}
+                                    value={
+                                        formData.officeOverview.country || ""
+                                    }
                                     onChange={handleInputChange}
                                     className="input-ui text-gray-900"
                                 />
+                            </InputWrapper>
+
+                            <InputWrapper label="Continent" required>
+                                <select
+                                    name="officeOverview.continent"
+                                    value={
+                                        formData.officeOverview.continent || ""
+                                    }
+                                    onChange={(e) => {
+                                        console.log(
+                                            "CHANGED TO 👉",
+                                            e.target.value,
+                                        );
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            officeOverview: {
+                                                ...prev.officeOverview,
+                                                continent: e.target.value,
+                                            },
+                                        }));
+                                    }}
+                                    className="input-ui text-gray-900"
+                                >
+                                    <option value="">Select a continent</option>
+                                    <option value="Africa">Africa</option>
+                                    <option value="Antarctica">
+                                        Antarctica
+                                    </option>
+                                    <option value="Asia">Asia</option>
+                                    <option value="Europe">Europe</option>
+                                    <option value="North America">
+                                        North America
+                                    </option>
+                                    <option value="Oceania">Oceania</option>
+                                    <option value="South America">
+                                        South America
+                                    </option>
+                                </select>
                             </InputWrapper>
 
                             <InputWrapper label="Phone" required>
@@ -473,7 +536,10 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                                             <input
                                                 type="time"
                                                 name="officeOverview.hours.start"
-                                                value={formData.officeOverview.hours.start || ""}
+                                                value={
+                                                    formData.officeOverview
+                                                        .hours.start || ""
+                                                }
                                                 onChange={handleInputChange}
                                                 className="w-full bg-transparent text-lg font-semibold text-gray-900 outline-none cursor-pointer"
                                             />
@@ -490,7 +556,10 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                                             <input
                                                 type="time"
                                                 name="officeOverview.hours.end"
-                                                value={formData.officeOverview.hours.end || ""}
+                                                value={
+                                                    formData.officeOverview
+                                                        .hours.end || ""
+                                                }
                                                 onChange={handleInputChange}
                                                 className="w-full bg-transparent text-lg font-semibold text-gray-900 outline-none cursor-pointer"
                                             />
@@ -527,7 +596,9 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                                                         {officeHours}
                                                     </p>
                                                     <p className="text-sm text-gray-600 mt-2">
-                                                        Your office will be available during these hours
+                                                        Your office will be
+                                                        available during these
+                                                        hours
                                                     </p>
                                                 </div>
                                             </div>
@@ -539,7 +610,9 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                             <InputWrapper label="Website" required>
                                 <input
                                     name="officeOverview.website"
-                                    value={formData.officeOverview.website || ""}
+                                    value={
+                                        formData.officeOverview.website || ""
+                                    }
                                     onChange={handleInputChange}
                                     className="input-ui text-gray-900"
                                     placeholder="https://example.com"
@@ -548,7 +621,9 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                         </div>
 
                         <div className="space-y-4 p-4 bg-blue-50 rounded-xl">
-                            <h3 className="font-semibold text-blue-900">About Section</h3>
+                            <h3 className="font-semibold text-blue-900">
+                                About Section
+                            </h3>
 
                             <InputWrapper label="Airline ID" required>
                                 <input
@@ -560,7 +635,7 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                                 />
                             </InputWrapper>
 
-                            <InputWrapper label="Office Location" required>
+                            <InputWrapper label="Office Location">
                                 <textarea
                                     name="about.location"
                                     value={formData.about.location || ""}
@@ -571,7 +646,7 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                                 />
                             </InputWrapper>
 
-                            <InputWrapper label="Overview" required>
+                            <InputWrapper label="Overview">
                                 <textarea
                                     name="about.overview"
                                     value={formData.about.overview || ""}
@@ -732,19 +807,24 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                 return (
                     <div className="space-y-6 animate-fade-in">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <InputWrapper label="Airport Name" required>
+                            <InputWrapper label="Airport Name">
                                 <input
                                     name="airportLocation.airportName"
-                                    value={formData.airportLocation.airportName || ""}
+                                    value={
+                                        formData.airportLocation.airportName ||
+                                        ""
+                                    }
                                     onChange={handleInputChange}
                                     className="input-ui text-gray-900"
                                 />
                             </InputWrapper>
 
-                            <InputWrapper label="IATA Code" required>
+                            <InputWrapper label="IATA Code">
                                 <input
                                     name="airportLocation.iataCode"
-                                    value={formData.airportLocation.iataCode || ""}
+                                    value={
+                                        formData.airportLocation.iataCode || ""
+                                    }
                                     onChange={handleInputChange}
                                     className="input-ui text-gray-900"
                                     maxLength={3}
@@ -753,20 +833,25 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                             </InputWrapper>
                         </div>
 
-                        <InputWrapper label="Terminal Info" required>
+                        <InputWrapper label="Terminal Info">
                             <input
                                 name="airportLocation.terminalInfo"
-                                value={formData.airportLocation.terminalInfo || ""}
+                                value={
+                                    formData.airportLocation.terminalInfo || ""
+                                }
                                 onChange={handleInputChange}
                                 className="input-ui text-gray-900"
                                 placeholder="e.g., Terminal 3"
                             />
                         </InputWrapper>
 
-                        <InputWrapper label="Counter Contact" required>
+                        <InputWrapper label="Counter Contact">
                             <input
                                 name="airportLocation.counterContact"
-                                value={formData.airportLocation.counterContact || ""}
+                                value={
+                                    formData.airportLocation.counterContact ||
+                                    ""
+                                }
                                 onChange={handleInputChange}
                                 className="input-ui text-gray-900"
                             />
@@ -775,7 +860,10 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                         <InputWrapper label="Airport Address">
                             <textarea
                                 name="airportLocation.airportAddress"
-                                value={formData.airportLocation.airportAddress || ""}
+                                value={
+                                    formData.airportLocation.airportAddress ||
+                                    ""
+                                }
                                 onChange={handleInputChange}
                                 className="input-ui text-gray-900"
                                 rows={3}
@@ -793,7 +881,10 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                                     type="number"
                                     step="any"
                                     name="airportMapLocation.latitude"
-                                    value={formData.airportMapLocation.latitude || ""}
+                                    value={
+                                        formData.airportMapLocation.latitude ||
+                                        ""
+                                    }
                                     onChange={(e) =>
                                         setFormData((prev) => ({
                                             ...prev,
@@ -815,7 +906,10 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                                     type="number"
                                     step="any"
                                     name="airportMapLocation.longitude"
-                                    value={formData.airportMapLocation.longitude || ""}
+                                    value={
+                                        formData.airportMapLocation.longitude ||
+                                        ""
+                                    }
                                     onChange={(e) =>
                                         setFormData((prev) => ({
                                             ...prev,
@@ -833,10 +927,12 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                             </InputWrapper>
                         </div>
 
-                        <InputWrapper label="Map Query" required>
+                        <InputWrapper label="Map Query">
                             <input
                                 name="airportMapLocation.mapQuery"
-                                value={formData.airportMapLocation.mapQuery || ""}
+                                value={
+                                    formData.airportMapLocation.mapQuery || ""
+                                }
                                 onChange={handleInputChange}
                                 className="input-ui text-gray-900"
                                 placeholder="Dubai International Airport"
@@ -846,7 +942,10 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                         <InputWrapper label="Google Maps URL">
                             <input
                                 name="airportMapLocation.googleMapsUrl"
-                                value={formData.airportMapLocation.googleMapsUrl || ""}
+                                value={
+                                    formData.airportMapLocation.googleMapsUrl ||
+                                    ""
+                                }
                                 onChange={handleInputChange}
                                 className="input-ui text-gray-900"
                             />
@@ -855,7 +954,9 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                         <InputWrapper label="Embed URL">
                             <input
                                 name="airportMapLocation.embedUrl"
-                                value={formData.airportMapLocation.embedUrl || ""}
+                                value={
+                                    formData.airportMapLocation.embedUrl || ""
+                                }
                                 onChange={handleInputChange}
                                 className="input-ui text-gray-900"
                             />
@@ -866,18 +967,26 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
             case 4:
                 return (
                     <div className="space-y-6 animate-fade-in">
-                        <InputWrapper label="Available Services (comma-separated)" required>
+                        <InputWrapper
+                            label="Available Services (comma-separated)"
+                            required
+                        >
                             <input
                                 type="text"
                                 value={availableServicesText}
-                                onChange={(e) => setAvailableServicesText(e.target.value)}
+                                onChange={(e) =>
+                                    setAvailableServicesText(e.target.value)
+                                }
                                 onBlur={() => {
                                     const servicesArray = availableServicesText
                                         .split(",")
                                         .map((s) => s.trim())
                                         .filter(Boolean);
 
-                                    handleArrayInputChange("availableServices", servicesArray);
+                                    handleArrayInputChange(
+                                        "availableServices",
+                                        servicesArray,
+                                    );
                                 }}
                                 className="input-ui text-gray-900"
                                 placeholder="Check-in, Baggage, Lounge, Assistance"
@@ -889,9 +998,14 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                                 Fleet Operations
                             </h3>
 
-                            <InputWrapper label="Aircraft Types (comma-separated)" required>
+                            <InputWrapper
+                                label="Aircraft Types (comma-separated)"
+                                required
+                            >
                                 <input
-                                    value={formData.fleetOperations.aircraftTypes.join(", ")}
+                                    value={formData.fleetOperations.aircraftTypes.join(
+                                        ", ",
+                                    )}
                                     onChange={(e) => {
                                         const array = e.target.value
                                             .split(",")
@@ -913,7 +1027,10 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                             <InputWrapper label="Total Fleet">
                                 <input
                                     type="number"
-                                    value={formData.fleetOperations.totalFleet || ""}
+                                    value={
+                                        formData.fleetOperations.totalFleet ||
+                                        ""
+                                    }
                                     onChange={(e) =>
                                         setFormData((prev) => ({
                                             ...prev,
@@ -931,13 +1048,17 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
 
                             <InputWrapper label="Additional Details">
                                 <textarea
-                                    value={formData.fleetOperations.additionalDetails || ""}
+                                    value={
+                                        formData.fleetOperations
+                                            .additionalDetails || ""
+                                    }
                                     onChange={(e) =>
                                         setFormData((prev) => ({
                                             ...prev,
                                             fleetOperations: {
                                                 ...prev.fleetOperations,
-                                                additionalDetails: e.target.value,
+                                                additionalDetails:
+                                                    e.target.value,
                                             },
                                         }))
                                     }
@@ -948,7 +1069,9 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                         </div>
 
                         <div className="space-y-4 p-4 bg-green-50 rounded-xl">
-                            <h3 className="font-semibold text-green-900">SEO Metadata</h3>
+                            <h3 className="font-semibold text-green-900">
+                                SEO Metadata
+                            </h3>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* ⭐ Rating Value */}
@@ -958,16 +1081,23 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                                         step="0.1"
                                         min="0"
                                         max="5"
-                                        value={formData.metadata?.rating?.value || ""}
+                                        value={
+                                            formData.metadata?.rating?.value ||
+                                            ""
+                                        }
                                         onChange={(e) =>
                                             setFormData((prev) => ({
                                                 ...prev,
                                                 metadata: {
                                                     ...prev.metadata,
                                                     rating: {
-                                                        ...prev.metadata?.rating,
+                                                        ...prev.metadata
+                                                            ?.rating,
                                                         value: e.target.value
-                                                            ? parseFloat(e.target.value)
+                                                            ? parseFloat(
+                                                                  e.target
+                                                                      .value,
+                                                              )
                                                             : 0,
                                                     },
                                                 },
@@ -982,14 +1112,18 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                                     <input
                                         type="number"
                                         min="0"
-                                        value={formData.metadata?.reviewCount || ""}
+                                        value={
+                                            formData.metadata?.reviewCount || ""
+                                        }
                                         onChange={(e) =>
                                             setFormData((prev) => ({
                                                 ...prev,
                                                 metadata: {
                                                     ...prev.metadata,
                                                     reviewCount: e.target.value
-                                                        ? parseInt(e.target.value)
+                                                        ? parseInt(
+                                                              e.target.value,
+                                                          )
                                                         : 0,
                                                 },
                                             }))
@@ -1002,13 +1136,17 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                                 <InputWrapper label="Review Summary (SEO)">
                                     <textarea
                                         maxLength={160}
-                                        value={formData.metadata?.reviewSummary || ""}
+                                        value={
+                                            formData.metadata?.reviewSummary ||
+                                            ""
+                                        }
                                         onChange={(e) =>
                                             setFormData((prev) => ({
                                                 ...prev,
                                                 metadata: {
                                                     ...prev.metadata,
-                                                    reviewSummary: e.target.value,
+                                                    reviewSummary:
+                                                        e.target.value,
                                                 },
                                             }))
                                         }
@@ -1021,7 +1159,9 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                                 <InputWrapper label="SEO Keywords (comma separated)">
                                     <input
                                         type="text"
-                                        value={(formData.metadata?.keywords || []).join(", ")}
+                                        value={(
+                                            formData.metadata?.keywords || []
+                                        ).join(", ")}
                                         onChange={(e) =>
                                             setFormData((prev) => ({
                                                 ...prev,
@@ -1042,13 +1182,19 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                                 {/* ✅ Verified */}
                                 <InputWrapper label="Verified Listing">
                                     <select
-                                        value={formData.metadata?.verified ? "yes" : "no"}
+                                        value={
+                                            formData.metadata?.verified
+                                                ? "yes"
+                                                : "no"
+                                        }
                                         onChange={(e) =>
                                             setFormData((prev) => ({
                                                 ...prev,
                                                 metadata: {
                                                     ...prev.metadata,
-                                                    verified: e.target.value === "yes",
+                                                    verified:
+                                                        e.target.value ===
+                                                        "yes",
                                                 },
                                             }))
                                         }
@@ -1121,29 +1267,43 @@ const AirlineOfficeForm = ({ onClose, onSave, initialData = null }) => {
                         const isCompleted = index < currentStep;
 
                         return (
-                            <div key={index} className="flex items-center flex-1">
+                            <div
+                                key={index}
+                                className="flex items-center flex-1"
+                            >
                                 <div className="flex flex-col items-center flex-1">
                                     <div
-                                        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${isActive
+                                        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
+                                            isActive
                                                 ? "bg-blue-600 text-white scale-110"
                                                 : isCompleted
-                                                    ? "bg-green-500 text-white"
-                                                    : "bg-gray-200 text-gray-500"
-                                            }`}
+                                                  ? "bg-green-500 text-white"
+                                                  : "bg-gray-200 text-gray-500"
+                                        }`}
                                     >
-                                        {isCompleted ? <Check size={20} /> : <Icon size={20} />}
+                                        {isCompleted ? (
+                                            <Check size={20} />
+                                        ) : (
+                                            <Icon size={20} />
+                                        )}
                                     </div>
                                     <span
-                                        className={`text-xs mt-2 font-semibold ${isActive ? "text-blue-600" : "text-gray-500"
-                                            }`}
+                                        className={`text-xs mt-2 font-semibold ${
+                                            isActive
+                                                ? "text-blue-600"
+                                                : "text-gray-500"
+                                        }`}
                                     >
                                         {step.title}
                                     </span>
                                 </div>
                                 {index < steps.length - 1 && (
                                     <div
-                                        className={`h-1 flex-1 mx-2 rounded transition-all ${isCompleted ? "bg-green-500" : "bg-gray-200"
-                                            }`}
+                                        className={`h-1 flex-1 mx-2 rounded transition-all ${
+                                            isCompleted
+                                                ? "bg-green-500"
+                                                : "bg-gray-200"
+                                        }`}
                                     />
                                 )}
                             </div>

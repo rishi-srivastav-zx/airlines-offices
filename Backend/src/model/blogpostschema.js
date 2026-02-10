@@ -20,6 +20,12 @@ const BlogPostSchema = new Schema(
             name: { type: String, trim: true },
             role: String,
             avatar: String,
+            bio: String,
+            website: String,
+            facebook: String,
+            twitter: String,
+            linkedin: String,
+            instagram: String,
         },
 
         featuredImage: {

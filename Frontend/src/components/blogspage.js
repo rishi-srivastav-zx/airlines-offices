@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Calendar, User, PhoneOutgoing, FileText } from "lucide-react";
-import axios from "axios";
+import { blogService } from "@/services/api";
 import { toast, Toaster } from "react-hot-toast";
 
 // Skeleton Card Component
@@ -53,25 +53,17 @@ export default function BlogPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const api = axios.create({
-        baseURL: "http://localhost:3001/api",
-        withCredentials: true,
-        headers: {
-            "Content-Type": "application/json",
-        },
-    });
+
 
     const fetchBlogPosts = async () => {
         try {
             setLoading(true);
             setError(""); // Clear previous errors
-            const res = await api.get("/blogs/posts", {
-                params: {
-                    status: "published", // Only show published blogs on public page
-                },
+            const res = await blogService.getAllPosts({
+                status: "published", // Only show published blogs on public page
             });
 
-            const mappedPosts = res.data.data.map((blog) => ({
+            const mappedPosts = res.data.map((blog) => ({
                 id: blog._id,
                 title: blog.title,
                 image: blog.featuredImage,
@@ -235,7 +227,7 @@ export default function BlogPage() {
                                                     </h2>
 
                                                     <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                                                        {post.excerpt}
+                                                        {post?.excerpt}
                                                     </p>
 
                                                     <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between text-[12px] text-gray-500">
@@ -250,9 +242,9 @@ export default function BlogPage() {
                                                             <Calendar
                                                                 size={14}
                                                             />
-                                                            <span>
-                                                                {post.date}
-                                                            </span>
+                                                     <span>
+                                                                 {post.date}
+                                                             </span>
                                                         </div>
                                                     </div>
                                                 </div>

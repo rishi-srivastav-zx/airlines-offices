@@ -1,425 +1,155 @@
 import mongoose from "mongoose";
 
 const OfficeSchema = new mongoose.Schema(
-  {
-    slug: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
+	{
 
-    firstName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+		airline: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "Airline",
+			required: true,
+			index: true,
+		},
+		continent: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "Continent",
+			required: true,
+		},
+		country: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "Country",
+			required: true,
+		},
+		city: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: "City",
+			required: true,
+		},
 
-    logo: {
-      type: String,
-    },
+		slug: {
+			type: String,
+			unique: true,
+			lowercase: true,
+			trim: true,
+		},
 
-    photo: {
-      type: String,
-    },
+		photo: {
+			type: String,
+		},
 
-    officeOverview: {
-      airlineName: {
-        type: String,
-        required: true,
-        trim: true,
-      },
+		website: {
+			type: String,
+		},
 
-      city: {
-        type: String,
-        required: true,
-        trim: true,
-      },
+		officeOverview: {
+			continent: {
+				type: String,
+				required: true,
+			},
 
-      country: {
-        type: String,
-        required: true,
-        trim: true,
-      },
+			country: {
+				type: String,
+				required: true,
+			},
 
-      address: {
-        type: String,
-        required: true,
-      },
+			city: {
+				type: String,
+				required: true,
+			},
 
-      phone: {
-        type: String,
-      },
+			address: {
+				type: String,
+				required: true,
+			},
 
-      hours: {
-        start: {
-          type: String,
-          required: true,
-        },
-        end: {
-          type: String,
-          required: true,
-        },
-      },
+			phone: {
+				type: String,
+			},
 
-      website: {
-        type: String,
-      },
-    },
+			hours: {
+				start: { type: String },
+				end: { type: String },
+			},
+		},
 
-    about: {
-      airlineId: {
-        type: String,
-      },
+		aboutOffice: {
+			description: {
+				type: String, 
+			},
 
-      description: {
-        type: String,
-      },
+			services: {
+				type: String, 
+			},
 
-      history: {
-        type: String,
-      },
+			additionalInfo: {
+				type: String, 
+			},
+		},
 
-      services: {
-        type: [String],
-        default: [],
-      },
+		airportLocation: {
+			airportName: {
+				type: String,
+				required: true,
+			},
+			terminalInfo: String,
+			iataCode: String,
+			counterContact: String,
+			airportAddress: String,
+		},
 
-      additionalInfo: {
-        type: String,
-      },
-    },
+		airportMapLocation: {
+			latitude: Number,
+			longitude: Number,
+			mapQuery: String,
+			googleMapsUrl: String,
+			embedUrl: String,
+		},
 
-    airportLocation: {
-      airportName: {
-        type: String,
-      },
+		seo: {
+			metaTitle: {
+				type: String,
+				required: true,
+				maxlength: 60,
+			},
 
-      terminalInfo: {
-        type: String,
-      },
+			metaDescription: {
+				type: String,
+				required: true,
+				maxlength: 160,
+			},
 
-      iataCode: {
-        type: String,
-      },
+			keywords: {
+				type: [String],
+				lowercase: true,
+				default: [],
+			},
 
-      counterContact: {
-        type: String,
-      },
+			canonicalUrl: String,
+			ogTitle: String,
+			ogDescription: String,
+			ogImage: String,
+		},
 
-      airportAddress: {
-        type: String,
-      },
-    },
+		metadata: {
+			verified: {
+				type: Boolean,
+				default: false,
+			},
 
-    airportMapLocation: {
-      latitude: {
-        type: Number,
-      },
-      longitude: {
-        type: Number,
-      },
-      mapQuery: {
-        type: String,
-      },
-      googleMapsUrl: {
-        type: String,
-      },
-      embedUrl: {
-        type: String,
-      },
-    },
-
-    availableServices: {
-      type: [String],
-      default: [],
-    },
-
-    fleetOperations: {
-      aircraftTypes: {
-        type: [String],
-        default: [],
-      },
-
-      totalFleet: {
-        type: Number,
-      },
-
-      additionalDetails: {
-        type: String,
-      },
-    },
-
-    metadata: {
-      rating: {
-        value: {
-          type: Number,
-          min: 0,
-          max: 5,
-          default: 0,
-        },
-        bestRating: {
-          type: Number,
-          default: 5,
-        },
-        worstRating: {
-          type: Number,
-          default: 1,
-        },
-      },
-
-      reviewCount: {
-        type: Number,
-        default: 0,
-      },
-
-      verified: {
-        type: Boolean,
-        default: false,
-      },
-
-      reviewSummary: {
-        type: String,
-        trim: true,
-        maxlength: 160,
-      },
-
-      keywords: [
-        {
-          type: String,
-          lowercase: true,
-          trim: true,
-        },
-      ],
-
-      lastUpdated: {
-        type: Date,
-        default: Date.now,
-      },
-    },
- 
-    slug: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
-    firstName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    logo: {
-      type: String,
-    },
-    photo: {
-      type: String,
-    },
-    officeOverview: {
-      airlineName: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-      city: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-      country: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-      address: {
-        type: String,
-        required: true,
-      },
-      phone: {
-        type: String,
-      },
-      hours: {
-        start: {
-          type: String,
-          required: true,
-        },
-        end: {
-          type: String,
-          required: true,
-        },
-      },
-      website: {
-        type: String,
-      },
-    },
-    about: {
-      airlineId: {
-        type: String,
-      },
-      location: {
-        type: String,
-        trim: true,
-      },
-      overview: {
-        type: String,
-        trim: true,
-      },
-      network: {
-        type: String,
-        trim: true,
-      },
-      fleet: {
-        type: String,
-        trim: true,
-      },
-      cabins: {
-        type: String,
-        trim: true,
-      },
-      alliance: {
-        type: String,
-        trim: true,
-      },
-      services: {
-        type: String,
-        trim: true,
-      },
-      baggage: {
-        type: String,
-        trim: true,
-      },
-      loyalty: {
-        type: String,
-        trim: true,
-      },
-      airportServices: {
-        type: String,
-        trim: true,
-      },
-      targetCustomers: {
-        type: String,
-        trim: true,
-      },
-      support: {
-        type: String,
-        trim: true,
-      },
-      description: {
-        type: String,
-      },
-      history: {
-        type: String,
-      },
-      additionalInfo: {
-        type: String,
-      },
-    },
-    airportLocation: {
-      airportName: {
-        type: String,
-      },
-      terminalInfo: {
-        type: String,
-      },
-      iataCode: {
-        type: String,
-      },
-      counterContact: {
-        type: String,
-      },
-      airportAddress: {
-        type: String,
-      },
-    },
-    airportMapLocation: {
-      latitude: {
-        type: Number,
-      },
-      longitude: {
-        type: Number,
-      },
-      mapQuery: {
-        type: String,
-      },
-      googleMapsUrl: {
-        type: String,
-      },
-      embedUrl: {
-        type: String,
-      },
-    },
-    availableServices: {
-      type: [String],
-      default: [],
-    },
-    fleetOperations: {
-      aircraftTypes: {
-        type: [String],
-        default: [],
-      },
-      totalFleet: {
-        type: Number,
-      },
-      additionalDetails: {
-        type: String,
-      },
-    },
-    metadata: {
-      rating: {
-        value: {
-          type: Number,
-          min: 0,
-          max: 5,
-          default: 0,
-        },
-        bestRating: {
-          type: Number,
-          default: 5,
-        },
-        worstRating: {
-          type: Number,
-          default: 1,
-        },
-      },
-      reviewCount: {
-        type: Number,
-        default: 0,
-      },
-      verified: {
-        type: Boolean,
-        default: false,
-      },
-      reviewSummary: {
-        type: String,
-        trim: true,
-        maxlength: 160,
-      },
-      keywords: [
-        {
-          type: String,
-          lowercase: true,
-          trim: true,
-        },
-      ],
-      lastUpdated: {
-        type: Date,
-        default: Date.now,
-      },
-    },
-  },
-  {
-    timestamps: true,
-  }
+			rating: {
+				value: {
+					type: Number,
+					min: 0,
+					max: 5,
+					default: 0,
+				},
+				reviewCount: {
+					type: Number,
+					default: 0,
+				},
+			},
+		},
+	},
+	{ timestamps: true },
 );
-
-OfficeSchema.pre("save", function (next) {
-  const hours = this.officeOverview?.hours;
-
-  if (hours?.start && hours?.end && hours.start >= hours.end) {
-    return next(new Error("Office end time must be later than start time"));
-  }
-
-  next();
-});
 
 export default mongoose.models.Office || mongoose.model("Office", OfficeSchema);

@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Office from "../model/officeSchema.js";
 
 
@@ -9,6 +10,7 @@ export const getAllOffices = async (req, res) => {
       city,
       country,
       airlineName,
+      airline,
       verified,
       search,
       sortBy = "createdAt",
@@ -23,6 +25,17 @@ export const getAllOffices = async (req, res) => {
     if (country) query["officeOverview.country"] = new RegExp(country, "i");
     if (airlineName)
       query["officeOverview.airlineName"] = new RegExp(airlineName, "i");
+    if (airline) {
+      // Find airline by slug first, then use its ObjectId
+      const Airline = mongoose.model('Airline');
+      const airlineDoc = await Airline.findOne({ slug: airline });
+      if (airlineDoc) {
+        query["airline"] = airlineDoc._id;
+      } else {
+        // If airline slug not found, return empty results
+        query["airline"] = null;
+      }
+    }
     if (verified !== undefined)
       query["metadata.verified"] = verified === "true";
     

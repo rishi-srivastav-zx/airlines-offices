@@ -137,6 +137,18 @@ export default function AirlineOfficeForm({
     }
   });
 
+  // URL validation function
+  const isValidUrl = (url) => {
+    if (!url) return true; // Optional field
+    try {
+      // Basic URL pattern validation
+      const urlPattern = /^(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
+      return urlPattern.test(url);
+    } catch {
+      return false;
+    }
+  };
+
   // Initialize with existing data
   useEffect(() => {
     if (initialData) {
@@ -147,6 +159,7 @@ export default function AirlineOfficeForm({
         continent: initialData.continent?._id || initialData.continent || "",
         country: initialData.country?._id || initialData.country || "",
         city: initialData.city?._id || initialData.city || "",
+        website: initialData.website || "",
         photoPreview: initialData.photo ? `http://localhost:3001${initialData.photo}` : null,
         seo: {
           ...prev.seo,
@@ -411,6 +424,9 @@ export default function AirlineOfficeForm({
         if (!formData.officeOverview.country) newErrors.country = "Select a country";
         if (!formData.officeOverview.city) newErrors.city = "City is required";
         if (!formData.officeOverview.address) newErrors.address = "Address is required";
+        if (formData.website && !isValidUrl(formData.website)) {
+          newErrors.website = "Please enter a valid URL (e.g., https://www.example.com)";
+        }
         break;
       case 2:
         if (!formData.airportLocation.airportName) newErrors.airportName = "Airport name is required";
@@ -676,6 +692,36 @@ export default function AirlineOfficeForm({
 										placeholder="+1 234 567 8900"
 										className="w-full px-4 py-3 rounded-xl text-gray-900 border-2 border-slate-200 focus:border-indigo-500 outline-none"
 									/>
+								</div>
+
+								<div className="space-y-2">
+									<label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+										<Globe size={16} />
+										Website
+									</label>
+									<input
+										type="url"
+										name="website"
+										value={formData.website}
+										onChange={(e) =>
+											handleInputChange(e)
+										}
+										placeholder="https://www.example.com"
+										className={`w-full px-4 py-3 rounded-xl text-gray-900 border-2 ${errors.website ? "border-red-300" : "border-slate-200"} focus:border-indigo-500 outline-none`}
+									/>
+									{errors.website && (
+										<p className="text-red-500 text-sm flex items-center gap-1">
+											<AlertCircle size={14} /> {errors.website}
+										</p>
+									)}
+									<p className="text-xs text-slate-500 mt-1">
+										Optional: Include full URL with https://
+									</p>
+									{errors.website && (
+										<p className="text-red-500 text-sm flex items-center gap-1">
+											<AlertCircle size={14} /> {errors.website}
+										</p>
+									)}
 								</div>
 
 								<div className="space-y-2 md:col-span-2">

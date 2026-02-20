@@ -62,7 +62,7 @@ export default function Footer() {
                             <ul className="space-y-4 text-sm text-gray-400">
                                 <li>
                                     <Link
-                                        href="/directory"
+                                        href="/directoryAirlines"
                                         className="hover:text-white"
                                     >
                                         Airlines Directory
@@ -70,7 +70,7 @@ export default function Footer() {
                                 </li>
                                 <li>
                                     <Link
-                                        href="/blog"
+                                        href="/blogs"
                                         className="hover:text-white"
                                     >
                                         Travel Blog
@@ -85,9 +85,12 @@ export default function Footer() {
                                     </Link>
                                 </li>
                                 <li>
-                                    <a href="#" className="hover:text-white">
+                                    <Link
+                                        href="/privacy-policy"
+                                        className="hover:text-white"
+                                    >
                                         Privacy Policy
-                                    </a>
+                                    </Link>
                                 </li>
                             </ul>
                         </div>

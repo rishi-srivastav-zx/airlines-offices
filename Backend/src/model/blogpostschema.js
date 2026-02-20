@@ -1,139 +1,135 @@
 import { Schema, model } from "mongoose";
 
-const BlogPostSchema = new Schema(
-    {
-        title: {
-            type: String,
-            required: true,
-            trim: true,
-        },
+/* ---------- SUB SCHEMAS ---------- */
 
-        slug: {
-            type: String,
-            required: true,
-            unique: true,
-            lowercase: true,
-            index: true,
-        },
-
-        author: {
-            name: { type: String, trim: true },
-            role: String,
-            avatar: String,
-            bio: String,
-            website: String,
-            facebook: String,
-            twitter: String,
-            linkedin: String,
-            instagram: String,
-        },
-
-        featuredImage: {
-            type: String,
-            required: true,
-        },
-
-        category: {
-            type: String,
-            index: true,
-        },
-
-        tags: {
-            type: [String],
-            index: true,
-        },
-
-        introduction: {
-            type: String,
-            required: true,
-        },
-
-        cabinClasses: {
-            economy: {
-                seatTypes: [
-                    {
-                        type: String,
-                        description: String,
-                        legroom: String,
-                    },
-                ],
-            },
-            club: {
-                advantages: [
-                    {
-                        feature: String,
-                        description: String,
-                    },
-                ],
-            },
-        },
-
-        upgradeOptions: [
-            {
-                method: String,
-                steps: [
-                    {
-                        stepNumber: Number,
-                        instruction: String,
-                    },
-                ],
-                notes: [String],
-            },
-        ],
-
-        pricing: {
-            range: {
-                min: Number,
-                max: Number,
-                currency: { type: String, default: "INR" },
-            },
-        },
-
-        benefits: [String],
-
-        faq: [
-            {
-                question: String,
-                answer: String,
-            },
-        ],
-
-        relatedAirlines: [
-            {
-                name: String,
-                link: String,
-            },
-        ],
-
-        seo: {
-            metaTitle: String,
-            metaDescription: String,
-            keywords: [String],
-        },
-
-        views: { type: Number, default: 0 },
-        likes: { type: Number, default: 0 },
-
-        status: {
-            type: String,
-            enum: ["pending", "draft", "published", "archived"],
-            default: "pending",
-            index: true,
-        },
-
-        publishDate: {
-            type: Date,
-            default: Date.now,
-        },
-    },
-    { timestamps: true },
+const EconomySeatSchema = new Schema(
+  {
+    seatName: { type: String },
+    description: { type: String, required: true },
+    legroom: { type: String, required: true },
+  },
+  { _id: false }
 );
 
-// 🔍 Text search index
+const ClubAdvantageSchema = new Schema(
+  {
+    feature: { type: String, required: true },
+    description: { type: String, required: true },
+  },
+  { _id: false }
+);
+
+const UpgradeStepSchema = new Schema(
+  {
+    stepNumber: Number,
+    instruction: String,
+  },
+  { _id: false }
+);
+
+/* ---------- MAIN BLOG SCHEMA ---------- */
+
+const BlogPostSchema = new Schema(
+  {
+    title: { type: String, required: true, trim: true },
+
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      index: true,
+    },
+
+    author: {
+      name: String,
+      role: String,
+      avatar: String,
+      bio: String,
+      website: String,
+      facebook: String,
+      twitter: String,
+      linkedin: String,
+      instagram: String,
+    },
+
+    featuredImage: { type: String, required: true },
+
+    category: { type: String, index: true },
+
+    tags: { type: [String], index: true },
+
+    introduction: { type: String, required: true },
+
+    content: { type: String },
+
+    cabinClasses: {
+      economy: {
+        seatTypes: [EconomySeatSchema],
+      },
+      club: {
+        advantages: [ClubAdvantageSchema],
+      },
+    },
+
+    upgradeOptions: [
+      {
+        method: String,
+        steps: [UpgradeStepSchema],
+        notes: [String],
+      },
+    ],
+
+    pricing: {
+      range: {
+        min: Number,
+        max: Number,
+        currency: { type: String, default: "USD" },
+      },
+    },
+
+    benefits: [String],
+
+    faq: [
+      {
+        question: String,
+        answer: String,
+      },
+    ],
+
+    relatedAirlines: [
+      {
+        name: String,
+        link: String,
+      },
+    ],
+
+    seo: {
+      metaTitle: String,
+      metaDescription: String,
+      keywords: [String],
+    },
+
+    views: { type: Number, default: 0 },
+    likes: { type: Number, default: 0 },
+
+    status: {
+      type: String,
+      enum: ["pending", "draft", "published", "archived"],
+      default: "pending",
+      index: true,
+    },
+
+    publishDate: { type: Date, default: Date.now },
+  },
+  { timestamps: true }
+);
+
+/* ---------- INDEXES ---------- */
 BlogPostSchema.index({
-    title: "text",
-    introduction: "text",
-    tags: "text",
+  title: "text",
+  introduction: "text",
+  tags: "text",
 });
 
 export default model("BlogPost", BlogPostSchema);

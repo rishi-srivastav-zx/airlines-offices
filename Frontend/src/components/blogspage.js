@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Calendar, User, PhoneOutgoing, FileText } from "lucide-react";
 import { blogService } from "@/services/api";
 import { toast, Toaster } from "react-hot-toast";
+import { getBlogImage } from "@/utils/getBlogImage";
 
 // Skeleton Card Component
 const SkeletonCard = () => (
@@ -64,7 +65,7 @@ export default function BlogPage() {
             });
 
             const mappedPosts = res.data.map((blog) => ({
-                id: blog._id,
+                slug: blog.slug,
                 title: blog.title,
                 image: blog.featuredImage,
                 excerpt:
@@ -159,7 +160,7 @@ export default function BlogPage() {
                             <div className="max-w-7xl mx-auto">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:px-6">
                                     {blogPosts.map((post, index) => (
-                                        <React.Fragment key={post.id}>
+                                        <React.Fragment key={post.slug}>
                                             {/* Banner */}
                                             {index === BANNER_INDEX && (
                                                 <div className="sm:col-span-2 lg:col-span-4">
@@ -202,21 +203,18 @@ export default function BlogPage() {
 
                                             {/* Blog Card */}
                                             <Link
-                                                href={`/blogs/${post.title
-                                                    .toLowerCase()
-                                                    .replace(/\s+/g, "-")}`}
+                                                href={`/blogs/${post.slug}`}
                                                 className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden
                           hover:shadow-xl hover:-translate-y-2 transition-all duration-300 flex flex-col"
                                             >
                                                 <div className="relative h-40 w-full bg-gray-100">
-                                                    <Image
+                                                    <img
                                                         src={post.image}
                                                         alt={post.title}
-                                                        fill
-                                                        className="object-cover transition-transform duration-500 hover:scale-105"
+                                                        className="object-cover w-full h-full transition-transform duration-500 hover:scale-105"
                                                         onError={(e) => {
                                                             e.target.src =
-                                                                "/placeholder-blog.jpg"; // Fallback image
+                                                               getBlogImage(post?.image); 
                                                         }}
                                                     />
                                                 </div>

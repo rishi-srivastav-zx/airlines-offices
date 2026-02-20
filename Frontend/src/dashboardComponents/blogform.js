@@ -11,8 +11,12 @@ import {
     Upload,
     ChevronRight,
     ChevronLeft,
+    AlertCircle,
+    CheckCircle,
+    Info,
 } from "lucide-react";
 import TinyMCEEditor from "./tinymceditor";
+import { toast } from "react-hot-toast";
 
 // Mock generateSEOData function
 const generateSEOData = async (type, content) => {
@@ -31,34 +35,32 @@ const generateSEOData = async (type, content) => {
 };
 
 const uploadImage = async (file) => {
-        try {
-            const formData = new FormData();
-            formData.append("image", file);
+    try {
+        const formData = new FormData();
+        formData.append("image", file);
 
-            const response = await fetch("http://localhost:3001/api/upload/image", {
-                method: "POST",
-                body: formData,
-            });
+        const response = await fetch("http://localhost:3001/api/upload/image", {
+            method: "POST",
+            body: formData,
+        });
 
-            if (!response.ok) {
-                throw new Error("Upload failed");
-            }
+        if (!response.ok) {
+            throw new Error("Upload failed");
+        }
 
-            const result = await response.json();
-            
-            if (result.success && result.url) {
-                return result.url;
-            } else {
-                // Fallback to mock URL if upload fails
-                console.warn("Upload failed, using mock URL");
-                return `https://picsum.photos/seed/${Date.now()}/400/300.jpg`;
-            }
-        } catch (error) {
-            console.error("Upload error:", error);
-            // Fallback to mock URL
+        const result = await response.json();
+        
+        if (result.success && result.url) {
+            return result.url;
+        } else {
+            console.warn("Upload failed, using mock URL");
             return `https://picsum.photos/seed/${Date.now()}/400/300.jpg`;
         }
-    };
+    } catch (error) {
+        console.error("Upload error:", error);
+        return `https://picsum.photos/seed/${Date.now()}/400/300.jpg`;
+    }
+};
 
 export default function BlogFormModal({ mode, blog, onSave, onClose }) {
     const [isGeneratingSEO, setIsGeneratingSEO] = useState(false);
@@ -68,7 +70,7 @@ export default function BlogFormModal({ mode, blog, onSave, onClose }) {
     const [keywordInput, setKeywordInput] = useState("");
     const fileInputRef = useRef(null);
 
-const steps = ["basic", "content", "cabin", "pricing", "seo"];
+    const steps = ["basic", "content", "cabin", "pricing", "seo"];
     const stepTitles = {
         basic: "Basic Information",
         content: "Content Details",
@@ -77,115 +79,125 @@ const steps = ["basic", "content", "cabin", "pricing", "seo"];
         seo: "SEO Optimization",
     };
 
-const [formData, setFormData] = useState({
-        title: "",
-        slug: "",
-        featuredImage: "",
-        category: "",
-        tags: [],
-        introduction: "",
-        content: "",
-        author: { 
-            name: "", 
-            role: "", 
-            avatar: "",
-            bio: "",
-            website: "",
-            facebook: "",
-            twitter: "",
-            linkedin: "",
-            instagram: ""
+  const [formData, setFormData] = useState({
+  title: "",
+  slug: "",
+  featuredImage: "",
+  category: "",
+  tags: [],
+  introduction: "",
+  content: "",
+
+  author: {
+    name: "",
+    role: "",
+    avatar: "",
+    bio: "",
+    website: "",
+    facebook: "",
+    twitter: "",
+    linkedin: "",
+    instagram: "",
+  },
+
+    cabinClasses: {
+      economy: {
+        seatTypes: [
+          {
+            seatName: "",
+            description: "",
+            legroom: "",
+          },
+        ],
+      },
+      club: {
+      advantages: [
+        {
+          feature: "",
+          description: "",
         },
-        cabinClasses: {
-            economy: {
-                seatTypes: [],
-            },
-            club: {
-                advantages: [],
-            },
-        },
-        upgradeOptions: [],
-        pricing: {
-            range: { min: 0, max: 0, currency: "INR" },
-        },
-        benefits: [],
-        faq: [],
-        relatedAirlines: [],
-        seo: {
-            metaTitle: "",
-            metaDescription: "",
-            keywords: [],
-        },
-        status: "pending",
-        publishDate: new Date(),
-    });
+      ],
+    },
+  },
+
+  upgradeOptions: [],
+  pricing: {
+    range: { min: 0, max: 0, currency: "INR" },
+  },
+  benefits: [],
+  faq: [],
+  relatedAirlines: [],
+  seo: {
+    metaTitle: "",
+    metaDescription: "",
+    keywords: [],
+  },
+  status: "pending",
+  publishDate: new Date(),
+});
+
 
     const isEditMode = mode === "edit" || mode === "create";
     const isViewMode = mode === "view";
     const activeTab = steps[currentStep];
 
-useEffect(() => {
-        if (blog) {
-            setFormData({
-                title: blog.title || "",
-                slug: blog.slug || "",
-                featuredImage: blog.featuredImage || "",
-                category: blog.category || "",
-                tags: blog.tags || [],
-                introduction: blog.introduction || "",
-                content: blog.content || "",
-                author: blog.author || { 
-                    name: "", 
-                    role: "", 
-                    avatar: "",
-                    bio: "",
-                    website: "",
-                    facebook: "",
-                    twitter: "",
-                    linkedin: "",
-                    instagram: ""
-                },
-                cabinClasses: blog.cabinClasses || {
-                    economy: {
-                        seatTypes: [],
-                    },
-                    club: {
-                        advantages: [],
-                    },
-                },
-                upgradeOptions: blog.upgradeOptions || [],
-                pricing: blog.pricing || {
-                    range: { min: 0, max: 0, currency: "INR" },
-                },
-                benefits: blog.benefits || [],
-                faq: blog.faq || [],
-                relatedAirlines: blog.relatedAirlines || [],
-                seo: blog.seo || {
-                    metaTitle: "",
-                    metaDescription: "",
-                    keywords: [],
-                },
-                status: blog.status || "pending",
-                publishDate: blog.publishDate || new Date(),
-            });
-        }
-    }, [blog, mode]);
+ useEffect(() => {
+  if (!blog) return;
 
-const handleAuthorAvatarUpload = async (file) => {
+  setFormData({
+    title: blog.title ?? "",
+    slug: blog.slug ?? "",
+    featuredImage: blog.featuredImage ?? "",
+    category: blog.category ?? "",
+    tags: blog.tags ?? [],
+    introduction: blog.introduction ?? "",
+    content: blog.content ?? "",
+
+    author: {
+      name: blog.author?.name ?? "",
+      role: blog.author?.role ?? "",
+      avatar: blog.author?.avatar ?? "",
+      bio: blog.author?.bio ?? "",
+      website: blog.author?.website ?? "",
+      facebook: blog.author?.facebook ?? "",
+      twitter: blog.author?.twitter ?? "",
+      linkedin: blog.author?.linkedin ?? "",
+      instagram: blog.author?.instagram ?? "",
+    },
+
+    cabinClasses: {
+      economy: {
+        seatTypes: blog.cabinClasses?.economy?.seatTypes ?? [],
+      },
+      club: {
+        advantages: blog.cabinClasses?.club?.advantages ?? [],
+      },
+    },
+
+    upgradeOptions: blog.upgradeOptions ?? [],
+    pricing: blog.pricing ?? { range: { min: 0, max: 0, currency: "INR" } },
+    benefits: blog.benefits ?? [],
+    faq: blog.faq ?? [],
+    relatedAirlines: blog.relatedAirlines ?? [],
+    seo: blog.seo ?? { metaTitle: "", metaDescription: "", keywords: [] },
+    status: blog.status ?? "pending",
+    publishDate: blog.publishDate ? new Date(blog.publishDate) : new Date(),
+  });
+}, [blog, mode]);
+
+
+    const handleAuthorAvatarUpload = async (file) => {
         try {
-            // Validate file type
             if (!file.type.startsWith("image/")) {
-                alert("Please upload a valid image file (JPG, PNG, GIF, WebP)");
+                toast.error("Please upload a valid image file (JPG, PNG, GIF, WebP)");
                 return;
             }
 
-            // Validate file size (max 5MB)
             if (file.size > 5 * 1024 * 1024) {
-                alert("Image size should be less than 5MB");
+                toast.error("Image size should be less than 5MB");
                 return;
             }
 
-            // Use the same upload method as featured image
             const avatarUrl = await uploadImage(file);
             
             setFormData((prev) => ({
@@ -195,54 +207,49 @@ const handleAuthorAvatarUpload = async (file) => {
                     avatar: avatarUrl, 
                 },
             }));
+            toast.success("Avatar uploaded successfully!");
         } catch (error) {
-            alert("Failed to upload avatar. Please try again.");
+            toast.error("Failed to upload avatar. Please try again.");
         }
     };
 
-
-useEffect(() => {
+    useEffect(() => {
         if (isEditMode && formData.title && !blog) {
             const slug = formData.title
                 .toLowerCase()
-                .replace(/[^a-z0-9\s]+/g, " ") // Replace special chars with space first
+                .replace(/[^a-z0-9\s]+/g, " ")
                 .trim()
-                .replace(/\s+/g, "-") // Replace spaces with hyphens
+                .replace(/\s+/g, "-")
                 .replace(/^-|-$/g, "")
-                .replace(/[()]/g, ""); // Remove parentheses
+                .replace(/[()]/g, "");
             setFormData((prev) => ({ ...prev, slug }));
         }
     }, [formData.title, isEditMode, blog]);
 
-const handleImageUpload = async (e) => {
+    const handleImageUpload = async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        console.log("Image upload started:", file.name, file.type, file.size);
-
-        // Validate file type
         if (!file.type.startsWith("image/")) {
-            alert("Please upload a valid image file (JPG, PNG, GIF, WebP)");
+            toast.error("Please upload a valid image file (JPG, PNG, GIF, WebP)");
             return;
         }
 
-        // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            alert("Image size should be less than 5MB");
+            toast.error("Image size should be less than 5MB");
             return;
         }
 
         setIsUploadingImage(true);
         try {
             const imageUrl = await uploadImage(file);
-            console.log("Upload completed, URL:", imageUrl);
             setFormData((prev) => ({
                 ...prev,
                 featuredImage: imageUrl,
             }));
+            toast.success("Image uploaded successfully!");
         } catch (error) {
-            console.error("Upload failed:", error);
-            alert("Failed to upload image. Please try again.");
+            toast.error("Failed to upload image. Please try again.");
         } finally {
             setIsUploadingImage(false);
         }
@@ -250,7 +257,7 @@ const handleImageUpload = async (e) => {
 
     const handleGenerateSEO = async () => {
         if (!formData.title) {
-            alert("Please enter a blog title first.");
+            toast.error("Please enter a blog title first.");
             return;
         }
         setIsGeneratingSEO(true);
@@ -267,27 +274,28 @@ const handleImageUpload = async (e) => {
                     keywords: result.keywords,
                 },
             }));
+            toast.success("SEO data generated successfully!");
         }
         setIsGeneratingSEO(false);
     };
 
     const validateStep = (step) => {
         switch (step) {
-            case 0: // basic
+            case 0:
                 if (!formData.title.trim()) {
-                    alert("Please enter a title");
+                    toast.error("Please enter a title");
                     return false;
                 }
                 if (!formData.slug.trim()) {
-                    alert("Please enter a slug");
+                    toast.error("Please enter a slug");
                     return false;
                 }
                 if (!formData.featuredImage.trim()) {
-                    alert("Please add a featured image URL or upload an image");
+                    toast.error("Please add a featured image URL or upload an image");
                     return false;
                 }
                 if (!formData.introduction.trim()) {
-                    alert("Please enter an introduction");
+                    toast.error("Please enter an introduction");
                     return false;
                 }
                 return true;
@@ -306,24 +314,22 @@ const handleImageUpload = async (e) => {
         setCurrentStep((prev) => Math.max(prev - 1, 0));
     };
 
-const handleSubmit = (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
         
-        // Validate required fields before submission
         if (!formData.title || formData.title.trim() === "") {
-            alert("Please provide a title before submitting.");
+            toast.error("Please provide a title before submitting.");
             return;
         }
         if (!formData.featuredImage || formData.featuredImage.trim() === "") {
-            alert("Please upload a featured image before submitting.");
+            toast.error("Please upload a featured image before submitting.");
             return;
         }
         if (!formData.introduction || formData.introduction.trim() === "") {
-            alert("Please provide an introduction before submitting.");
+            toast.error("Please provide an introduction before submitting.");
             return;
         }
         
-        // Prepare clean data that matches the backend schema
         const submitData = {
             title: formData.title.trim(),
             slug: formData.slug.trim(),
@@ -345,7 +351,7 @@ const handleSubmit = (e) => {
             },
             cabinClasses: {
                 economy: {
-                    seatTypes: formData.cabinClasses.economy.seatTypes.filter(seat => seat?.type?.trim())
+                    seatTypes: formData.cabinClasses.economy.seatTypes.filter(seat => seat?.seatName?.trim())
                 },
                 club: {
                     advantages: formData.cabinClasses.club.advantages.filter(adv => adv?.feature?.trim())
@@ -375,9 +381,6 @@ const handleSubmit = (e) => {
             publishDate: formData.publishDate || new Date()
         };
         
-        console.log("=== FRONTEND SUBMITTING DATA ===");
-        console.log(JSON.stringify(submitData, null, 2));
-        
         onSave(submitData);
     };
 
@@ -387,6 +390,7 @@ const handleSubmit = (e) => {
         return "Write New Blog Post";
     };
 
+    // Helper functions for dynamic fields
     const addTag = () => {
         if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
             setFormData((prev) => ({
@@ -394,6 +398,9 @@ const handleSubmit = (e) => {
                 tags: [...prev.tags, tagInput.trim()],
             }));
             setTagInput("");
+            toast.success("Tag added!");
+        } else if (formData.tags.includes(tagInput.trim())) {
+            toast.error("Tag already exists!");
         }
     };
 
@@ -402,13 +409,11 @@ const handleSubmit = (e) => {
             ...prev,
             tags: prev.tags.filter((t) => t !== tag),
         }));
+        toast.success("Tag removed!");
     };
 
     const addKeyword = () => {
-        if (
-            keywordInput.trim() &&
-            !formData.seo.keywords.includes(keywordInput.trim())
-        ) {
+        if (keywordInput.trim() && !formData.seo.keywords.includes(keywordInput.trim())) {
             setFormData((prev) => ({
                 ...prev,
                 seo: {
@@ -417,6 +422,9 @@ const handleSubmit = (e) => {
                 },
             }));
             setKeywordInput("");
+            toast.success("Keyword added!");
+        } else if (formData.seo.keywords.includes(keywordInput.trim())) {
+            toast.error("Keyword already exists!");
         }
     };
 
@@ -428,10 +436,12 @@ const handleSubmit = (e) => {
                 keywords: prev.seo.keywords.filter((k) => k !== keyword),
             },
         }));
+        toast.success("Keyword removed!");
     };
 
     const addBenefit = () => {
         setFormData((prev) => ({ ...prev, benefits: [...prev.benefits, ""] }));
+        toast.success("Benefit field added!");
     };
 
     const updateBenefit = (index, value) => {
@@ -445,6 +455,7 @@ const handleSubmit = (e) => {
             ...prev,
             benefits: prev.benefits.filter((_, i) => i !== index),
         }));
+        toast.success("Benefit removed!");
     };
 
     const addFAQ = () => {
@@ -452,6 +463,7 @@ const handleSubmit = (e) => {
             ...prev,
             faq: [...prev.faq, { question: "", answer: "" }],
         }));
+        toast.success("FAQ added!");
     };
 
     const updateFAQ = (index, field, value) => {
@@ -465,6 +477,7 @@ const handleSubmit = (e) => {
             ...prev,
             faq: prev.faq.filter((_, i) => i !== index),
         }));
+        toast.success("FAQ removed!");
     };
 
     const addRelatedAirline = () => {
@@ -472,6 +485,7 @@ const handleSubmit = (e) => {
             ...prev,
             relatedAirlines: [...prev.relatedAirlines, { name: "", link: "" }],
         }));
+        toast.success("Related airline added!");
     };
 
     const updateRelatedAirline = (index, field, value) => {
@@ -485,6 +499,170 @@ const handleSubmit = (e) => {
             ...prev,
             relatedAirlines: prev.relatedAirlines.filter((_, i) => i !== index),
         }));
+        toast.success("Related airline removed!");
+    };
+
+    // Cabin class helpers
+    const addEconomySeatType = () => {
+        setFormData((prev) => ({
+            ...prev,
+            cabinClasses: {
+                ...prev.cabinClasses,
+                economy: {
+                    ...prev.cabinClasses.economy,
+                    seatTypes: [...prev.cabinClasses.economy.seatTypes, { seatName: "", description: "", legroom: "" }]
+                }
+            }
+        }));
+        toast.success("Economy seat type added!");
+    };
+
+    const updateEconomySeatType = (index, field, value) => {
+        const newSeatTypes = [...formData.cabinClasses.economy.seatTypes];
+        newSeatTypes[index] = { ...newSeatTypes[index], [field]: value };
+        setFormData((prev) => ({
+            ...prev,
+            cabinClasses: {
+                ...prev.cabinClasses,
+                economy: {
+                    ...prev.cabinClasses.economy,
+                    seatTypes: newSeatTypes
+                }
+            }
+        }));
+    };
+
+    const removeEconomySeatType = (index) => {
+        const newSeatTypes = [...formData.cabinClasses.economy.seatTypes];
+        newSeatTypes.splice(index, 1);
+        setFormData((prev) => ({
+            ...prev,
+            cabinClasses: {
+                ...prev.cabinClasses,
+                economy: {
+                    ...prev.cabinClasses.economy,
+                    seatTypes: newSeatTypes
+                }
+            }
+        }));
+        toast.success("Economy seat type removed!");
+    };
+
+    const addClubAdvantage = () => {
+        setFormData((prev) => ({
+            ...prev,
+            cabinClasses: {
+                ...prev.cabinClasses,
+                club: {
+                    ...prev.cabinClasses.club,
+                    advantages: [...prev.cabinClasses.club.advantages, { feature: "", description: "" }]
+                }
+            }
+        }));
+        toast.success("Club advantage added!");
+    };
+
+    const updateClubAdvantage = (index, field, value) => {
+        const newAdvantages = [...formData.cabinClasses.club.advantages];
+        newAdvantages[index] = { ...newAdvantages[index], [field]: value };
+        setFormData((prev) => ({
+            ...prev,
+            cabinClasses: {
+                ...prev.cabinClasses,
+                club: {
+                    ...prev.cabinClasses.club,
+                    advantages: newAdvantages
+                }
+            }
+        }));
+    };
+
+    const removeClubAdvantage = (index) => {
+        const newAdvantages = [...formData.cabinClasses.club.advantages];
+        newAdvantages.splice(index, 1);
+        setFormData((prev) => ({
+            ...prev,
+            cabinClasses: {
+                ...prev.cabinClasses,
+                club: {
+                    ...prev.cabinClasses.club,
+                    advantages: newAdvantages
+                }
+            }
+        }));
+        toast.success("Club advantage removed!");
+    };
+
+    const addUpgradeOption = () => {
+        setFormData((prev) => ({
+            ...prev,
+            upgradeOptions: [...prev.upgradeOptions, { method: "", steps: [], notes: [] }]
+        }));
+        toast.success("Upgrade option added!");
+    };
+
+    const updateUpgradeOption = (index, field, value) => {
+        const newOptions = [...formData.upgradeOptions];
+        newOptions[index] = { ...newOptions[index], [field]: value };
+        setFormData((prev) => ({ ...prev, upgradeOptions: newOptions }));
+    };
+
+    const removeUpgradeOption = (index) => {
+        const newOptions = [...formData.upgradeOptions];
+        newOptions.splice(index, 1);
+        setFormData((prev) => ({ ...prev, upgradeOptions: newOptions }));
+        toast.success("Upgrade option removed!");
+    };
+
+    const addUpgradeStep = (optionIndex) => {
+        const newOptions = [...formData.upgradeOptions];
+        if (!newOptions[optionIndex].steps) newOptions[optionIndex].steps = [];
+        newOptions[optionIndex].steps.push({ stepNumber: newOptions[optionIndex].steps.length + 1, instruction: "" });
+        setFormData((prev) => ({ ...prev, upgradeOptions: newOptions }));
+        toast.success("Step added!");
+    };
+
+    const updateUpgradeStep = (optionIndex, stepIndex, field, value) => {
+        const newOptions = [...formData.upgradeOptions];
+        if (!newOptions[optionIndex].steps) newOptions[optionIndex].steps = [];
+        newOptions[optionIndex].steps[stepIndex] = { ...newOptions[optionIndex].steps[stepIndex], [field]: value };
+        setFormData((prev) => ({ ...prev, upgradeOptions: newOptions }));
+    };
+
+    const removeUpgradeStep = (optionIndex, stepIndex) => {
+        const newOptions = [...formData.upgradeOptions];
+        if (!newOptions[optionIndex].steps) newOptions[optionIndex].steps = [];
+        newOptions[optionIndex].steps.splice(stepIndex, 1);
+        // Renumber steps
+        newOptions[optionIndex].steps = newOptions[optionIndex].steps.map((step, idx) => ({
+            ...step,
+            stepNumber: idx + 1
+        }));
+        setFormData((prev) => ({ ...prev, upgradeOptions: newOptions }));
+        toast.success("Step removed!");
+    };
+
+    const addUpgradeNote = (optionIndex) => {
+        const newOptions = [...formData.upgradeOptions];
+        if (!newOptions[optionIndex].notes) newOptions[optionIndex].notes = [];
+        newOptions[optionIndex].notes.push("");
+        setFormData((prev) => ({ ...prev, upgradeOptions: newOptions }));
+        toast.success("Note added!");
+    };
+
+    const updateUpgradeNote = (optionIndex, noteIndex, value) => {
+        const newOptions = [...formData.upgradeOptions];
+        if (!newOptions[optionIndex].notes) newOptions[optionIndex].notes = [];
+        newOptions[optionIndex].notes[noteIndex] = value;
+        setFormData((prev) => ({ ...prev, upgradeOptions: newOptions }));
+    };
+
+    const removeUpgradeNote = (optionIndex, noteIndex) => {
+        const newOptions = [...formData.upgradeOptions];
+        if (!newOptions[optionIndex].notes) newOptions[optionIndex].notes = [];
+        newOptions[optionIndex].notes.splice(noteIndex, 1);
+        setFormData((prev) => ({ ...prev, upgradeOptions: newOptions }));
+        toast.success("Note removed!");
     };
 
     return (
@@ -495,7 +673,7 @@ const handleSubmit = (e) => {
                     <div className="p-6 border-b sticky top-0 bg-white z-10">
                         <div className="flex justify-between items-center mb-4">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+                                <div className="p-2 bg-[#00ADEF] text-white rounded-lg">
                                     <FileText size={20} />
                                 </div>
                                 <h2 className="text-xl font-bold text-slate-900">
@@ -523,7 +701,7 @@ const handleSubmit = (e) => {
                                             <div
                                                 className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
                                                     index <= currentStep
-                                                        ? "bg-indigo-600 text-white"
+                                                        ? "bg-[#00ADEF] text-white"
                                                         : "bg-slate-200 text-slate-500"
                                                 }`}
                                             >
@@ -532,7 +710,7 @@ const handleSubmit = (e) => {
                                             <span
                                                 className={`text-sm font-medium whitespace-nowrap ${
                                                     index <= currentStep
-                                                        ? "text-indigo-600"
+                                                        ? "text-[#00ADEF]"
                                                         : "text-slate-500"
                                                 }`}
                                             >
@@ -543,7 +721,7 @@ const handleSubmit = (e) => {
                                             <div
                                                 className={`flex-1 h-0.5 mx-2 ${
                                                     index < currentStep
-                                                        ? "bg-indigo-600"
+                                                        ? "bg-[#00ADEF]"
                                                         : "bg-slate-200"
                                                 }`}
                                             />
@@ -563,7 +741,7 @@ const handleSubmit = (e) => {
                                         onClick={() => setCurrentStep(index)}
                                         className={`px-4 py-2 font-medium text-sm capitalize whitespace-nowrap ${
                                             currentStep === index
-                                                ? "border-b-2 border-indigo-600 text-indigo-600"
+                                                ? "border-b-2 border-[#00ADEF] text-[#00ADEF]"
                                                 : "text-slate-500 hover:text-slate-700"
                                         }`}
                                     >
@@ -587,7 +765,7 @@ const handleSubmit = (e) => {
                                         required
                                         disabled={isViewMode}
                                         placeholder="Enter a catchy headline..."
-                                        className="w-full px-4 py-3 text-lg rounded-xl border-2 border-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 text-gray-900 transition-all outline-none disabled:bg-gray-50"
+                                        className="w-full px-4 py-3 text-lg rounded-xl border-2 border-slate-300 focus:border-[#00ADEF] focus:ring-4 focus:ring-[#00ADEF]/10 text-gray-900 transition-all outline-none disabled:bg-gray-50"
                                         value={formData.title || ""}
                                         onChange={(e) =>
                                             setFormData({
@@ -606,7 +784,7 @@ const handleSubmit = (e) => {
                                         required
                                         disabled={isViewMode}
                                         placeholder="blog-post-slug"
-                                        className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                        className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
                                         value={formData.slug || ""}
                                         onChange={(e) =>
                                             setFormData({
@@ -624,7 +802,7 @@ const handleSubmit = (e) => {
                                     <input
                                         disabled={isViewMode}
                                         placeholder="Travel Tips"
-                                        className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                        className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
                                         value={formData.category || ""}
                                         onChange={(e) =>
                                             setFormData({
@@ -640,12 +818,10 @@ const handleSubmit = (e) => {
                                         Featured Image *
                                     </label>
 
-{/* Image Upload Only */}
                                     <div className="space-y-3">
                                         <p className="text-xs text-slate-500 mb-2">
                                             Upload an image file for the featured image
                                         </p>
-                                        {/* Upload Button */}
                                         {isEditMode && (
                                             <div>
                                                 <input
@@ -661,7 +837,7 @@ const handleSubmit = (e) => {
                                                         fileInputRef.current?.click()
                                                     }
                                                     disabled={isUploadingImage}
-                                                    className="w-full px-4 py-3 border-2 border-dashed border-slate-300 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-indigo-600 disabled:opacity-50"
+                                                    className="w-full px-4 py-3 border-2 border-dashed border-slate-300 rounded-lg hover:border-[#00ADEF] hover:bg-[#00ADEF]/5 transition-all flex items-center justify-center gap-2 text-slate-600 hover:text-[#00ADEF] disabled:opacity-50"
                                                 >
                                                     <Upload size={20} />
                                                     {isUploadingImage
@@ -671,18 +847,12 @@ const handleSubmit = (e) => {
                                             </div>
                                         )}
 
-{/* Image Preview */}
                                         {formData.featuredImage && (
                                             <div className="relative">
                                                 <img
                                                     src={formData.featuredImage}
                                                     alt="Preview"
                                                     className="w-full h-64 object-cover rounded-lg"
-                                                    onLoad={() => console.log("Image loaded successfully")}
-                                                    onError={(e) => {
-                                                        console.error("Image failed to load:", formData.featuredImage);
-                                                        e.target.style.display = "none";
-                                                    }}
                                                 />
                                                 {isEditMode && (
                                                     <button
@@ -690,8 +860,7 @@ const handleSubmit = (e) => {
                                                         onClick={() =>
                                                             setFormData({
                                                                 ...formData,
-                                                                featuredImage:
-                                                                    "",
+                                                                featuredImage: "",
                                                             })
                                                         }
                                                         className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
@@ -712,7 +881,7 @@ const handleSubmit = (e) => {
                                         <input
                                             disabled={isViewMode}
                                             placeholder="Add tag..."
-                                            className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                            className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
                                             value={tagInput}
                                             onChange={(e) =>
                                                 setTagInput(e.target.value)
@@ -726,9 +895,10 @@ const handleSubmit = (e) => {
                                             <button
                                                 type="button"
                                                 onClick={addTag}
-                                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                                                className="px-4 py-2 bg-[#00ADEF] text-white rounded-lg hover:bg-[#0095cc] flex items-center gap-2"
                                             >
                                                 <Plus size={18} />
+                                                Add
                                             </button>
                                         )}
                                     </div>
@@ -736,7 +906,7 @@ const handleSubmit = (e) => {
                                         {formData.tags.map((tag, index) => (
                                             <span
                                                 key={index}
-                                                className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm flex items-center gap-2"
+                                                className="px-3 py-1 bg-[#00ADEF]/10 text-[#00ADEF] rounded-full text-sm flex items-center gap-2 border border-[#00ADEF]/20"
                                             >
                                                 {tag}
                                                 {isEditMode && (
@@ -745,7 +915,7 @@ const handleSubmit = (e) => {
                                                         onClick={() =>
                                                             removeTag(tag)
                                                         }
-                                                        className="hover:text-indigo-900"
+                                                        className="hover:text-[#0095cc]"
                                                     >
                                                         <X size={14} />
                                                     </button>
@@ -764,7 +934,7 @@ const handleSubmit = (e) => {
                                         disabled={isViewMode}
                                         rows={4}
                                         placeholder="Write a brief introduction..."
-                                        className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none resize-none disabled:bg-gray-50"
+                                        className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none resize-none disabled:bg-gray-50"
                                         value={formData.introduction || ""}
                                         onChange={(e) =>
                                             setFormData({
@@ -778,7 +948,7 @@ const handleSubmit = (e) => {
                                 <div className="lg:col-span-2">
                                     <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
                                         <svg
-                                            className="w-5 h-5 text-indigo-600"
+                                            className="w-5 h-5 text-[#00ADEF]"
                                             fill="none"
                                             stroke="currentColor"
                                             viewBox="0 0 24 24"
@@ -794,15 +964,10 @@ const handleSubmit = (e) => {
                                     </h3>
 
                                     <div className="space-y-6">
-                                        {/* Name, Role, and Avatar */}
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            {/* Name */}
                                             <div>
                                                 <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                                    Full Name{" "}
-                                                    <span className="text-red-500">
-                                                        *
-                                                    </span>
+                                                    Full Name <span className="text-red-500">*</span>
                                                 </label>
                                                 <input
                                                     type="text"
@@ -811,26 +976,21 @@ const handleSubmit = (e) => {
                                                     className={`w-full px-4 py-2.5 rounded-lg border-2 transition-all text-slate-900 placeholder:text-slate-400 ${
                                                         isViewMode
                                                             ? "border-slate-200 bg-slate-50 cursor-not-allowed"
-                                                            : "border-slate-300 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                                                            : "border-slate-300 hover:border-[#00ADEF] focus:border-[#00ADEF] focus:ring-2 focus:ring-[#00ADEF]/20 outline-none"
                                                     }`}
-                                                    value={
-                                                        formData.author?.name ||
-                                                        ""
-                                                    }
+                                                    value={formData.author?.name || ""}
                                                     onChange={(e) =>
                                                         setFormData({
                                                             ...formData,
                                                             author: {
                                                                 ...formData.author,
-                                                                name: e.target
-                                                                    .value,
+                                                                name: e.target.value,
                                                             },
                                                         })
                                                     }
                                                 />
                                             </div>
 
-                                            {/* Role */}
                                             <div>
                                                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                                                     Role / Title
@@ -842,43 +1002,31 @@ const handleSubmit = (e) => {
                                                     className={`w-full px-4 py-2.5 rounded-lg border-2 transition-all text-slate-900 placeholder:text-slate-400 ${
                                                         isViewMode
                                                             ? "border-slate-200 bg-slate-50 cursor-not-allowed"
-                                                            : "border-slate-300 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                                                            : "border-slate-300 hover:border-[#00ADEF] focus:border-[#00ADEF] focus:ring-2 focus:ring-[#00ADEF]/20 outline-none"
                                                     }`}
-                                                    value={
-                                                        formData.author?.role ||
-                                                        ""
-                                                    }
+                                                    value={formData.author?.role || ""}
                                                     onChange={(e) =>
                                                         setFormData({
                                                             ...formData,
                                                             author: {
                                                                 ...formData.author,
-                                                                role: e.target
-                                                                    .value,
+                                                                role: e.target.value,
                                                             },
                                                         })
                                                     }
                                                 />
                                             </div>
 
-                                            {/* Avatar Upload */}
                                             <div>
                                                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                                                     Profile Picture
                                                 </label>
-
                                                 <div className="flex items-start gap-4">
-                                                    {/* Avatar Preview */}
                                                     <div className="relative">
-                                                        {formData.author
-                                                            ?.avatar ? (
+                                                        {formData.author?.avatar ? (
                                                             <div className="relative group">
                                                                 <img
-                                                                    src={
-                                                                        formData
-                                                                            .author
-                                                                            .avatar
-                                                                    }
+                                                                    src={formData.author.avatar}
                                                                     alt="Author avatar preview"
                                                                     className="w-20 h-20 rounded-full object-cover border-2 border-slate-300 shadow-sm"
                                                                 />
@@ -886,34 +1034,17 @@ const handleSubmit = (e) => {
                                                                     <button
                                                                         type="button"
                                                                         onClick={() =>
-                                                                            setFormData(
-                                                                                {
-                                                                                    ...formData,
-                                                                                    author: {
-                                                                                        ...formData.author,
-                                                                                        avatar: null,
-                                                                                    },
+                                                                            setFormData({
+                                                                                ...formData,
+                                                                                author: {
+                                                                                    ...formData.author,
+                                                                                    avatar: null,
                                                                                 },
-                                                                            )
+                                                                            })
                                                                         }
                                                                         className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all opacity-0 group-hover:opacity-100"
-                                                                        title="Remove image"
                                                                     >
-                                                                        <svg
-                                                                            className="w-3.5 h-3.5"
-                                                                            fill="none"
-                                                                            stroke="currentColor"
-                                                                            viewBox="0 0 24 24"
-                                                                        >
-                                                                            <path
-                                                                                strokeLinecap="round"
-                                                                                strokeLinejoin="round"
-                                                                                strokeWidth={
-                                                                                    2
-                                                                                }
-                                                                                d="M6 18L18 6M6 6l12 12"
-                                                                            />
-                                                                        </svg>
+                                                                        <X size={14} />
                                                                     </button>
                                                                 )}
                                                             </div>
@@ -928,120 +1059,42 @@ const handleSubmit = (e) => {
                                                                     <path
                                                                         strokeLinecap="round"
                                                                         strokeLinejoin="round"
-                                                                        strokeWidth={
-                                                                            2
-                                                                        }
+                                                                        strokeWidth={2}
                                                                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                                                                     />
                                                                 </svg>
                                                             </div>
                                                         )}
                                                     </div>
-
-                                                    {/* Upload Input */}
                                                     <div className="flex-1">
-                                                        <label
-                                                            className={`block cursor-pointer ${isViewMode ? "cursor-not-allowed" : ""}`}
-                                                        >
-                                                            <div
-                                                                className={`border-2 border-dashed rounded-lg p-4 text-center transition-all ${
-                                                                    isViewMode
-                                                                        ? "border-slate-200 bg-slate-50"
-                                                                        : "border-slate-300 hover:border-indigo-400 hover:bg-indigo-50/50"
-                                                                }`}
-                                                            >
-                                                                <svg
-                                                                    className="mx-auto h-8 w-8 text-slate-400 mb-2"
-                                                                    fill="none"
-                                                                    stroke="currentColor"
-                                                                    viewBox="0 0 24 24"
-                                                                >
-                                                                    <path
-                                                                        strokeLinecap="round"
-                                                                        strokeLinejoin="round"
-                                                                        strokeWidth={
-                                                                            2
-                                                                        }
-                                                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                                                                    />
-                                                                </svg>
+                                                        <label className={`block cursor-pointer ${isViewMode ? "cursor-not-allowed" : ""}`}>
+                                                            <div className={`border-2 border-dashed rounded-lg p-4 text-center transition-all ${
+                                                                isViewMode
+                                                                    ? "border-slate-200 bg-slate-50"
+                                                                    : "border-slate-300 hover:border-[#00ADEF] hover:bg-[#00ADEF]/5"
+                                                            }`}>
+                                                                <Upload className="mx-auto h-8 w-8 text-slate-400 mb-2" />
                                                                 <p className="text-sm font-medium text-slate-700 mb-1">
-                                                                    {formData
-                                                                        .author
-                                                                        ?.avatar
-                                                                        ? "Change picture"
-                                                                        : "Upload a picture"}
+                                                                    {formData.author?.avatar ? "Change picture" : "Upload a picture"}
                                                                 </p>
-                                                                <p className="text-xs text-slate-500">
-                                                                    PNG, JPG up
-                                                                    to 5MB
-                                                                </p>
+                                                                <p className="text-xs text-slate-500">PNG, JPG up to 5MB</p>
                                                             </div>
                                                             <input
                                                                 type="file"
                                                                 accept="image/*"
-                                                                disabled={
-                                                                    isViewMode
-                                                                }
-                                                                onChange={(
-                                                                    e,
-                                                                ) => {
-                                                                    const file =
-                                                                        e.target
-                                                                            .files?.[0];
-                                                                    if (file) {
-                                                                        handleAuthorAvatarUpload(
-                                                                            file,
-                                                                        );
-                                                                    }
+                                                                disabled={isViewMode}
+                                                                onChange={(e) => {
+                                                                    const file = e.target.files?.[0];
+                                                                    if (file) handleAuthorAvatarUpload(file);
                                                                 }}
                                                                 className="hidden"
                                                             />
                                                         </label>
-
-                                                        {formData.author
-                                                            ?.avatar &&
-                                                            !isViewMode && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        setFormData(
-                                                                            {
-                                                                                ...formData,
-                                                                                author: {
-                                                                                    ...formData.author,
-                                                                                    avatar: null,
-                                                                                },
-                                                                            },
-                                                                        )
-                                                                    }
-                                                                    className="mt-2 text-sm text-red-600 hover:text-red-700 font-medium transition-colors flex items-center gap-1"
-                                                                >
-                                                                    <svg
-                                                                        className="w-4 h-4"
-                                                                        fill="none"
-                                                                        stroke="currentColor"
-                                                                        viewBox="0 0 24 24"
-                                                                    >
-                                                                        <path
-                                                                            strokeLinecap="round"
-                                                                            strokeLinejoin="round"
-                                                                            strokeWidth={
-                                                                                2
-                                                                            }
-                                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                                                        />
-                                                                    </svg>
-                                                                    Remove
-                                                                    picture
-                                                                </button>
-                                                            )}
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Bio */}
                                         <div>
                                             <label className="block text-sm font-semibold text-slate-700 mb-2">
                                                 Biography
@@ -1053,11 +1106,9 @@ const handleSubmit = (e) => {
                                                 className={`w-full px-4 py-3 rounded-lg border-2 transition-all resize-none text-slate-900 placeholder:text-slate-400 ${
                                                     isViewMode
                                                         ? "border-slate-200 bg-slate-50 cursor-not-allowed"
-                                                        : "border-slate-300 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                                                        : "border-slate-300 hover:border-[#00ADEF] focus:border-[#00ADEF] focus:ring-2 focus:ring-[#00ADEF]/20 outline-none"
                                                 }`}
-                                                value={
-                                                    formData.author?.bio || ""
-                                                }
+                                                value={formData.author?.bio || ""}
                                                 onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
@@ -1069,121 +1120,59 @@ const handleSubmit = (e) => {
                                                 }
                                             />
                                             <p className="mt-1 text-xs text-slate-500">
-                                                {formData.author?.bio?.length ||
-                                                    0}{" "}
-                                                / 500 characters
+                                                {formData.author?.bio?.length || 0} / 500 characters
                                             </p>
                                         </div>
 
-                                        {/* Social Links */}
                                         <div>
                                             <label className="block text-sm font-semibold text-slate-700 mb-3">
                                                 Social Media Links
                                             </label>
                                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                                 {[
-                                                    {
-                                                        field: "website",
-                                                        label: "Website",
-                                                        icon: "🌐",
-                                                        placeholder:
-                                                            "https://example.com",
-                                                    },
-                                                    {
-                                                        field: "facebook",
-                                                        label: "Facebook",
-                                                        icon: "📘",
-                                                        placeholder:
-                                                            "https://facebook.com/username",
-                                                    },
-                                                    {
-                                                        field: "twitter",
-                                                        label: "Twitter/X",
-                                                        icon: "🐦",
-                                                        placeholder:
-                                                            "https://twitter.com/username",
-                                                    },
-                                                    {
-                                                        field: "linkedin",
-                                                        label: "LinkedIn",
-                                                        icon: "💼",
-                                                        placeholder:
-                                                            "https://linkedin.com/in/username",
-                                                    },
-                                                    {
-                                                        field: "instagram",
-                                                        label: "Instagram",
-                                                        icon: "📷",
-                                                        placeholder:
-                                                            "https://instagram.com/username",
-                                                    },
-
-                                                ].map(
-                                                    ({
-                                                        field,
-                                                        label,
-                                                        icon,
-                                                        placeholder,
-                                                    }) => (
-                                                        <div key={field}>
-                                                            <label className="block text-xs font-medium text-slate-600 mb-1.5 flex items-center gap-1">
-                                                                <span>
-                                                                    {icon}
-                                                                </span>
-                                                                {label}
-                                                            </label>
-                                                            <input
-                                                                type="url"
-                                                                disabled={
-                                                                    isViewMode
-                                                                }
-                                                                placeholder={
-                                                                    placeholder
-                                                                }
-                                                                className={`w-full px-3 py-2 rounded-lg border-2 transition-all text-sm text-slate-900 placeholder:text-slate-400 ${
-                                                                    isViewMode
-                                                                        ? "border-slate-200 bg-slate-50 cursor-not-allowed"
-                                                                        : "border-slate-300 hover:border-indigo-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
-                                                                }`}
-                                                                value={
-                                                                    formData
-                                                                        .author?.[
-                                                                        field
-                                                                    ] || ""
-                                                                }
-                                                                onChange={(e) =>
-                                                                    setFormData(
-                                                                        {
-                                                                            ...formData,
-                                                                            author: {
-                                                                                ...formData.author,
-                                                                                [field]:
-                                                                                    e
-                                                                                        .target
-                                                                                        .value,
-                                                                            },
-                                                                        },
-                                                                    )
-                                                                }
-                                                            />
-                                                        </div>
-                                                    ),
-                                                )}
+                                                    { field: "website", label: "Website", icon: "🌐", placeholder: "https://example.com" },
+                                                    { field: "facebook", label: "Facebook", icon: "📘", placeholder: "https://facebook.com/username" },
+                                                    { field: "twitter", label: "Twitter/X", icon: "🐦", placeholder: "https://twitter.com/username" },
+                                                    { field: "linkedin", label: "LinkedIn", icon: "💼", placeholder: "https://linkedin.com/in/username" },
+                                                    { field: "instagram", label: "Instagram", icon: "📷", placeholder: "https://instagram.com/username" },
+                                                ].map(({ field, label, icon, placeholder }) => (
+                                                    <div key={field}>
+                                                        <label className="block text-xs font-medium text-slate-600 mb-1.5 flex items-center gap-1">
+                                                            <span>{icon}</span>
+                                                            {label}
+                                                        </label>
+                                                        <input
+                                                            type="url"
+                                                            disabled={isViewMode}
+                                                            placeholder={placeholder}
+                                                            className={`w-full px-3 py-2 rounded-lg border-2 transition-all text-sm text-slate-900 placeholder:text-slate-400 ${
+                                                                isViewMode
+                                                                    ? "border-slate-200 bg-slate-50 cursor-not-allowed"
+                                                                    : "border-slate-300 hover:border-[#00ADEF] focus:border-[#00ADEF] focus:ring-2 focus:ring-[#00ADEF]/20 outline-none"
+                                                            }`}
+                                                            value={formData.author?.[field] || ""}
+                                                            onChange={(e) =>
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    author: {
+                                                                        ...formData.author,
+                                                                        [field]: e.target.value,
+                                                                    },
+                                                                })
+                                                            }
+                                                        />
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
-
-
-
                             </div>
                         )}
 
-{/* Content Tab */}
+                        {/* Content Tab */}
                         {activeTab === "content" && (
                             <div className="space-y-6">
-                                {/* Main Content Editor */}
                                 <div>
                                     <h3 className="text-lg font-bold text-slate-900 mb-4">
                                         Blog Content
@@ -1210,46 +1199,35 @@ const handleSubmit = (e) => {
                                             <button
                                                 type="button"
                                                 onClick={addBenefit}
-                                                className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700"
+                                                className="flex items-center gap-2 px-4 py-2 bg-[#00ADEF] text-white rounded-lg hover:bg-[#0095cc] transition-colors"
                                             >
                                                 <Plus size={16} /> Add Benefit
                                             </button>
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        {formData.benefits.map(
-                                            (benefit, index) => (
-                                                <div
-                                                    key={index}
-                                                    className="flex gap-2"
-                                                >
-                                                    <input
-                                                        disabled={isViewMode}
-                                                        placeholder="Benefit description..."
-                                                        className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                                        value={benefit}
-                                                        onChange={(e) =>
-                                                            updateBenefit(
-                                                                index,
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                    />
-                                                    {isEditMode && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                removeBenefit(
-                                                                    index,
-                                                                )
-                                                            }
-                                                            className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg"
-                                                        >
-                                                            <Trash2 size={18} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ),
+                                        {formData.benefits.map((benefit, index) => (
+                                            <div key={index} className="flex gap-2">
+                                                <input
+                                                    disabled={isViewMode}
+                                                    placeholder="Benefit description..."
+                                                    className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
+                                                    value={benefit}
+                                                    onChange={(e) => updateBenefit(index, e.target.value)}
+                                                />
+                                                {isEditMode && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeBenefit(index)}
+                                                        className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {formData.benefits.length === 0 && isEditMode && (
+                                            <p className="text-sm text-slate-500 italic">No benefits added yet. Click "Add Benefit" to create one.</p>
                                         )}
                                     </div>
                                 </div>
@@ -1263,7 +1241,7 @@ const handleSubmit = (e) => {
                                             <button
                                                 type="button"
                                                 onClick={addFAQ}
-                                                className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700"
+                                                className="flex items-center gap-2 px-4 py-2 bg-[#00ADEF] text-white rounded-lg hover:bg-[#0095cc] transition-colors"
                                             >
                                                 <Plus size={16} /> Add FAQ
                                             </button>
@@ -1271,10 +1249,7 @@ const handleSubmit = (e) => {
                                     </div>
                                     <div className="space-y-4">
                                         {formData.faq.map((item, index) => (
-                                            <div
-                                                key={index}
-                                                className="p-4 border-2 border-slate-200 rounded-lg space-y-2"
-                                            >
+                                            <div key={index} className="p-4 border-2 border-slate-200 rounded-lg space-y-2">
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-sm font-bold text-slate-700">
                                                         Question {index + 1}
@@ -1282,10 +1257,8 @@ const handleSubmit = (e) => {
                                                     {isEditMode && (
                                                         <button
                                                             type="button"
-                                                            onClick={() =>
-                                                                removeFAQ(index)
-                                                            }
-                                                            className="text-red-600 hover:text-red-700"
+                                                            onClick={() => removeFAQ(index)}
+                                                            className="text-red-600 hover:text-red-700 transition-colors"
                                                         >
                                                             <Trash2 size={16} />
                                                         </button>
@@ -1294,32 +1267,23 @@ const handleSubmit = (e) => {
                                                 <input
                                                     disabled={isViewMode}
                                                     placeholder="Question..."
-                                                    className="w-full px-4 py-2 rounded-lg border border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                    className="w-full px-4 py-2 rounded-lg border border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
                                                     value={item.question}
-                                                    onChange={(e) =>
-                                                        updateFAQ(
-                                                            index,
-                                                            "question",
-                                                            e.target.value,
-                                                        )
-                                                    }
+                                                    onChange={(e) => updateFAQ(index, "question", e.target.value)}
                                                 />
                                                 <textarea
                                                     disabled={isViewMode}
                                                     rows={3}
                                                     placeholder="Answer..."
-                                                    className="w-full px-4 py-2 rounded-lg border border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                    className="w-full px-4 py-2 rounded-lg border border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
                                                     value={item.answer}
-                                                    onChange={(e) =>
-                                                        updateFAQ(
-                                                            index,
-                                                            "answer",
-                                                            e.target.value,
-                                                        )
-                                                    }
+                                                    onChange={(e) => updateFAQ(index, "answer", e.target.value)}
                                                 />
                                             </div>
                                         ))}
+                                        {formData.faq.length === 0 && isEditMode && (
+                                            <p className="text-sm text-slate-500 italic">No FAQs added yet. Click "Add FAQ" to create one.</p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -1332,60 +1296,42 @@ const handleSubmit = (e) => {
                                             <button
                                                 type="button"
                                                 onClick={addRelatedAirline}
-                                                className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700"
+                                                className="flex items-center gap-2 px-4 py-2 bg-[#00ADEF] text-white rounded-lg hover:bg-[#0095cc] transition-colors"
                                             >
                                                 <Plus size={16} /> Add Airline
                                             </button>
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        {formData.relatedAirlines.map(
-                                            (airline, index) => (
-                                                <div
-                                                    key={index}
-                                                    className="flex gap-2"
-                                                >
-                                                    <input
-                                                        disabled={isViewMode}
-                                                        placeholder="Airline name..."
-                                                        className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                                        value={airline.name}
-                                                        onChange={(e) =>
-                                                            updateRelatedAirline(
-                                                                index,
-                                                                "name",
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                    />
-                                                    <input
-                                                        disabled={isViewMode}
-                                                        placeholder="Link..."
-                                                        className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                                        value={airline.link}
-                                                        onChange={(e) =>
-                                                            updateRelatedAirline(
-                                                                index,
-                                                                "link",
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                    />
-                                                    {isEditMode && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                removeRelatedAirline(
-                                                                    index,
-                                                                )
-                                                            }
-                                                            className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg"
-                                                        >
-                                                            <Trash2 size={18} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ),
+                                        {formData.relatedAirlines.map((airline, index) => (
+                                            <div key={index} className="flex gap-2">
+                                                <input
+                                                    disabled={isViewMode}
+                                                    placeholder="Airline name..."
+                                                    className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
+                                                    value={airline.name}
+                                                    onChange={(e) => updateRelatedAirline(index, "name", e.target.value)}
+                                                />
+                                                <input
+                                                    disabled={isViewMode}
+                                                    placeholder="Link..."
+                                                    className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
+                                                    value={airline.link}
+                                                    onChange={(e) => updateRelatedAirline(index, "link", e.target.value)}
+                                                />
+                                                {isEditMode && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeRelatedAirline(index)}
+                                                        className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {formData.relatedAirlines.length === 0 && isEditMode && (
+                                            <p className="text-sm text-slate-500 italic">No related airlines added yet. Click "Add Airline" to create one.</p>
                                         )}
                                     </div>
                                 </div>
@@ -1397,9 +1343,20 @@ const handleSubmit = (e) => {
                             <div className="space-y-8">
                                 {/* Economy Class */}
                                 <div>
-                                    <h3 className="text-lg font-bold text-slate-900 mb-4">
-                                        Economy Class Seat Types
-                                    </h3>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-lg font-bold text-slate-900">
+                                            Economy Class Seat Types
+                                        </h3>
+                                        {isEditMode && (
+                                            <button
+                                                type="button"
+                                                onClick={addEconomySeatType}
+                                                className="flex items-center gap-2 px-4 py-2 bg-[#00ADEF] text-white rounded-lg hover:bg-[#0095cc] transition-colors"
+                                            >
+                                                <Plus size={16} /> Add Seat Type
+                                            </button>
+                                        )}
+                                    </div>
                                     <div className="space-y-3">
                                         {formData.cabinClasses.economy.seatTypes.map((seatType, index) => (
                                             <div key={index} className="p-4 border-2 border-slate-200 rounded-lg space-y-3">
@@ -1410,21 +1367,8 @@ const handleSubmit = (e) => {
                                                     {isEditMode && (
                                                         <button
                                                             type="button"
-                                                            onClick={() => {
-                                                                const newSeatTypes = [...formData.cabinClasses.economy.seatTypes];
-                                                                newSeatTypes.splice(index, 1);
-                                                                setFormData({
-                                                                    ...formData,
-                                                                    cabinClasses: {
-                                                                        ...formData.cabinClasses,
-                                                                        economy: {
-                                                                            ...formData.cabinClasses.economy,
-                                                                            seatTypes: newSeatTypes
-                                                                        }
-                                                                    }
-                                                                });
-                                                            }}
-                                                            className="text-red-600 hover:text-red-700"
+                                                            onClick={() => removeEconomySeatType(index)}
+                                                            className="text-red-600 hover:text-red-700 transition-colors"
                                                         >
                                                             <Trash2 size={16} />
                                                         </button>
@@ -1434,94 +1378,49 @@ const handleSubmit = (e) => {
                                                     <input
                                                         disabled={isViewMode}
                                                         placeholder="Seat Type Name"
-                                                        className="px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                        className="px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
                                                         value={seatType.type || ""}
-                                                        onChange={(e) => {
-                                                            const newSeatTypes = [...formData.cabinClasses.economy.seatTypes];
-                                                            newSeatTypes[index] = { ...seatType, type: e.target.value };
-                                                            setFormData({
-                                                                ...formData,
-                                                                cabinClasses: {
-                                                                    ...formData.cabinClasses,
-                                                                    economy: {
-                                                                        ...formData.cabinClasses.economy,
-                                                                        seatTypes: newSeatTypes
-                                                                    }
-                                                                }
-                                                            });
-                                                        }}
+                                                        onChange={(e) => updateEconomySeatType(index, "type", e.target.value)}
                                                     />
                                                     <input
                                                         disabled={isViewMode}
                                                         placeholder="Description"
-                                                        className="px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                        className="px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
                                                         value={seatType.description || ""}
-                                                        onChange={(e) => {
-                                                            const newSeatTypes = [...formData.cabinClasses.economy.seatTypes];
-                                                            newSeatTypes[index] = { ...seatType, description: e.target.value };
-                                                            setFormData({
-                                                                ...formData,
-                                                                cabinClasses: {
-                                                                    ...formData.cabinClasses,
-                                                                    economy: {
-                                                                        ...formData.cabinClasses.economy,
-                                                                        seatTypes: newSeatTypes
-                                                                    }
-                                                                }
-                                                            });
-                                                        }}
+                                                        onChange={(e) => updateEconomySeatType(index, "description", e.target.value)}
                                                     />
                                                     <input
                                                         disabled={isViewMode}
                                                         placeholder="Legroom"
-                                                        className="px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                        className="px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
                                                         value={seatType.legroom || ""}
-                                                        onChange={(e) => {
-                                                            const newSeatTypes = [...formData.cabinClasses.economy.seatTypes];
-                                                            newSeatTypes[index] = { ...seatType, legroom: e.target.value };
-                                                            setFormData({
-                                                                ...formData,
-                                                                cabinClasses: {
-                                                                    ...formData.cabinClasses,
-                                                                    economy: {
-                                                                        ...formData.cabinClasses.economy,
-                                                                        seatTypes: newSeatTypes
-                                                                    }
-                                                                }
-                                                            });
-                                                        }}
+                                                        onChange={(e) => updateEconomySeatType(index, "legroom", e.target.value)}
                                                     />
                                                 </div>
                                             </div>
                                         ))}
-                                        {isEditMode && (
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setFormData({
-                                                        ...formData,
-                                                        cabinClasses: {
-                                                            ...formData.cabinClasses,
-                                                            economy: {
-                                                                ...formData.cabinClasses.economy,
-                                                                seatTypes: [...formData.cabinClasses.economy.seatTypes, { type: "", description: "", legroom: "" }]
-                                                            }
-                                                        }
-                                                    });
-                                                }}
-                                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2"
-                                            >
-                                                <Plus size={16} /> Add Seat Type
-                                            </button>
+                                        {formData.cabinClasses.economy.seatTypes.length === 0 && isEditMode && (
+                                            <p className="text-sm text-slate-500 italic">No economy seat types added yet. Click "Add Seat Type" to create one.</p>
                                         )}
                                     </div>
                                 </div>
 
                                 {/* Club Class */}
                                 <div>
-                                    <h3 className="text-lg font-bold text-slate-900 mb-4">
-                                        Club Class Advantages
-                                    </h3>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-lg font-bold text-slate-900">
+                                            Club Class Advantages
+                                        </h3>
+                                        {isEditMode && (
+                                            <button
+                                                type="button"
+                                                onClick={addClubAdvantage}
+                                                className="flex items-center gap-2 px-4 py-2 bg-[#00ADEF] text-white rounded-lg hover:bg-[#0095cc] transition-colors"
+                                            >
+                                                <Plus size={16} /> Add Advantage
+                                            </button>
+                                        )}
+                                    </div>
                                     <div className="space-y-3">
                                         {formData.cabinClasses.club.advantages.map((advantage, index) => (
                                             <div key={index} className="p-4 border-2 border-slate-200 rounded-lg space-y-3">
@@ -1532,21 +1431,8 @@ const handleSubmit = (e) => {
                                                     {isEditMode && (
                                                         <button
                                                             type="button"
-                                                            onClick={() => {
-                                                                const newAdvantages = [...formData.cabinClasses.club.advantages];
-                                                                newAdvantages.splice(index, 1);
-                                                                setFormData({
-                                                                    ...formData,
-                                                                    cabinClasses: {
-                                                                        ...formData.cabinClasses,
-                                                                        club: {
-                                                                            ...formData.cabinClasses.club,
-                                                                            advantages: newAdvantages
-                                                                        }
-                                                                    }
-                                                                });
-                                                            }}
-                                                            className="text-red-600 hover:text-red-700"
+                                                            onClick={() => removeClubAdvantage(index)}
+                                                            className="text-red-600 hover:text-red-700 transition-colors"
                                                         >
                                                             <Trash2 size={16} />
                                                         </button>
@@ -1556,74 +1442,42 @@ const handleSubmit = (e) => {
                                                     <input
                                                         disabled={isViewMode}
                                                         placeholder="Feature Name"
-                                                        className="px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                        className="px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
                                                         value={advantage.feature || ""}
-                                                        onChange={(e) => {
-                                                            const newAdvantages = [...formData.cabinClasses.club.advantages];
-                                                            newAdvantages[index] = { ...advantage, feature: e.target.value };
-                                                            setFormData({
-                                                                ...formData,
-                                                                cabinClasses: {
-                                                                    ...formData.cabinClasses,
-                                                                    club: {
-                                                                        ...formData.cabinClasses.club,
-                                                                        advantages: newAdvantages
-                                                                    }
-                                                                }
-                                                            });
-                                                        }}
+                                                        onChange={(e) => updateClubAdvantage(index, "feature", e.target.value)}
                                                     />
                                                     <input
                                                         disabled={isViewMode}
                                                         placeholder="Description"
-                                                        className="px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                        className="px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
                                                         value={advantage.description || ""}
-                                                        onChange={(e) => {
-                                                            const newAdvantages = [...formData.cabinClasses.club.advantages];
-                                                            newAdvantages[index] = { ...advantage, description: e.target.value };
-                                                            setFormData({
-                                                                ...formData,
-                                                                cabinClasses: {
-                                                                    ...formData.cabinClasses,
-                                                                    club: {
-                                                                        ...formData.cabinClasses.club,
-                                                                        advantages: newAdvantages
-                                                                    }
-                                                                }
-                                                            });
-                                                        }}
+                                                        onChange={(e) => updateClubAdvantage(index, "description", e.target.value)}
                                                     />
                                                 </div>
                                             </div>
                                         ))}
-                                        {isEditMode && (
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setFormData({
-                                                        ...formData,
-                                                        cabinClasses: {
-                                                            ...formData.cabinClasses,
-                                                            club: {
-                                                                ...formData.cabinClasses.club,
-                                                                advantages: [...formData.cabinClasses.club.advantages, { feature: "", description: "" }]
-                                                            }
-                                                        }
-                                                    });
-                                                }}
-                                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2"
-                                            >
-                                                <Plus size={16} /> Add Advantage
-                                            </button>
+                                        {formData.cabinClasses.club.advantages.length === 0 && isEditMode && (
+                                            <p className="text-sm text-slate-500 italic">No club advantages added yet. Click "Add Advantage" to create one.</p>
                                         )}
                                     </div>
                                 </div>
 
                                 {/* Upgrade Options */}
                                 <div>
-                                    <h3 className="text-lg font-bold text-slate-900 mb-4">
-                                        Upgrade Options
-                                    </h3>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-lg font-bold text-slate-900">
+                                            Upgrade Options
+                                        </h3>
+                                        {isEditMode && (
+                                            <button
+                                                type="button"
+                                                onClick={addUpgradeOption}
+                                                className="flex items-center gap-2 px-4 py-2 bg-[#00ADEF] text-white rounded-lg hover:bg-[#0095cc] transition-colors"
+                                            >
+                                                <Plus size={16} /> Add Upgrade Option
+                                            </button>
+                                        )}
+                                    </div>
                                     <div className="space-y-4">
                                         {formData.upgradeOptions.map((option, index) => (
                                             <div key={index} className="p-4 border-2 border-slate-200 rounded-lg space-y-4">
@@ -1634,15 +1488,8 @@ const handleSubmit = (e) => {
                                                     {isEditMode && (
                                                         <button
                                                             type="button"
-                                                            onClick={() => {
-                                                                const newOptions = [...formData.upgradeOptions];
-                                                                newOptions.splice(index, 1);
-                                                                setFormData({
-                                                                    ...formData,
-                                                                    upgradeOptions: newOptions
-                                                                });
-                                                            }}
-                                                            className="text-red-600 hover:text-red-700"
+                                                            onClick={() => removeUpgradeOption(index)}
+                                                            className="text-red-600 hover:text-red-700 transition-colors"
                                                         >
                                                             <Trash2 size={16} />
                                                         </button>
@@ -1651,168 +1498,99 @@ const handleSubmit = (e) => {
                                                 <input
                                                     disabled={isViewMode}
                                                     placeholder="Upgrade Method"
-                                                    className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                    className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
                                                     value={option.method || ""}
-                                                    onChange={(e) => {
-                                                        const newOptions = [...formData.upgradeOptions];
-                                                        newOptions[index] = { ...option, method: e.target.value };
-                                                        setFormData({
-                                                            ...formData,
-                                                            upgradeOptions: newOptions
-                                                        });
-                                                    }}
+                                                    onChange={(e) => updateUpgradeOption(index, "method", e.target.value)}
                                                 />
                                                 
                                                 {/* Steps */}
                                                 <div>
-                                                    <h4 className="text-sm font-semibold text-slate-700 mb-2">Steps</h4>
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <h4 className="text-sm font-semibold text-slate-700">Steps</h4>
+                                                        {isEditMode && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => addUpgradeStep(index)}
+                                                                className="px-3 py-1 bg-[#00ADEF]/10 text-[#00ADEF] rounded-lg hover:bg-[#00ADEF]/20 text-sm transition-colors"
+                                                            >
+                                                                <Plus size={14} className="inline mr-1" /> Add Step
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                     <div className="space-y-2">
                                                         {option.steps?.map((step, stepIndex) => (
                                                             <div key={stepIndex} className="flex gap-2 items-center">
-                                                                <input
-                                                                    disabled={isViewMode}
-                                                                    type="number"
-                                                                    placeholder="#"
-                                                                    className="w-16 px-2 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                                                    value={step.stepNumber || ""}
-                                                                    onChange={(e) => {
-                                                                        const newOptions = [...formData.upgradeOptions];
-                                                                        if (!newOptions[index].steps) newOptions[index].steps = [];
-                                                                        newOptions[index].steps[stepIndex] = { ...step, stepNumber: parseInt(e.target.value) || 0 };
-                                                                        setFormData({
-                                                                            ...formData,
-                                                                            upgradeOptions: newOptions
-                                                                        });
-                                                                    }}
-                                                                />
+                                                                <span className="w-8 h-8 flex items-center justify-center bg-slate-100 rounded-lg text-sm font-bold text-slate-600">
+                                                                    {step.stepNumber}
+                                                                </span>
                                                                 <input
                                                                     disabled={isViewMode}
                                                                     placeholder="Instruction"
-                                                                    className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                                    className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
                                                                     value={step.instruction || ""}
-                                                                    onChange={(e) => {
-                                                                        const newOptions = [...formData.upgradeOptions];
-                                                                        if (!newOptions[index].steps) newOptions[index].steps = [];
-                                                                        newOptions[index].steps[stepIndex] = { ...step, instruction: e.target.value };
-                                                                        setFormData({
-                                                                            ...formData,
-                                                                            upgradeOptions: newOptions
-                                                                        });
-                                                                    }}
+                                                                    onChange={(e) => updateUpgradeStep(index, stepIndex, "instruction", e.target.value)}
                                                                 />
                                                                 {isEditMode && (
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => {
-                                                                            const newOptions = [...formData.upgradeOptions];
-                                                                            if (!newOptions[index].steps) newOptions[index].steps = [];
-                                                                            newOptions[index].steps.splice(stepIndex, 1);
-                                                                            setFormData({
-                                                                                ...formData,
-                                                                                upgradeOptions: newOptions
-                                                                            });
-                                                                        }}
-                                                                        className="text-red-600 hover:text-red-700"
+                                                                        onClick={() => removeUpgradeStep(index, stepIndex)}
+                                                                        className="text-red-600 hover:text-red-700 transition-colors"
                                                                     >
                                                                         <Trash2 size={16} />
                                                                     </button>
                                                                 )}
                                                             </div>
                                                         ))}
-                                                        {isEditMode && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    const newOptions = [...formData.upgradeOptions];
-                                                                    if (!newOptions[index].steps) newOptions[index].steps = [];
-                                                                    newOptions[index].steps.push({ stepNumber: 0, instruction: "" });
-                                                                    setFormData({
-                                                                        ...formData,
-                                                                        upgradeOptions: newOptions
-                                                                    });
-                                                                }}
-                                                                className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 text-sm"
-                                                            >
-                                                                Add Step
-                                                            </button>
+                                                        {(!option.steps || option.steps.length === 0) && isEditMode && (
+                                                            <p className="text-sm text-slate-500 italic">No steps added yet.</p>
                                                         )}
                                                     </div>
                                                 </div>
 
                                                 {/* Notes */}
                                                 <div>
-                                                    <h4 className="text-sm font-semibold text-slate-700 mb-2">Notes</h4>
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <h4 className="text-sm font-semibold text-slate-700">Notes</h4>
+                                                        {isEditMode && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => addUpgradeNote(index)}
+                                                                className="px-3 py-1 bg-[#00ADEF]/10 text-[#00ADEF] rounded-lg hover:bg-[#00ADEF]/20 text-sm transition-colors"
+                                                            >
+                                                                <Plus size={14} className="inline mr-1" /> Add Note
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                     <div className="space-y-2">
                                                         {option.notes?.map((note, noteIndex) => (
                                                             <div key={noteIndex} className="flex gap-2">
                                                                 <input
                                                                     disabled={isViewMode}
                                                                     placeholder="Note"
-                                                                    className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                                                    className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
                                                                     value={note || ""}
-                                                                    onChange={(e) => {
-                                                                        const newOptions = [...formData.upgradeOptions];
-                                                                        if (!newOptions[index].notes) newOptions[index].notes = [];
-                                                                        newOptions[index].notes[noteIndex] = e.target.value;
-                                                                        setFormData({
-                                                                            ...formData,
-                                                                            upgradeOptions: newOptions
-                                                                        });
-                                                                    }}
+                                                                    onChange={(e) => updateUpgradeNote(index, noteIndex, e.target.value)}
                                                                 />
                                                                 {isEditMode && (
                                                                     <button
                                                                         type="button"
-                                                                        onClick={() => {
-                                                                            const newOptions = [...formData.upgradeOptions];
-                                                                            if (!newOptions[index].notes) newOptions[index].notes = [];
-                                                                            newOptions[index].notes.splice(noteIndex, 1);
-                                                                            setFormData({
-                                                                                ...formData,
-                                                                                upgradeOptions: newOptions
-                                                                            });
-                                                                        }}
-                                                                        className="text-red-600 hover:text-red-700"
+                                                                        onClick={() => removeUpgradeNote(index, noteIndex)}
+                                                                        className="text-red-600 hover:text-red-700 transition-colors"
                                                                     >
                                                                         <Trash2 size={16} />
                                                                     </button>
                                                                 )}
                                                             </div>
                                                         ))}
-                                                        {isEditMode && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    const newOptions = [...formData.upgradeOptions];
-                                                                    if (!newOptions[index].notes) newOptions[index].notes = [];
-                                                                    newOptions[index].notes.push("");
-                                                                    setFormData({
-                                                                        ...formData,
-                                                                        upgradeOptions: newOptions
-                                                                    });
-                                                                }}
-                                                                className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 text-sm"
-                                                            >
-                                                                Add Note
-                                                            </button>
+                                                        {(!option.notes || option.notes.length === 0) && isEditMode && (
+                                                            <p className="text-sm text-slate-500 italic">No notes added yet.</p>
                                                         )}
                                                     </div>
                                                 </div>
                                             </div>
                                         ))}
-                                        {isEditMode && (
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setFormData({
-                                                        ...formData,
-                                                        upgradeOptions: [...formData.upgradeOptions, { method: "", steps: [], notes: [] }]
-                                                    });
-                                                }}
-                                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2"
-                                            >
-                                                <Plus size={16} /> Add Upgrade Option
-                                            </button>
+                                        {formData.upgradeOptions.length === 0 && isEditMode && (
+                                            <p className="text-sm text-slate-500 italic">No upgrade options added yet. Click "Add Upgrade Option" to create one.</p>
                                         )}
                                     </div>
                                 </div>
@@ -1834,22 +1612,15 @@ const handleSubmit = (e) => {
                                             type="number"
                                             disabled={isViewMode}
                                             placeholder="0"
-                                            className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                            value={
-                                                formData.pricing.range.min || ""
-                                            }
+                                            className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
+                                            value={formData.pricing.range.min || ""}
                                             onChange={(e) =>
                                                 setFormData({
                                                     ...formData,
                                                     pricing: {
                                                         range: {
-                                                            ...formData.pricing
-                                                                .range,
-                                                            min:
-                                                                parseInt(
-                                                                    e.target
-                                                                        .value,
-                                                                ) || 0,
+                                                            ...formData.pricing.range,
+                                                            min: parseInt(e.target.value) || 0,
                                                         },
                                                     },
                                                 })
@@ -1864,22 +1635,15 @@ const handleSubmit = (e) => {
                                             type="number"
                                             disabled={isViewMode}
                                             placeholder="0"
-                                            className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                            value={
-                                                formData.pricing.range.max || ""
-                                            }
+                                            className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
+                                            value={formData.pricing.range.max || ""}
                                             onChange={(e) =>
                                                 setFormData({
                                                     ...formData,
                                                     pricing: {
                                                         range: {
-                                                            ...formData.pricing
-                                                                .range,
-                                                            max:
-                                                                parseInt(
-                                                                    e.target
-                                                                        .value,
-                                                                ) || 0,
+                                                            ...formData.pricing.range,
+                                                            max: parseInt(e.target.value) || 0,
                                                         },
                                                     },
                                                 })
@@ -1892,19 +1656,15 @@ const handleSubmit = (e) => {
                                         </label>
                                         <select
                                             disabled={isViewMode}
-                                            className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                            value={
-                                                formData.pricing.range.currency
-                                            }
+                                            className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
+                                            value={formData.pricing.range.currency}
                                             onChange={(e) =>
                                                 setFormData({
                                                     ...formData,
                                                     pricing: {
                                                         range: {
-                                                            ...formData.pricing
-                                                                .range,
-                                                            currency:
-                                                                e.target.value,
+                                                            ...formData.pricing.range,
+                                                            currency: e.target.value,
                                                         },
                                                     },
                                                 })
@@ -1920,17 +1680,12 @@ const handleSubmit = (e) => {
                             </div>
                         )}
 
-
-
                         {/* SEO Tab */}
                         {activeTab === "seo" && (
                             <div className="space-y-6">
                                 <div className="flex justify-between items-center">
                                     <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                                        <Sparkles
-                                            size={20}
-                                            className="text-indigo-600"
-                                        />
+                                        <Sparkles size={20} className="text-[#00ADEF]" />
                                         SEO Optimization
                                     </h3>
                                     {isEditMode && (
@@ -1938,11 +1693,9 @@ const handleSubmit = (e) => {
                                             type="button"
                                             onClick={handleGenerateSEO}
                                             disabled={isGeneratingSEO}
-                                            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium"
+                                            className="px-4 py-2 bg-[#00ADEF] text-white rounded-lg hover:bg-[#0095cc] disabled:opacity-50 text-sm font-medium transition-colors"
                                         >
-                                            {isGeneratingSEO
-                                                ? "Generating..."
-                                                : "Generate with AI"}
+                                            {isGeneratingSEO ? "Generating..." : "Generate with AI"}
                                         </button>
                                     )}
                                 </div>
@@ -1954,7 +1707,7 @@ const handleSubmit = (e) => {
                                     <input
                                         disabled={isViewMode}
                                         placeholder="SEO optimized title..."
-                                        className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                        className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
                                         value={formData.seo.metaTitle || ""}
                                         onChange={(e) =>
                                             setFormData({
@@ -1976,17 +1729,14 @@ const handleSubmit = (e) => {
                                         disabled={isViewMode}
                                         rows={3}
                                         placeholder="Brief description for search engines..."
-                                        className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
-                                        value={
-                                            formData.seo.metaDescription || ""
-                                        }
+                                        className="w-full px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
+                                        value={formData.seo.metaDescription || ""}
                                         onChange={(e) =>
                                             setFormData({
                                                 ...formData,
                                                 seo: {
                                                     ...formData.seo,
-                                                    metaDescription:
-                                                        e.target.value,
+                                                    metaDescription: e.target.value,
                                                 },
                                             })
                                         }
@@ -2001,51 +1751,45 @@ const handleSubmit = (e) => {
                                         <input
                                             disabled={isViewMode}
                                             placeholder="Add keyword..."
-                                            className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-indigo-500 outline-none disabled:bg-gray-50"
+                                            className="flex-1 px-4 py-2 rounded-lg border-2 border-slate-300 text-gray-900 focus:border-[#00ADEF] outline-none disabled:bg-gray-50"
                                             value={keywordInput}
                                             onChange={(e) =>
                                                 setKeywordInput(e.target.value)
                                             }
                                             onKeyPress={(e) =>
                                                 e.key === "Enter" &&
-                                                (e.preventDefault(),
-                                                addKeyword())
+                                                (e.preventDefault(), addKeyword())
                                             }
                                         />
                                         {isEditMode && (
                                             <button
                                                 type="button"
                                                 onClick={addKeyword}
-                                                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                                                className="px-4 py-2 bg-[#00ADEF] text-white rounded-lg hover:bg-[#0095cc] flex items-center gap-2"
                                             >
                                                 <Plus size={18} />
+                                                Add
                                             </button>
                                         )}
                                     </div>
                                     <div className="flex flex-wrap gap-2">
-                                        {formData.seo.keywords.map(
-                                            (keyword, index) => (
-                                                <span
-                                                    key={index}
-                                                    className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm flex items-center gap-2"
-                                                >
-                                                    {keyword}
-                                                    {isEditMode && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                removeKeyword(
-                                                                    keyword,
-                                                                )
-                                                            }
-                                                            className="hover:text-green-900"
-                                                        >
-                                                            <X size={14} />
-                                                        </button>
-                                                    )}
-                                                </span>
-                                            ),
-                                        )}
+                                        {formData.seo.keywords.map((keyword, index) => (
+                                            <span
+                                                key={index}
+                                                className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm flex items-center gap-2 border border-green-200"
+                                            >
+                                                {keyword}
+                                                {isEditMode && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeKeyword(keyword)}
+                                                        className="hover:text-green-900"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                )}
+                                            </span>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
@@ -2080,7 +1824,7 @@ const handleSubmit = (e) => {
                                 <button
                                     type="button"
                                     onClick={handleNext}
-                                    className="px-8 py-2.5 font-bold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-900/10 transition-all flex items-center gap-2"
+                                    className="px-8 py-2.5 font-bold bg-[#00ADEF] text-white rounded-lg hover:bg-[#0095cc] shadow-lg shadow-[#00ADEF]/25 transition-all flex items-center gap-2"
                                 >
                                     Next
                                     <ChevronRight size={18} />
@@ -2092,9 +1836,7 @@ const handleSubmit = (e) => {
                                     type="submit"
                                     className="px-8 py-2.5 font-bold bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-lg shadow-green-900/10 transition-all"
                                 >
-                                    {mode === "edit"
-                                        ? "Update & Publish"
-                                        : "Save & Publish"}
+                                    {mode === "edit" ? "Update & Publish" : "Save & Publish"}
                                 </button>
                             )}
                         </div>

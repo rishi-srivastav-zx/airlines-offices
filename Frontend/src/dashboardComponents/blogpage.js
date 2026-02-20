@@ -9,6 +9,15 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  Eye,
+  Pencil,
+  Trash2,
+  FileText,
+  Clock,
+  TrendingUp,
+  MoreHorizontal,
+  ArrowUpRight,
+  AlertCircle,
 } from "lucide-react";
 import BlogFormModal from "./blogform";
 import axios from "axios";
@@ -30,34 +39,101 @@ const ContentStatus = {
   archived: "REJECTED",
 };
 
-/* Status Badge */
+/* Enhanced Status Badge with better visuals */
 const StatusBadge = ({ status }) => {
-  const styles = {
-    APPROVED: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-    PUBLISHED: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-    "PENDING APPROVAL": "bg-amber-50 text-amber-700 border border-amber-200",
-    PENDING: "bg-amber-50 text-amber-700 border border-amber-200",
-    DRAFT: "bg-slate-50 text-slate-700 border border-slate-200",
-    REJECTED: "bg-red-50 text-red-700 border border-red-200",
+  const config = {
+    APPROVED: {
+      bg: "bg-emerald-50",
+      text: "text-emerald-700",
+      border: "border-emerald-200",
+      dot: "bg-emerald-500",
+      icon: TrendingUp,
+    },
+    PUBLISHED: {
+      bg: "bg-emerald-50",
+      text: "text-emerald-700",
+      border: "border-emerald-200",
+      dot: "bg-emerald-500",
+      icon: TrendingUp,
+    },
+    "PENDING APPROVAL": {
+      bg: "bg-amber-50",
+      text: "text-amber-700",
+      border: "border-amber-200",
+      dot: "bg-amber-500",
+      icon: Clock,
+    },
+    PENDING: {
+      bg: "bg-amber-50",
+      text: "text-amber-700",
+      border: "border-amber-200",
+      dot: "bg-amber-500",
+      icon: Clock,
+    },
+    DRAFT: {
+      bg: "bg-slate-50",
+      text: "text-slate-700",
+      border: "border-slate-200",
+      dot: "bg-slate-400",
+      icon: FileText,
+    },
+    REJECTED: {
+      bg: "bg-red-50",
+      text: "text-red-700",
+      border: "border-red-200",
+      dot: "bg-red-500",
+      icon: MoreHorizontal,
+    },
   };
+
+  const style = config[status] || config.PENDING;
+  const Icon = style.icon;
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${styles[status] || styles.PENDING} transition-all duration-200`}
+      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${style.bg} ${style.text} border ${style.border} transition-all duration-200 shadow-sm`}
     >
-      <span
-        className={`w-1.5 h-1.5 rounded-full ${
-          status === "APPROVED" || status === "PUBLISHED"
-            ? "bg-emerald-500"
-            : status === "PENDING APPROVAL" || status === "PENDING"
-              ? "bg-amber-500"
-              : status === "DRAFT"
-                ? "bg-slate-400"
-                : "bg-red-500"
-        } animate-pulse`}
-      />
+      <span className={`w-2 h-2 rounded-full ${style.dot} animate-pulse`} />
+      <Icon size={12} className="opacity-70" />
       {status}
     </span>
+  );
+};
+
+/* Delete Confirmation Modal */
+const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, blogTitle }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-3 bg-red-100 rounded-full">
+            <AlertCircle size={24} className="text-red-600" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900">Delete Blog Post</h3>
+        </div>
+        
+        <p className="text-slate-600 mb-6">
+          Are you sure you want to delete <span className="font-semibold text-slate-900">"{blogTitle}"</span>? This action cannot be undone and the blog will be permanently removed.
+        </p>
+
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30"
+          >
+            Delete Permanently
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -71,12 +147,16 @@ export default function BlogsPage() {
   const [modalMode, setModalMode] = useState("view");
   const [selectedBlog, setSelectedBlog] = useState(null);
 
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [blogToDelete, setBlogToDelete] = useState(null);
+
   const fetchBlogs = async (search = "") => {
     try {
       setLoading(true);
       const res = await api.get("/blogs/posts", {
         params: {
-          status: "published", // Only show published blogs in main page
+          status: "published",
           search,
         },
       });
@@ -104,12 +184,10 @@ export default function BlogsPage() {
     }
   };
 
-  /* Initial load */
   useEffect(() => {
     fetchBlogs();
   }, []);
 
-  /* Search (debounced) */
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchBlogs(searchQuery);
@@ -132,7 +210,6 @@ export default function BlogsPage() {
 
   const handleEdit = async (blog) => {
     try {
-      // Use the existing slug to fetch the blog
       const res = await api.get(`/blogs/posts/admin/${encodeURIComponent(blog.slug)}`);
       const blogData = res.data.data;
       
@@ -142,6 +219,26 @@ export default function BlogsPage() {
     } catch (err) {
       console.error(err);
       toast.error("Failed to fetch blog post details");
+    }
+  };
+
+  const handleDeleteClick = (blog) => {
+    setBlogToDelete(blog);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!blogToDelete) return;
+
+    try {
+      await api.delete(`/blogs/posts/${encodeURIComponent(blogToDelete.slug)}`);
+      toast.success("Blog deleted successfully!");
+      setDeleteModalOpen(false);
+      setBlogToDelete(null);
+      fetchBlogs(); // Refresh the list
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete blog post");
     }
   };
 
@@ -157,8 +254,7 @@ export default function BlogsPage() {
         await api.post("/blogs/posts", formData);
         toast.success("Blog created and sent for approval!");
         setIsModalOpen(false);
-        fetchBlogs(); // Refresh the list
-        // Redirect to approval page with blogs tab active
+        fetchBlogs();
         setTimeout(() => {
           window.location.href = "/dashboard/Approvals?tab=blogs";
         }, 1500);
@@ -166,13 +262,12 @@ export default function BlogsPage() {
         await api.put(`/blogs/posts/${encodeURIComponent(selectedBlog.slug)}`, formData);
         toast.success("Blog updated successfully!");
         setIsModalOpen(false);
-        // If editing a pending blog, refresh approval page instead
         if (selectedBlog.status === "pending") {
           setTimeout(() => {
             window.location.href = "/dashboard/Approvals?tab=blogs";
           }, 1000);
         } else {
-          fetchBlogs(); // Refresh published blogs list
+          fetchBlogs();
         }
       }
     } catch (err) {
@@ -185,148 +280,211 @@ export default function BlogsPage() {
   return (
     <>
       <Toaster position="top-center" reverseOrder={false} />
-      <div className="space-y-6 p-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between gap-4">
+      <div className="min-h-screen bg-slate-50/50 p-6 space-y-6">
+        {/* Header Section - Stats Removed */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 mb-1">
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
               Blog Posts
             </h1>
-            <p className="text-slate-600">
-              Create and manage content for the public website.
+            <p className="text-slate-500 mt-1 flex items-center gap-2">
+              <FileText size={16} className="text-[#00ADEF]" />
+              Create and manage content for the public website
             </p>
           </div>
           <button
             onClick={handleAddNew}
-            className="flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white  px-6  rounded-xl font-semibold shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all duration-200 hover:scale-105"
+            className="flex items-center gap-2 bg-[#00ADEF] hover:bg-[#0095cc] text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-[#00ADEF]/25 hover:shadow-xl hover:shadow-[#00ADEF]/30 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0"
           >
-            <Plus size={20} />
-            Create Blogs
+            <Plus size={20} strokeWidth={2.5} />
+            Create New Blog
           </button>
         </div>
 
-        {/* Table Wrapper */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
-          {/* Search */}
-          <div className="p-6 border-b border-slate-200 flex justify-between gap-4 bg-gradient-to-br from-slate-50 to-white">
-            <div className="relative w-full max-w-md">
-              <Search
-                size={18}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-              <input
-                type="text"
-                placeholder="Search articles..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 text-slate-900 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-              />
+        {/* Main Content Card */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/20 overflow-hidden">
+          {/* Search & Filter Bar */}
+          <div className="p-6 border-b border-slate-100 bg-white">
+            <div className="flex flex-col sm:flex-row justify-between gap-4">
+              <div className="relative flex-1 max-w-lg">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Search size={18} className="text-slate-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search articles by title, author, or content..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00ADEF]/20 focus:border-[#00ADEF] transition-all duration-200 hover:bg-white hover:border-slate-300"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button className="flex items-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 shadow-sm">
+                  <Filter size={16} className="text-slate-500" />
+                  Filters
+                </button>
+                <button className="flex items-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 shadow-sm">
+                  <Calendar size={16} className="text-slate-500" />
+                  Date Range
+                </button>
+              </div>
             </div>
-            <button className="flex items-center text-slate-700 gap-2 px-5 py-3 border border-slate-300 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors duration-200">
-              <Filter size={16} />
-              Filters
-            </button>
           </div>
 
-          {/* Loading / Error */}
+          {/* Loading State */}
           {loading && (
-            <div className="p-12 text-center text-slate-500">
-              <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-slate-200 border-t-indigo-600 mb-4"></div>
-              <p className="text-lg font-medium">Loading blogs...</p>
+            <div className="p-16 text-center">
+              <div className="relative inline-block">
+                <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-100 border-t-[#00ADEF]"></div>
+                <div className="absolute inset-0 rounded-full h-16 w-16 border-4 border-transparent border-t-[#00ADEF]/30 animate-pulse"></div>
+              </div>
+              <p className="mt-6 text-lg font-medium text-slate-600">Loading your blogs...</p>
+              <p className="text-sm text-slate-400 mt-1">Please wait a moment</p>
             </div>
           )}
 
+          {/* Error State */}
           {error && (
-            <div className="p-6 mx-6 my-4 text-red-700 bg-red-50 border border-red-200 rounded-xl font-medium">
-              {error}
+            <div className="p-8 m-6 text-red-700 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-3">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <MoreHorizontal size={20} className="text-red-600" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-red-900">Error Loading Blogs</h4>
+                <p className="text-sm mt-1 text-red-700">{error}</p>
+              </div>
             </div>
           )}
 
-          {/* Table */}
+          {/* Table Content */}
           {!loading && !error && (
             <>
               {blogs.length === 0 ? (
-                <div className="p-16 text-center text-slate-500">
-                  <div className="text-7xl mb-6">📝</div>
-                  <h3 className="text-xl font-semibold text-slate-700 mb-2">
+                <div className="p-20 text-center">
+                  <div className="inline-flex items-center justify-center w-24 h-24 bg-slate-50 rounded-3xl mb-6">
+                    <FileText size={48} className="text-slate-300" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">
                     No blog posts found
                   </h3>
-                  <p className="text-sm text-slate-500">
-                    There are no blog posts available at the moment.
+                  <p className="text-slate-500 max-w-md mx-auto mb-6">
+                    Get started by creating your first blog post. It will appear here once published.
                   </p>
+                  <button
+                    onClick={handleAddNew}
+                    className="inline-flex items-center gap-2 text-[#00ADEF] font-semibold hover:underline"
+                  >
+                    Create your first blog
+                    <ArrowUpRight size={16} />
+                  </button>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
-                    <thead className="bg-gradient-to-r from-slate-50 to-slate-100 text-xs uppercase text-slate-600 font-semibold tracking-wider">
+                    <thead className="bg-slate-50/80 border-b border-slate-200">
                       <tr>
-                        <th className="px-6 py-4">Article</th>
-                        <th className="px-6 py-4 text-center">Status</th>
-                        <th className="px-6 py-4">Author</th>
-                        <th className="px-6 py-4">Date</th>
-                        <th className="px-6 py-4">Action</th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Article Details
+                        </th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">
+                          Status
+                        </th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Author
+                        </th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                          Published Date
+                        </th>
+                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-200">
-                      {blogs.map((blog) => (
+                    <tbody className="divide-y divide-slate-100">
+                      {blogs.map((blog, index) => (
                         <tr
                           key={blog.id}
-                          className="hover:bg-slate-50 transition-colors duration-150"
+                          className="group hover:bg-slate-50/80 transition-all duration-200"
+                          style={{ animationDelay: `${index * 50}ms` }}
                         >
                           <td className="px-6 py-5">
                             <div className="flex gap-4 items-center">
-                              <div className="relative group">
+                              <div className="relative group/img">
                                 <img
                                   src={blog.featuredImage}
-                                  className="w-16 h-16 rounded-xl object-cover shadow-md border border-slate-200 group-hover:shadow-lg transition-shadow duration-200"
+                                  className="w-20 h-20 rounded-xl object-cover shadow-md border border-slate-200 group-hover/img:shadow-lg group-hover/img:scale-105 transition-all duration-300"
                                   alt=""
                                 />
-                                <div className="absolute inset-0 rounded-xl bg-black/0 group-hover:bg-black/5 transition-colors duration-200"></div>
+                                <div className="absolute inset-0 rounded-xl ring-2 ring-transparent group-hover/img:ring-[#00ADEF]/20 transition-all duration-300"></div>
                               </div>
-                              <div>
-                                <p className="font-semibold text-slate-900 text-base mb-1">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-slate-900 text-base mb-1 line-clamp-1 group-hover:text-[#00ADEF] transition-colors">
                                   {blog.title}
-                                </p>
-                                <p className="text-xs text-slate-500 flex items-center gap-1.5">
-                                  <ImageIcon
-                                    size={12}
-                                    className="text-slate-400"
-                                  />
-                                  Featured Image
-                                </p>
+                                </h4>
+                                <div className="flex items-center gap-3 text-xs text-slate-500">
+                                  <span className="flex items-center gap-1.5">
+                                    <ImageIcon size={12} className="text-slate-400" />
+                                    Featured Image
+                                  </span>
+                                  <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                  <span className="font-mono text-slate-400">/{blog.slug}</span>
+                                </div>
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-5 text-center align-middle">
-                            <div className="flex justify-center text-slate-900">
-                              <StatusBadge
-                                status={blog.status?.toUpperCase()}
-                              />
+                          
+                          <td className="px-6 py-5 text-center">
+                            <StatusBadge status={blog.status?.toUpperCase()} />
+                          </td>
+
+                          <td className="px-6 py-5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00ADEF] to-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                                {blog.author.charAt(0).toUpperCase()}
+                              </div>
+                              <span className="text-sm font-medium text-slate-700">
+                                {blog.author}
+                              </span>
                             </div>
                           </td>
 
-                          <td className="px-6 py-5 text-sm text-slate-700 font-medium">
-                            {blog.author}
-                          </td>
-                          <td className="px-6 py-5 text-sm text-slate-600">
-                            <div className="flex items-center gap-2">
-                              <Calendar size={16} className="text-slate-400" />
-                              {blog.createdAt}
+                          <td className="px-6 py-5">
+                            <div className="flex items-center gap-2 text-sm text-slate-600">
+                              <div className="p-1.5 bg-slate-100 rounded-lg">
+                                <Calendar size={14} className="text-slate-500" />
+                              </div>
+                              <span className="font-medium">
+                                {new Date(blog.createdAt).toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
+                              </span>
                             </div>
                           </td>
+
                           <td className="px-6 py-5">
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 justify-end">
                               <button
                                 onClick={() => handleView(blog)}
-                                className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 hover:shadow-md transition-all duration-200 border border-blue-200"
+                                className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-[#00ADEF] hover:text-white hover:border-[#00ADEF] transition-all duration-200 shadow-sm hover:shadow-md"
                               >
+                                <Eye size={14} />
                                 View
                               </button>
                               <button
                                 onClick={() => handleEdit(blog)}
-                                className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 hover:shadow-md transition-all duration-200 border border-slate-300"
+                                className="flex items-center gap-1.5 px-3 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white hover:border-slate-800 transition-all duration-200 shadow-sm hover:shadow-md"
                               >
+                                <Pencil size={14} />
                                 Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteClick(blog)}
+                                className="flex items-center gap-1.5 px-3 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-600 hover:text-white hover:border-red-600 transition-all duration-200 shadow-sm hover:shadow-md"
+                              >
+                                <Trash2 size={14} />
+                                Delete
                               </button>
                             </div>
                           </td>
@@ -339,21 +497,39 @@ export default function BlogsPage() {
             </>
           )}
 
-          {/* Pagination UI (future-ready) */}
-          <div className="p-5 border-t border-slate-200 flex justify-between items-center text-sm text-slate-600 bg-gradient-to-br from-slate-50 to-white">
-            <span className="font-medium">Showing {blogs.length} articles</span>
-            <div className="flex gap-2">
-              <button className="p-2.5 border border-slate-300 rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
-                <ChevronLeft size={18} className="text-slate-600" />
-              </button>
-              <button className="p-2.5 border border-slate-300 rounded-lg hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
-                <ChevronRight size={18} className="text-slate-600" />
-              </button>
+          {/* Enhanced Pagination */}
+          <div className="p-5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <span className="font-semibold text-slate-900">{blogs.length}</span>
+              <span className="text-slate-500">articles found</span>
+              {searchQuery && (
+                <span className="text-xs bg-slate-200 px-2 py-1 rounded-full text-slate-600">
+                  filtered by "{searchQuery}"
+                </span>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-slate-500">Page 1 of 1</span>
+              <div className="flex gap-2">
+                <button 
+                  disabled
+                  className="p-2.5 border border-slate-200 bg-white rounded-xl hover:bg-slate-50 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                >
+                  <ChevronLeft size={18} className="text-slate-600" />
+                </button>
+                <button 
+                  disabled
+                  className="p-2.5 border border-slate-200 bg-white rounded-xl hover:bg-slate-50 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                >
+                  <ChevronRight size={18} className="text-slate-600" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Modal */}
+        {/* Blog Form Modal */}
         {isModalOpen && (
           <BlogFormModal
             mode={modalMode}
@@ -362,6 +538,17 @@ export default function BlogsPage() {
             onClose={() => setIsModalOpen(false)}
           />
         )}
+
+        {/* Delete Confirmation Modal */}
+        <DeleteConfirmModal
+          isOpen={deleteModalOpen}
+          onClose={() => {
+            setDeleteModalOpen(false);
+            setBlogToDelete(null);
+          }}
+          onConfirm={handleDeleteConfirm}
+          blogTitle={blogToDelete?.title || ""}
+        />
       </div>
     </>
   );

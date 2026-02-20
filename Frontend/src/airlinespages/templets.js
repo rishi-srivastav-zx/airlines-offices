@@ -21,12 +21,11 @@ import axios from "axios";
 import SafeImage from "@/components/safeImage";
 import OfficeInquiryList from "@/components/InquiryTable";
 import AirlineOfficesSection from "@/components/List";
-import { officeInquiries } from "@/components/constdata";
 
-// Environment configuration
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-// InfoTable Component
+
 const InfoTable = ({ icon: Icon, title, rows }) => {
 	return (
 		<div className="bg-white p-4 sm:p-6 md:p-8 border border-slate-200 rounded-lg sm:rounded-xl shadow-sm">
@@ -56,7 +55,7 @@ const InfoTable = ({ icon: Icon, title, rows }) => {
 	);
 };
 
-// MapSection Component
+
 const MapSection = ({ office }) => {
 	const { address, city, country } = office.officeOverview || {};
 	const { latitude, longitude } = office.airportMapLocation || {};
@@ -189,13 +188,13 @@ const ServicesSection = ({ services }) => {
 		);
 	}
 
-	// Clean and format the services text
+	
 	const cleanText = services
-		.replace(/<[^>]*>/g, " ") // Remove HTML tags
-		.replace(/\s+/g, " ") // Normalize whitespace
+		.replace(/<[^>]*>/g, " ") 
+		.replace(/\s+/g, " ") 
 		.trim();
 
-	// Try to split into bullet points if text contains common delimiters
+	
 	const serviceItems = cleanText
 		.split(/[•·◆◇▪▫■□►▻▸▹→⇒—–-]|\n+|\.\s+(?=[A-Z])/)
 		.map((item) => item.trim())
@@ -320,11 +319,11 @@ const NotFoundState = () => (
 );
 
 // Main Component
-const OfficeTemplate = () => {
+const OfficeTemplate = ({ initialData }) => {
 	const router = useRouter();
 	const params = useParams();
 
-	const [selectedOffice, setSelectedOffice] = useState(null);
+	const [selectedOffice, setSelectedOffice] = useState(initialData || null);
 	const [relatedOffices, setRelatedOffices] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
@@ -582,7 +581,10 @@ const OfficeTemplate = () => {
 							<MapSection office={selectedOffice} />
 
 							{/* Inquiries */}
-							<OfficeInquiryList data={officeInquiries} />
+							<OfficeInquiryList
+								airlineName={airline?.airlineName}
+								city={officeOverview?.city}
+							/>	
 
 							{/* Related Offices */}
 							<AirlineOfficesSection data={relatedOffices} />

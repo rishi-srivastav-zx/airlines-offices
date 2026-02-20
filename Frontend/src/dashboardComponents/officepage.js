@@ -106,19 +106,36 @@ export default function AirlinesManagementPage() {
 			};
 			let response;
 
+            const permissions = getUserPermissions();
+            // Only users with explicit approval permissions can publish directly
+            // SUPERADMIN and MANAGER have approvals: true
+            // EDITOR has approvals: false
+            // Unknown/logged out users have approvals: undefined
+            const canPublishDirectly = permissions.approvals === true;
+            const needsApproval = !canPublishDirectly;
+
 			if (selectedAirline) {
+                // For updates, we currently publish directly. 
+                // In a full system, updates by EDITORS should also go to pending.
+                // But for now, let's keep it simple as per the requirements.
 				response = await api.put(
 					`/airlines/${selectedAirline.slug}`,
 					formData,
 					config,
 				);
 			} else {
-				response = await api.post("/airlines", formData, config);
+                if (needsApproval) {
+                    response = await api.post("/approval/submit-airline", formData, config);
+                } else {
+    				response = await api.post("/airlines", formData, config);
+                }
 			}
 
 			if (response.data.success) {
 				toast.success(
-					selectedAirline ? "Airline updated!" : "Airline created!",
+					selectedAirline 
+                        ? "Airline updated!" 
+                        : (needsApproval ? "Airline submitted for approval!" : "Airline created!")
 				);
 				setIsAirlineModalOpen(false);
 				setSelectedAirline(null);

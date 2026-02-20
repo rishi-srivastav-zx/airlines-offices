@@ -12,10 +12,12 @@ import {
 	Building2,
 	FileText,
 	Loader2,
+	Plane,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
-import AirlineOfficeForm from "./officeform"; 
+import AirlineOfficeForm from "./officeform";
 import BlogFormModal from "./blogform";
+import AirlineAdminForm from "./airlineform"; // Import the airline form
 
 // API Configuration
 const api = axios.create({
@@ -69,9 +71,15 @@ export default function ApprovalsPage() {
 	const [selectedBlog, setSelectedBlog] = useState(null);
 	const [isBlogModalOpen, setIsBlogModalOpen] = useState(false);
 	const [blogModalMode, setBlogModalMode] = useState("view");
-	const [activeTab, setActiveTab] = useState("offices"); // Tab management
+	const [activeTab, setActiveTab] = useState("offices"); // Tab management - now includes "airlines"
 	const [notificationCount, setNotificationCount] = useState(0);
 	const [airlines, setAirlines] = useState([]);
+
+	// New: Pending airlines states
+	const [pendingAirlines, setPendingAirlines] = useState([]);
+	const [selectedAirline, setSelectedAirline] = useState(null);
+	const [isAirlineModalOpen, setIsAirlineModalOpen] = useState(false);
+	const [airlineModalMode, setAirlineModalMode] = useState("view");
 
 	// Handle URL parameter for initial tab
 	useEffect(() => {
@@ -79,18 +87,24 @@ export default function ApprovalsPage() {
 		const tab = urlParams.get("tab");
 		if (tab === "blogs") {
 			setActiveTab("blogs");
+		} else if (tab === "airlines") {
+			setActiveTab("airlines");
 		}
 	}, []);
 
 	// Fetch pending offices
 	const fetchPendingOffices = async () => {
 		try {
-			const response = await api.get("/approval/pending");
+			console.log("Fetching pending offices...");
+			const response = await api.get("/approval/pending?type=offices");
+			console.log("Pending offices response:", response.data);
 			if (response.data.success) {
 				setItems(response.data.data);
+				console.log("Setting offices:", response.data.data);
 			}
 		} catch (err) {
 			console.error("Error fetching pending offices:", err);
+			setItems([]); // Set empty array on error
 		}
 	};
 
@@ -113,28 +127,51 @@ export default function ApprovalsPage() {
 			}));
 
 			setBlogs(mappedBlogs);
-			setNotificationCount(mappedBlogs.length); // Update notification count
 		} catch (err) {
 			console.error("Error fetching pending blogs:", err);
 		}
 	};
 
-    const fetchAirlines = async () => {
-        try {
-            const response = await api.get("/airlines");
-            if (response.data.success) {
-                setAirlines(response.data.data);
-            }
-        } catch (err) {
-            console.error("Error fetching airlines:", err);
-        }
-    };
+	// Fetch all airlines (for reference in offices)
+	const fetchAirlines = async () => {
+		try {
+			const response = await api.get("/airlines");
+			if (response.data.success) {
+				setAirlines(response.data.data);
+			}
+		} catch (err) {
+			console.error("Error fetching airlines:", err);
+		}
+	};
+
+	// New: Fetch pending airlines
+	const fetchPendingAirlines = async () => {
+		try {
+			console.log("Fetching pending airlines...");
+			const response = await api.get("/approval/pending?type=airlines");
+			console.log("Pending airlines response:", response.data);
+			if (response.data.success) {
+				console.log("Setting pending airlines:", response.data.data);
+				setPendingAirlines(response.data.data);
+			}
+		} catch (err) {
+			console.error("Error fetching pending airlines:", err);
+			// If endpoint doesn't exist yet, set empty array
+			setPendingAirlines([]);
+		}
+	};
+
 
 	const fetchAllPending = async () => {
 		setLoading(true);
 		setError(null);
 
-		await Promise.all([fetchPendingOffices(), fetchPendingBlogs(), fetchAirlines()]);
+		await Promise.all([
+			fetchPendingOffices(),
+			fetchPendingBlogs(),
+			fetchAirlines(),
+			fetchPendingAirlines(), // Add pending airlines fetch
+		]);
 
 		setLoading(false);
 	};
@@ -142,6 +179,15 @@ export default function ApprovalsPage() {
 	useEffect(() => {
 		fetchAllPending();
 	}, []);
+
+	// Update notification count whenever data changes
+	useEffect(() => {
+		console.log("Office items count:", items.length);
+		console.log("Blog items count:", blogs.length);
+		console.log("Airline items count:", pendingAirlines.length);
+		console.log("Total notification count:", items.length + blogs.length + pendingAirlines.length);
+		setNotificationCount(items.length + blogs.length + pendingAirlines.length);
+	}, [items, blogs, pendingAirlines]);
 
 	// Updated: Handle preview with mode selection
 	const handlePreview = (office) => {
@@ -171,13 +217,10 @@ export default function ApprovalsPage() {
 						headers: {
 							"Content-Type": "multipart/form-data",
 						},
-					},
+					}
 				);
 			} else {
-				await api.put(
-					`/approval/${selectedOffice._id}/update`,
-					formData,
-				);
+				await api.put(`/approval/${selectedOffice._id}/update`, formData);
 			}
 
 			toast.success("Pending office updated");
@@ -185,9 +228,7 @@ export default function ApprovalsPage() {
 			setSelectedOffice(null);
 			fetchPendingOffices(); // Refresh the list
 		} catch (err) {
-			toast.error(
-				err.response?.data?.message || "Failed to update office",
-			);
+			toast.error(err.response?.data?.message || "Failed to update office");
 			console.error("Error updating office:", err);
 		}
 	};
@@ -232,6 +273,91 @@ export default function ApprovalsPage() {
 		}
 	};
 
+	// New: Airline approval functions
+	const handleViewAirline = (airline) => {
+		setSelectedAirline(airline);
+		setAirlineModalMode("view");
+		setIsAirlineModalOpen(true);
+	};
+
+	const handleEditAirline = (airline) => {
+		setSelectedAirline(airline);
+		setAirlineModalMode("edit");
+		setIsAirlineModalOpen(true);
+	};
+
+	const handleApproveAirline = async (id) => {
+		setIsApproving(true);
+		try {
+			const response = await api.put(`/approval/${id}/approve`);
+			if (response.data.success) {
+				toast.success("Airline approved and published successfully!");
+				setPendingAirlines(pendingAirlines.filter((a) => a._id !== id));
+			}
+		} catch (err) {
+			toast.error(err.response?.data?.message || "Failed to approve airline");
+			console.error("Error approving airline:", err);
+		} finally {
+			setIsApproving(false);
+		}
+	};
+
+	const handleRejectAirline = async (id) => {
+		if (!rejectionReason) {
+			setSelectedItemId(id);
+			setIsRejectModalOpen(true);
+			return;
+		}
+
+		try {
+			const response = await api.put(`/approval/${id}/reject`, {
+				rejectionReason,
+			});
+			if (response.data.success) {
+				toast.success("Airline rejected successfully!");
+				setPendingAirlines(pendingAirlines.filter((a) => a._id !== id));
+				setIsRejectModalOpen(false);
+				setRejectionReason("");
+				setSelectedItemId(null);
+			}
+		} catch (err) {
+			toast.error(err.response?.data?.message || "Failed to reject airline");
+			console.error("Error rejecting airline:", err);
+		}
+	};
+
+	const handleSaveAirline = async (formData) => {
+		try {
+			if (formData instanceof FormData) {
+				await api.put(
+					`/airlines/${selectedAirline._id}`,
+					formData,
+					{
+						headers: {
+							"Content-Type": "multipart/form-data",
+						},
+					}
+				);
+			} else {
+				await api.put(`/airlines/${selectedAirline._id}`, formData);
+			}
+
+			toast.success("Airline updated successfully!");
+			setIsAirlineModalOpen(false);
+			setSelectedAirline(null);
+			fetchPendingAirlines();
+		} catch (err) {
+			toast.error(err.response?.data?.message || "Failed to update airline");
+			console.error("Error updating airline:", err);
+		}
+	};
+
+	const handleCloseAirlineModal = () => {
+		setIsAirlineModalOpen(false);
+		setSelectedAirline(null);
+		setAirlineModalMode("view");
+	};
+
 	const handleApprove = async (id) => {
 		setIsApproving(true);
 		try {
@@ -241,9 +367,7 @@ export default function ApprovalsPage() {
 				setItems(items.filter((i) => i._id !== id));
 			}
 		} catch (err) {
-			toast.error(
-				err.response?.data?.message || "Failed to approve office",
-			);
+			toast.error(err.response?.data?.message || "Failed to approve office");
 			console.error("Error approving office:", err);
 		} finally {
 			setIsApproving(false);
@@ -263,7 +387,7 @@ export default function ApprovalsPage() {
 				`/approval/${selectedItemId}/reject`,
 				{
 					rejectionReason,
-				},
+				}
 			);
 			if (response.data.success) {
 				toast.success("Office rejected successfully!");
@@ -273,9 +397,7 @@ export default function ApprovalsPage() {
 				setSelectedItemId(null);
 			}
 		} catch (err) {
-			toast.error(
-				err.response?.data?.message || "Failed to reject office",
-			);
+			toast.error(err.response?.data?.message || "Failed to reject office");
 			console.error("Error rejecting office:", err);
 		}
 	};
@@ -283,10 +405,12 @@ export default function ApprovalsPage() {
 	// Filter items based on search query
 	const filteredItems = items.filter((item) => {
 		const searchLower = searchQuery.toLowerCase();
+		// Make sure we're only filtering office items
+		if (item.itemType && item.itemType !== 'office') {
+			return false;
+		}
 		return (
-			item.officeOverview?.airlineName
-				?.toLowerCase()
-				.includes(searchLower) ||
+			item.officeOverview?.airlineName?.toLowerCase().includes(searchLower) ||
 			item.officeOverview?.city?.toLowerCase().includes(searchLower) ||
 			item.officeOverview?.country?.toLowerCase().includes(searchLower)
 		);
@@ -301,6 +425,22 @@ export default function ApprovalsPage() {
 		);
 	});
 
+	// New: Filter pending airlines based on search query
+	const filteredPendingAirlines = pendingAirlines.filter((airline) => {
+		const searchLower = searchQuery.toLowerCase();
+		// Make sure we're only filtering airline items
+		if (airline.itemType && airline.itemType !== 'airline') {
+			return false;
+		}
+		return (
+			airline.airlineName?.toLowerCase().includes(searchLower) ||
+			airline.firstName?.toLowerCase().includes(searchLower) ||
+			airline.countries?.some((c) =>
+				c.name?.toLowerCase().includes(searchLower)
+			)
+		);
+	});
+
 	return (
 		<>
 			<Toaster position="top-center" reverseOrder={false} />
@@ -310,10 +450,7 @@ export default function ApprovalsPage() {
 						<div>
 							<h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
 								<div className="p-2 bg-blue-100 rounded-xl">
-									<FileText
-										className="text-blue-600"
-										size={28}
-									/>
+									<FileText className="text-blue-600" size={28} />
 								</div>
 								Content Approvals
 							</h1>
@@ -326,12 +463,12 @@ export default function ApprovalsPage() {
 								Total Pending:
 							</span>
 							<span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-bold">
-								{items.length + blogs.length}
+								{notificationCount}
 							</span>
 						</div>
 					</div>
 
-					{/* Tabs */}
+					{/* Tabs - Now includes Airlines */}
 					<div className="bg-white rounded-xl border shadow-sm p-1">
 						<div className="flex gap-1">
 							<button
@@ -344,6 +481,17 @@ export default function ApprovalsPage() {
 							>
 								<Building2 size={18} />
 								Offices ({items.length})
+							</button>
+							<button
+								onClick={() => setActiveTab("airlines")}
+								className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+									activeTab === "airlines"
+										? "bg-blue-600 text-white"
+										: "text-slate-600 hover:bg-slate-50"
+								}`}
+							>
+								<Plane size={18} />
+								Airlines ({pendingAirlines.length})
 							</button>
 							<button
 								onClick={() => setActiveTab("blogs")}
@@ -368,7 +516,13 @@ export default function ApprovalsPage() {
 							/>
 							<input
 								type="text"
-								placeholder="Search by airline name, city, or country..."
+								placeholder={
+									activeTab === "airlines"
+										? "Search by airline name, brand name, or country..."
+										: activeTab === "blogs"
+										? "Search by title or author..."
+										: "Search by airline name, city, or country..."
+								}
 								className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
@@ -378,10 +532,7 @@ export default function ApprovalsPage() {
 
 					{loading ? (
 						<div className="bg-white rounded-2xl border shadow-xl p-20 flex flex-col items-center justify-center">
-							<Loader2
-								size={48}
-								className="animate-spin text-blue-600 mb-4"
-							/>
+							<Loader2 size={48} className="animate-spin text-blue-600 mb-4" />
 							<p className="text-slate-600 font-medium">
 								Loading pending {activeTab}...
 							</p>
@@ -415,38 +566,27 @@ export default function ApprovalsPage() {
 														<span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
 															Office
 														</span>
-														<StatusBadge
-															status={item.status}
-														/>
+														<StatusBadge status={item.status} />
 													</div>
 													<h3 className="text-lg font-bold text-slate-900">
-														{item.officeOverview
-															?.airlineName ||
+														{item.airline.airlineName ||
 															"Unknown Airline"}
 													</h3>
 													<p className="text-sm text-slate-600 mb-2">
-														{
-															item.officeOverview
-																?.city
-														}
-														,{" "}
-														{
-															item.officeOverview
-																?.country
-														}
+														{item.officeOverview?.city},{" "}
+														{item.officeOverview?.country}
 													</p>
 													<div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
 														<span className="flex items-center gap-1">
 															Submitted by{" "}
 															<span className="font-semibold text-slate-700">
-																{item.submittedBy ||
-																	"Anonymous"}
+																{item.submittedBy || "Anonymous"}
 															</span>
 														</span>
 														<span>•</span>
 														<span>
 															{new Date(
-																item.submittedAt,
+																item.submittedAt
 															).toLocaleDateString()}
 														</span>
 													</div>
@@ -454,11 +594,8 @@ export default function ApprovalsPage() {
 											</div>
 
 											<div className="flex items-center gap-3">
-												{/* Updated: Separate View and Edit buttons */}
 												<button
-													onClick={() =>
-														handlePreview(item)
-													}
+													onClick={() => handlePreview(item)}
 													className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-100"
 												>
 													<Eye size={18} />
@@ -466,9 +603,7 @@ export default function ApprovalsPage() {
 												</button>
 
 												<button
-													onClick={() =>
-														handleEdit(item)
-													}
+													onClick={() => handleEdit(item)}
 													className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors border border-amber-100"
 												>
 													<Edit size={18} />
@@ -476,11 +611,7 @@ export default function ApprovalsPage() {
 												</button>
 
 												<button
-													onClick={() =>
-														openRejectModal(
-															item._id,
-														)
-													}
+													onClick={() => openRejectModal(item._id)}
 													className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
 												>
 													<XCircle size={18} />
@@ -488,25 +619,18 @@ export default function ApprovalsPage() {
 												</button>
 
 												<button
-													onClick={() =>
-														handleApprove(item._id)
-													}
+													onClick={() => handleApprove(item._id)}
 													disabled={isApproving}
 													className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-all shadow-lg shadow-green-900/10 disabled:opacity-50"
 												>
 													{isApproving ? (
 														<>
-															<Loader2
-																size={18}
-																className="animate-spin"
-															/>
+															<Loader2 size={18} className="animate-spin" />
 															Approving...
 														</>
 													) : (
 														<>
-															<CheckCircle
-																size={18}
-															/>
+															<CheckCircle size={18} />
 															Approve
 														</>
 													)}
@@ -514,38 +638,158 @@ export default function ApprovalsPage() {
 											</div>
 										</div>
 									))}
-									{filteredItems.length === 0 &&
-										items.length > 0 && (
-											<div className="p-20 text-center">
-												<div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-													<Search
-														size={40}
-														className="text-slate-300"
-													/>
-												</div>
-												<h3 className="text-lg font-bold text-slate-900">
-													No results found
-												</h3>
-												<p className="text-slate-500 mt-1">
-													Try adjusting your search
-													terms
-												</p>
+									{filteredItems.length === 0 && items.length > 0 && (
+										<div className="p-20 text-center">
+											<div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+												<Search size={40} className="text-slate-300" />
 											</div>
-										)}
+											<h3 className="text-lg font-bold text-slate-900">
+												No results found
+											</h3>
+											<p className="text-slate-500 mt-1">
+												Try adjusting your search terms
+											</p>
+										</div>
+									)}
 									{items.length === 0 && (
 										<div className="p-20 text-center">
 											<div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-												<CheckCircle
-													size={40}
-													className="text-slate-300"
-												/>
+												<CheckCircle size={40} className="text-slate-300" />
 											</div>
 											<h3 className="text-lg font-bold text-slate-900">
 												All caught up!
 											</h3>
 											<p className="text-slate-500 mt-1">
-												No pending offices require your
-												approval.
+												No pending offices require your approval.
+											</p>
+										</div>
+									)}
+								</div>
+							)}
+
+							{/* Airlines Tab - NEW */}
+							{activeTab === "airlines" && (
+								<div className="divide-y divide-slate-100">
+									{filteredPendingAirlines.map((airline) => (
+										<div
+											key={airline._id}
+											className="p-6 flex flex-col md:flex-row items-center justify-between gap-6 hover:bg-slate-50/50 transition-colors"
+										>
+											<div className="flex items-start gap-4 flex-1">
+												<div className="p-3 rounded-xl bg-indigo-50 text-indigo-600">
+													<Plane size={24} />
+												</div>
+												<div>
+													<div className="flex items-center gap-2 mb-1">
+														<span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+															Airline
+														</span>
+														<StatusBadge status={airline.status || "PENDING"} />
+													</div>
+													<h3 className="text-lg font-bold text-slate-900">
+														{airline.airlineName || "Unknown Airline"}
+													</h3>
+													<p className="text-sm text-slate-600 mb-2">
+														Brand: {airline.firstName}
+													</p>
+													<div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
+														<span className="flex items-center gap-1">
+															Countries:{" "}
+															<span className="font-semibold text-slate-700">
+																{airline.countries?.length || 0}
+															</span>
+														</span>
+														<span>•</span>
+														<span className="flex items-center gap-1">
+															Cities:{" "}
+															<span className="font-semibold text-slate-700">
+																{airline.cities?.length || 0}
+															</span>
+														</span>
+														<span>•</span>
+														<span>
+															{new Date(
+																airline.createdAt || airline.submittedAt
+															).toLocaleDateString()}
+														</span>
+													</div>
+													{airline.seo?.metaTitle && (
+														<p className="text-xs text-slate-400 mt-2 truncate max-w-md">
+															SEO: {airline.seo.metaTitle}
+														</p>
+													)}
+												</div>
+											</div>
+
+											<div className="flex items-center gap-3">
+												<button
+													onClick={() => handleViewAirline(airline)}
+													className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-100"
+												>
+													<Eye size={18} />
+													View
+												</button>
+
+												<button
+													onClick={() => handleEditAirline(airline)}
+													className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors border border-amber-100"
+												>
+													<Edit size={18} />
+													Edit
+												</button>
+
+												<button
+													onClick={() => handleRejectAirline(airline._id)}
+													className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+												>
+													<XCircle size={18} />
+													Reject
+												</button>
+
+												<button
+													onClick={() => handleApproveAirline(airline._id)}
+													disabled={isApproving}
+													className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-all shadow-lg shadow-green-900/10 disabled:opacity-50"
+												>
+													{isApproving ? (
+														<>
+															<Loader2 size={18} className="animate-spin" />
+															Approving...
+														</>
+													) : (
+														<>
+															<CheckCircle size={18} />
+															Approve
+														</>
+													)}
+												</button>
+											</div>
+										</div>
+									))}
+									{filteredPendingAirlines.length === 0 &&
+										pendingAirlines.length > 0 && (
+											<div className="p-20 text-center">
+												<div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+													<Search size={40} className="text-slate-300" />
+												</div>
+												<h3 className="text-lg font-bold text-slate-900">
+													No results found
+												</h3>
+												<p className="text-slate-500 mt-1">
+													Try adjusting your search terms
+												</p>
+											</div>
+										)}
+									{pendingAirlines.length === 0 && (
+										<div className="p-20 text-center">
+											<div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+												<CheckCircle size={40} className="text-slate-300" />
+											</div>
+											<h3 className="text-lg font-bold text-slate-900">
+												All caught up!
+											</h3>
+											<p className="text-slate-500 mt-1">
+												No pending airlines require your approval.
 											</p>
 										</div>
 									)}
@@ -582,8 +826,7 @@ export default function ApprovalsPage() {
 													<div className="flex items-center gap-4 mt-2 text-sm text-slate-500">
 														<span className="flex items-center gap-1">
 															<span className="font-semibold text-slate-700">
-																Submitted{" "}
-																{blog.createdAt}
+																Submitted {blog.createdAt}
 															</span>
 														</span>
 													</div>
@@ -592,9 +835,7 @@ export default function ApprovalsPage() {
 
 											<div className="flex items-center gap-3">
 												<button
-													onClick={() =>
-														handleViewBlog(blog)
-													}
+													onClick={() => handleViewBlog(blog)}
 													className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-100"
 												>
 													<Eye size={18} />
@@ -602,9 +843,7 @@ export default function ApprovalsPage() {
 												</button>
 
 												<button
-													onClick={() =>
-														handleRejectBlog(blog)
-													}
+													onClick={() => handleRejectBlog(blog)}
 													className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
 												>
 													<XCircle size={18} />
@@ -612,9 +851,7 @@ export default function ApprovalsPage() {
 												</button>
 
 												<button
-													onClick={() =>
-														handleApproveBlog(blog)
-													}
+													onClick={() => handleApproveBlog(blog)}
 													className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-all shadow-lg shadow-green-900/10"
 												>
 													<CheckCircle size={18} />
@@ -623,38 +860,29 @@ export default function ApprovalsPage() {
 											</div>
 										</div>
 									))}
-									{filteredBlogs.length === 0 &&
-										blogs.length > 0 && (
-											<div className="p-20 text-center">
-												<div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-													<Search
-														size={40}
-														className="text-slate-300"
-													/>
-												</div>
-												<h3 className="text-lg font-bold text-slate-900">
-													No results found
-												</h3>
-												<p className="text-slate-500 mt-1">
-													Try adjusting your search
-													terms
-												</p>
+									{filteredBlogs.length === 0 && blogs.length > 0 && (
+										<div className="p-20 text-center">
+											<div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+												<Search size={40} className="text-slate-300" />
 											</div>
-										)}
+											<h3 className="text-lg font-bold text-slate-900">
+												No results found
+											</h3>
+											<p className="text-slate-500 mt-1">
+												Try adjusting your search terms
+											</p>
+										</div>
+									)}
 									{blogs.length === 0 && (
 										<div className="p-20 text-center">
 											<div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-												<CheckCircle
-													size={40}
-													className="text-slate-300"
-												/>
+												<CheckCircle size={40} className="text-slate-300" />
 											</div>
 											<h3 className="text-lg font-bold text-slate-900">
 												All caught up!
 											</h3>
 											<p className="text-slate-500 mt-1">
-												No pending blogs require your
-												approval.
+												No pending blogs require your approval.
 											</p>
 										</div>
 									)}
@@ -671,9 +899,7 @@ export default function ApprovalsPage() {
 										Reject Submission
 									</h2>
 									<button
-										onClick={() =>
-											setIsRejectModalOpen(false)
-										}
+										onClick={() => setIsRejectModalOpen(false)}
 										className="text-slate-400 hover:text-slate-600 text-2xl"
 									>
 										×
@@ -681,9 +907,8 @@ export default function ApprovalsPage() {
 								</div>
 								<div className="p-6">
 									<p className="text-sm text-slate-600 mb-4">
-										Please provide a reason for rejection.
-										This will be shared with the editor to
-										help them improve the content.
+										Please provide a reason for rejection. This will be
+										shared with the editor to help them improve the content.
 									</p>
 									<label className="block text-xs font-bold text-slate-500 uppercase mb-2">
 										Rejection Reason
@@ -693,16 +918,12 @@ export default function ApprovalsPage() {
 										rows={4}
 										placeholder="e.g. Incomplete address information, outdated phone numbers..."
 										value={rejectionReason}
-										onChange={(e) =>
-											setRejectionReason(e.target.value)
-										}
+										onChange={(e) => setRejectionReason(e.target.value)}
 									/>
 								</div>
 								<div className="p-6 bg-slate-50 flex justify-end gap-3">
 									<button
-										onClick={() =>
-											setIsRejectModalOpen(false)
-										}
+										onClick={() => setIsRejectModalOpen(false)}
 										className="px-4 py-2 font-medium text-slate-600 hover:bg-slate-200 rounded-lg"
 									>
 										Cancel
@@ -726,8 +947,8 @@ export default function ApprovalsPage() {
 						initialData={selectedOffice}
 						onSave={handleSave}
 						onClose={handleCloseModal}
-                        airlines={airlines}
-						mode={modalMode} 
+						airlines={airlines}
+						mode={modalMode}
 					/>
 				)}
 
@@ -740,6 +961,16 @@ export default function ApprovalsPage() {
 							setIsBlogModalOpen(false);
 							setSelectedBlog(null);
 						}}
+					/>
+				)}
+
+				{/* Airline Modal - NEW */}
+				{isAirlineModalOpen && (
+					<AirlineAdminForm
+						initialData={selectedAirline}
+						onSave={handleSaveAirline}
+						onClose={handleCloseAirlineModal}
+						mode={airlineModalMode}
 					/>
 				)}
 			</div>

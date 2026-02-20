@@ -27,6 +27,9 @@ export const getAllAirlines = async (req, res) => {
     const sortOrder = order === "asc" ? 1 : -1;
 
     const airlines = await Airline.find(query)
+      .populate("continents")
+      .populate("countries")
+      .populate("cities")
       .sort({ [sortBy]: sortOrder })
       .limit(parseInt(limit))
       .skip(skip);

@@ -1,12 +1,14 @@
 import express from "express";
 import PendingOffice from "../model/pendingOfficeSchema.js";
+import PendingAirline from "../model/pendingAirlineSchema.js";
 import Office from "../model/officeSchema.js";
+import Airline from "../model/airlineschema.js";
 import { upload } from "../middleware/multer.js";
 
 const router = express.Router();
 
 // @route   GET /api/approval/pending
-// @desc    Get all pending office submissions
+// @desc    Get all pending submissions (offices and/or airlines)
 // @access  Private (Manager/SuperAdmin)
 router.get("/pending", async (req, res) => {
   try {
@@ -16,23 +18,55 @@ router.get("/pending", async (req, res) => {
       status = "PENDING",
       sortBy = "submittedAt",
       order = "desc",
+      type = "all", // "all", "offices", "airlines"
     } = req.query;
 
     const query = { status };
-
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const sortOrder = order === "asc" ? 1 : -1;
 
-    const pendingOffices = await PendingOffice.find(query)
-      .sort({ [sortBy]: sortOrder })
-      .limit(parseInt(limit))
-      .skip(skip);
+    let data = [];
+    let total = 0;
 
-    const total = await PendingOffice.countDocuments(query);
+    if (type === "offices") {
+      const pendingOffices = await PendingOffice.find(query).populate("airline")
+        .sort({ [sortBy]: sortOrder })
+        .limit(parseInt(limit))
+        .skip(skip);
+      
+      data = pendingOffices.map(item => ({ ...item.toObject(), itemType: 'office' }));
+      total = await PendingOffice.countDocuments(query);
+    } else if (type === "airlines") {
+      const pendingAirlines = await PendingAirline.find(query)
+        .sort({ [sortBy]: sortOrder })
+        .limit(parseInt(limit))
+        .skip(skip);
+      
+      data = pendingAirlines.map(item => ({ ...item.toObject(), itemType: 'airline' }));
+      total = await PendingAirline.countDocuments(query);
+    } else {
+      // Get both offices and airlines, then combine and sort
+      const [pendingOffices, pendingAirlines] = await Promise.all([
+        PendingOffice.find(query).sort({ [sortBy]: sortOrder }),
+        PendingAirline.find(query).sort({ [sortBy]: sortOrder })
+      ]);
+
+      const combined = [
+        ...pendingOffices.map(item => ({ ...item.toObject(), itemType: 'office' })),
+        ...pendingAirlines.map(item => ({ ...item.toObject(), itemType: 'airline' }))
+      ].sort((a, b) => {
+        const dateA = new Date(a[sortBy]);
+        const dateB = new Date(b[sortBy]);
+        return sortOrder === 1 ? dateA - dateB : dateB - dateA;
+      });
+
+      total = combined.length;
+      data = combined.slice(skip, skip + parseInt(limit));
+    }
 
     res.json({
       success: true,
-      data: pendingOffices,
+      data,
       pagination: {
         currentPage: parseInt(page),
         totalPages: Math.ceil(total / parseInt(limit)),
@@ -99,38 +133,102 @@ router.post(
   }
 );
 
+// @route   POST /api/approval/submit-airline
+// @desc    Submit new airline for approval
+// @access  Private
+router.post(
+  "/submit-airline",
+  upload.fields([
+    { name: "logo", maxCount: 1 },
+    { name: "ogImage", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      let airlineData;
+      if (req.body.airlineData) {
+        airlineData = JSON.parse(req.body.airlineData);
+      } else {
+        airlineData = { ...req.body };
+      }
+
+      const logoFile = req.files?.logo?.[0];
+      const ogImageFile = req.files?.ogImage?.[0];
+
+      if (logoFile) {
+        airlineData.logo = ("/" + logoFile.path).replace(/\\/g, "/");
+      }
+
+      if (ogImageFile) {
+        if (!airlineData.seo) airlineData.seo = {};
+        airlineData.seo.ogImage = ("/" + ogImageFile.path).replace(/\\/g, "/");
+      }
+
+      // Add submission metadata
+      airlineData.submittedBy = "Test User"; // Temporary for testing
+      airlineData.submittedAt = new Date();
+
+      const pendingAirline = new PendingAirline(airlineData);
+      const savedPendingAirline = await pendingAirline.save();
+
+      res.status(201).json({
+        success: true,
+        data: savedPendingAirline,
+        message: "Airline submitted for approval successfully",
+      });
+    } catch (err) {
+      let errorMessage = "Failed to submit airline for approval";
+      if (err instanceof SyntaxError) {
+        errorMessage = "Invalid JSON in airlineData field.";
+      }
+      res
+        .status(400)
+        .json({ success: false, message: errorMessage, error: err.message });
+    }
+  }
+);
+
 // @route   PUT /api/approval/:id/approve
-// @desc    Approve a pending office submission
+// @desc    Approve a pending submission (office or airline)
 // @access  Private (Manager/SuperAdmin)
 router.put("/:id/approve", async (req, res) => {
   try {
-    const pendingOffice = await PendingOffice.findById(req.params.id);
+    // Try to find in pending offices first
+    let pendingItem = await PendingOffice.findById(req.params.id);
+    let itemType = "office";
+    let MainModel = Office;
+    
+    // If not found in offices, try airlines
+    if (!pendingItem) {
+      pendingItem = await PendingAirline.findById(req.params.id);
+      itemType = "airline";
+      MainModel = itemType === "airline" ? Airline : Office;
+    }
 
-    if (!pendingOffice) {
+    if (!pendingItem) {
       return res.status(404).json({
         success: false,
-        message: "Pending office not found",
+        message: "Pending submission not found",
       });
     }
 
-    if (pendingOffice.status !== "PENDING") {
+    if (pendingItem.status !== "PENDING") {
       return res.status(400).json({
         success: false,
-        message: "Office has already been processed",
+        message: `${itemType.charAt(0).toUpperCase() + itemType.slice(1)} has already been processed`,
       });
     }
 
-    // Check if slug already exists in main offices collection
-    const existingOffice = await Office.findOne({ slug: pendingOffice.slug });
-    if (existingOffice) {
+    // Check if slug already exists in main collection
+    const existingItem = await MainModel.findOne({ slug: pendingItem.slug });
+    if (existingItem) {
       return res.status(400).json({
         success: false,
-        message: "Office with this slug already exists in main collection",
+        message: `${itemType.charAt(0).toUpperCase() + itemType.slice(1)} with this slug already exists in main collection`,
       });
     }
 
-    // Create new office in main collection
-    const officeData = pendingOffice.toObject();
+    // Create new item in main collection
+    const itemData = pendingItem.toObject();
     
     // Clean up approval fields
     const fieldsToRemove = [
@@ -138,21 +236,21 @@ router.put("/:id/approve", async (req, res) => {
       "reviewedBy", "reviewedAt", "rejectionReason", 
       "__v", "createdAt", "updatedAt"
     ];
-    fieldsToRemove.forEach(field => delete officeData[field]);
+    fieldsToRemove.forEach(field => delete itemData[field]);
 
-    const newOffice = new Office(officeData);
-    const savedOffice = await newOffice.save();
+    const newItem = new MainModel(itemData);
+    const savedItem = await newItem.save();
 
-    // Update pending office status
-    pendingOffice.status = "APPROVED";
-    pendingOffice.reviewedBy = "Admin";
-    pendingOffice.reviewedAt = new Date();
-    await pendingOffice.save();
+    // Update pending item status
+    pendingItem.status = "APPROVED";
+    pendingItem.reviewedBy = "Admin";
+    pendingItem.reviewedAt = new Date();
+    await pendingItem.save();
 
     res.json({
       success: true,
-      data: savedOffice,
-      message: "Office approved and published successfully",
+      data: savedItem,
+      message: `${itemType.charAt(0).toUpperCase() + itemType.slice(1)} approved and published successfully`,
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -160,44 +258,53 @@ router.put("/:id/approve", async (req, res) => {
 });
 
 // @route   PUT /api/approval/:id/reject
-// @desc    Reject a pending office submission
+// @desc    Reject a pending submission (office or airline)
 // @access  Private (Manager/SuperAdmin)
 router.put("/:id/reject", async (req, res) => {
     try {
         const { rejectionReason } = req.body;
-        const pendingOffice = await PendingOffice.findById(req.params.id);
+        
+        // Try to find in pending offices first
+        let pendingItem = await PendingOffice.findById(req.params.id);
+        let itemType = "office";
+        
+        // If not found in offices, try airlines
+        if (!pendingItem) {
+            pendingItem = await PendingAirline.findById(req.params.id);
+            itemType = "airline";
+        }
 
-        if (!pendingOffice) {
+        if (!pendingItem) {
             return res.status(404).json({
                 success: false,
-                message: "Pending office not found",
+                message: "Pending submission not found",
             });
         }
 
-        if (pendingOffice.status !== "PENDING") {
+        if (pendingItem.status !== "PENDING") {
             return res.status(400).json({
                 success: false,
-                message: "Office has already been processed",
+                message: `${itemType.charAt(0).toUpperCase() + itemType.slice(1)} has already been processed`,
             });
         }
 
-        // Update pending office status to REJECTED
-        pendingOffice.status = "REJECTED";
-        pendingOffice.reviewedBy = "Admin";
-        pendingOffice.reviewedAt = new Date();
-        pendingOffice.rejectionReason = rejectionReason || "No reason provided";
-        await pendingOffice.save();
+        // Update pending item status to REJECTED
+        pendingItem.status = "REJECTED";
+        pendingItem.reviewedBy = "Admin";
+        pendingItem.reviewedAt = new Date();
+        pendingItem.rejectionReason = rejectionReason || "No reason provided";
+        await pendingItem.save();
 
         res.json({
             success: true,
-            message: "Office rejected successfully",
-            data: pendingOffice,
+            message: `${itemType.charAt(0).toUpperCase() + itemType.slice(1)} rejected successfully`,
+            data: pendingItem,
         });
     } catch (err) {
         console.error("REJECT ERROR 👉", err);
         res.status(500).json({
             success: false,
-            message: "Failed to reject office",
+            message: "Failed to reject submission",
             error: err.message,
         });
     }
@@ -281,17 +388,39 @@ router.put("/:id/update", upload.any(), async (req, res) => {
 // @access  Private (Manager/SuperAdmin)
 router.get("/stats", async (req, res) => {
   try {
-    const pending = await PendingOffice.countDocuments({ status: "PENDING" });
-    const approved = await PendingOffice.countDocuments({ status: "APPROVED" });
-    const rejected = await PendingOffice.countDocuments({ status: "REJECTED" });
+    const [officePending, officeApproved, officeRejected] = await Promise.all([
+      PendingOffice.countDocuments({ status: "PENDING" }),
+      PendingOffice.countDocuments({ status: "APPROVED" }),
+      PendingOffice.countDocuments({ status: "REJECTED" }),
+    ]);
+
+    const [airlinePending, airlineApproved, airlineRejected] = await Promise.all([
+      PendingAirline.countDocuments({ status: "PENDING" }),
+      PendingAirline.countDocuments({ status: "APPROVED" }),
+      PendingAirline.countDocuments({ status: "REJECTED" }),
+    ]);
 
     res.json({
       success: true,
       data: {
-        pending,
-        approved,
-        rejected,
-        total: pending + approved + rejected,
+        offices: {
+          pending: officePending,
+          approved: officeApproved,
+          rejected: officeRejected,
+          total: officePending + officeApproved + officeRejected,
+        },
+        airlines: {
+          pending: airlinePending,
+          approved: airlineApproved,
+          rejected: airlineRejected,
+          total: airlinePending + airlineApproved + airlineRejected,
+        },
+        combined: {
+          pending: officePending + airlinePending,
+          approved: officeApproved + airlineApproved,
+          rejected: officeRejected + airlineRejected,
+          total: (officePending + officeApproved + officeRejected) + (airlinePending + airlineApproved + airlineRejected),
+        }
       },
     });
   } catch (err) {

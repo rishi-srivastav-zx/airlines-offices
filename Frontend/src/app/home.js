@@ -17,9 +17,12 @@ import WorldMap from "@/components/worldMap";
 import SafeImage from "@/components/safeImage";
 import OfficeCard from "@/components/officeCard";
 import { blogService } from "@/services/api";
+import { slugify } from "@/utils/slugifyhelper";
 
 export default function Home() {
     const [searchQuery, setSearchQuery] = useState("");
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [suggestions, setSuggestions] = useState([]);
     const router = useRouter();
     const [offices, setOffices] = useState([]);
     const [airlines, setAirlines] = useState([]);
@@ -40,6 +43,7 @@ export default function Home() {
                 // Map backend data to match home component expectations
                 const mappedPosts = response.data.map((blog, index) => ({
                     id: blog._id || index + 1,
+                    slug: blog.slug,
                     title: blog.title,
                     excerpt: blog.introduction || "Read more about this blog post...",
                     date: new Date(blog.createdAt).toLocaleDateString(),
@@ -77,7 +81,7 @@ export default function Home() {
 
                 return resetIndex;
             });
-        }, 4000); // 4 sec me change
+        }, 4000); 
 
         return () => clearInterval(interval);
     }, [offices]);
@@ -87,8 +91,7 @@ export default function Home() {
             setLoading(true);
             try {
                 const officesRes = await axios.get(
-                    "http://localhost:3001/api/offices",
-                    
+                    "http://localhost:3001/api/offices?limit=1000",
                 );
                 
                 setOffices(officesRes.data.data);
@@ -98,10 +101,11 @@ export default function Home() {
                         officesRes.data.data
                             .filter((item) => item.airline) // Only include offices with populated airline
                             .map((item) => [
-                                item.airline._id, // Use airline's _id as the unique key
+                                item.airline._id, // Use airline's _id as unique key
                                 {
                                     id: item.airline._id,
                                     name: item.airline.airlineName,
+                                    slug: slugify(item.airline.airlineName),
                                     logo: item.airline.logo || 
                                         `https://via.placeholder.com/40x40/00ADEF/FFFFFF?text=${item.airline.airlineName?.charAt(0) || "✈"}`,
                                 },
@@ -124,10 +128,44 @@ export default function Home() {
     const handleSearch = (e) => {
         e.preventDefault();
         if (searchQuery.trim()) {
+            setShowSuggestions(false);
             router.push(
                 `/directoryAirlines?q=${encodeURIComponent(searchQuery)}`,
             );
         }
+    };
+
+    const handleInputChange = (e) => {
+        const value = e.target.value;
+        setSearchQuery(value);
+        
+        if (value.trim().length > 0) {
+            const query = value.toLowerCase();
+            const newSuggestions = [];
+            
+            const allCities = [...new Set(offices.map(office => office.officeOverview?.city).filter(Boolean))];
+            const matchedCities = allCities
+                .filter(city => city.toLowerCase().includes(query))
+                .slice(0, 5)
+                .map(city => ({ type: 'city', name: city, slug: `?city=${city}` }));
+            
+            const matchedAirlines = airlines
+                .filter(airline => airline.name.toLowerCase().includes(query))
+                .slice(0, 5)
+                .map(airline => ({ type: 'airline', name: airline.name, slug: `?airline=${airline.slug}` }));
+            
+            newSuggestions.push(...matchedCities, ...matchedAirlines);
+            setSuggestions(newSuggestions);
+            setShowSuggestions(newSuggestions.length > 0);
+        } else {
+            setShowSuggestions(false);
+        }
+    };
+
+    const handleSuggestionClick = (suggestion) => {
+        setSearchQuery(suggestion.name);
+        setShowSuggestions(false);
+        router.push(`/directoryAirlines${suggestion.slug}`);
     };
 
     // Skeleton Components
@@ -150,7 +188,7 @@ export default function Home() {
     );
 
     const BlogCardSkeleton = () => (
-        <div className="bg-white rounded-2xl overflow-hidden shadow-lg flex flex-col md:flex-row group cursor-pointer hover:shadow-2xl transition-all">
+        <div className="bg-white rounded-2xl overflow-hidden shadow-lg animate-pulse flex flex-col md:flex-row group cursor-pointer hover:shadow-2xl transition-all">
             <div className="md:w-1/3 overflow-hidden bg-gray-100">
                 <div className="w-full h-48 bg-gray-200 animate-pulse"></div>
             </div>
@@ -161,6 +199,16 @@ export default function Home() {
             </div>
         </div>
     );
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (showSuggestions && !e.target.closest('.search-container')) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [showSuggestions]);
 
     return (
         <div className="flex flex-col">
@@ -205,13 +253,14 @@ export default function Home() {
 
                     <form
                         onSubmit={handleSearch}
-                        className="relative max-w-3xl mx-auto"
+                        className="relative max-w-3xl mx-auto search-container"
                     >
                         <div className="relative flex items-center bg-white rounded-full shadow-2xl overflow-hidden">
                             <input
                                 type="text"
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={handleInputChange}
+                                onFocus={() => searchQuery.trim().length > 0 && suggestions.length > 0 && setShowSuggestions(true)}
                                 placeholder="Find Airline Office Worldwide..."
                                 className="w-full bg-transparent border-none py-5 px-8 text-base text-gray-700 focus:outline-none placeholder:text-gray-400"
                             />
@@ -223,6 +272,31 @@ export default function Home() {
                                 <span className="hidden sm:inline">Search</span>
                             </button>
                         </div>
+                        {showSuggestions && (
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl overflow-hidden z-50 max-h-80 overflow-y-auto">
+                                {suggestions.map((suggestion, index) => (
+                                    <div
+                                        key={`${suggestion.type}-${index}`}
+                                        onClick={() => handleSuggestionClick(suggestion)}
+                                        className="flex items-center px-6 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
+                                    >
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+                                            suggestion.type === 'city' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'
+                                        }`}>
+                                            {suggestion.type === 'city' ? (
+                                                <Globe className="h-4 w-4" />
+                                            ) : (
+                                                <Plane className="h-4 w-4" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-800">{suggestion.name}</p>
+                                            <p className="text-xs text-gray-500 capitalize">{suggestion.type}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </form>
 
                     <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -263,7 +337,7 @@ export default function Home() {
                                       key={airline.id}
                                       onClick={() =>
                                           router.push(
-                                              `/directoryAirlines?airline=${airline.id}`,
+                                              `/directoryAirlines?airline=${airline.slug}`,
                                               )
                                       }
                                       className="group cursor-pointer flex flex-col items-center p-6 rounded-2xl border border-gray-100 hover:border-[#00ADEF] hover:shadow-xl transition-all"
@@ -272,7 +346,7 @@ export default function Home() {
                                           <SafeImage
                                               src={`http://localhost:3001${airline.logo}`}
                                               alt={airline.name}
-                                              className="w-10 h-10 object-contain"
+                                              className="w-30 h-30 object-contain"
                                               fallbackSrc="https://via.placeholder.com/40x40/00ADEF/FFFFFF?text=✈"
                                           />
                                       </div>
@@ -427,7 +501,10 @@ export default function Home() {
                         blogPosts.map((post) => (
                             <div
                                 key={post.id}
-                                onClick={() => router.push(`/blogs/${post.title.toLowerCase().replace(/\s+/g, '-')}`)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            router.push(`/blogs/${post.slug}`);
+                                        }}
                                 className="bg-white rounded-2xl overflow-hidden shadow-lg flex flex-col md:flex-row group cursor-pointer hover:shadow-2xl transition-all"
                             >
                                 <div className="md:w-1/3 overflow-hidden bg-gray-100">
@@ -450,7 +527,10 @@ export default function Home() {
                                     </p>
                                     <span 
                                         className="text-sm font-bold text-[#333333] flex items-center cursor-pointer"
-                                        onClick={() => router.push(`/blogs/${post.title.toLowerCase().replace(/\s+/g, '-')}`)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            router.push(`/blogs/${post.slug}`);
+                                        }}
                                     >
                                         Read More{" "}
                                         <ArrowRight className="ml-1 h-4 w-4" />

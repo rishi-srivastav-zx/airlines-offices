@@ -10,11 +10,15 @@ import {
   List as ListIcon,
   ArrowRight,
   X,
+  Globe,
+  Building2,
+  MapPinned,
 } from "lucide-react";
 import OfficeCard from "@/components/officeCard";
 import SafeImage from "@/components/safeImage";
 import { getOffices } from "@/api/offices";
 import toast from "react-hot-toast";
+import { slugify } from "@/utils/slugifyhelper";
 
 const Directory = () => {
   const router = useRouter();
@@ -32,24 +36,25 @@ const Directory = () => {
   const [offices, setOffices] = useState([]);
   const [airlines, setAirlines] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+  const [websiteUrl, setWebsiteUrl] = useState("");
 
   useEffect(() => {
     const fetchOffices = async () => {
       try {
-        const data = await getOffices();
+        const data = await getOffices({});
         setOffices(data);
         const uniqueAirlines = [
           ...new Map(
             data
-              .filter((item) => item.airline) // Only include offices with populated airline
+              .filter((item) => item.airline)
               .map((item) => [
                 item.airline._id,
                 {
                   id: item.airline._id,
                   name: item.airline.airlineName,
+                  slug: slugify(item.airline.airlineName),
                 },
-              ]),
+              ])
           ).values(),
         ];
         setAirlines(uniqueAirlines);
@@ -80,7 +85,8 @@ const Directory = () => {
           .includes(search.toLowerCase());
 
       const matchesAirline =
-        !selectedAirline || office.airline?._id === selectedAirline;
+        !selectedAirline ||
+        slugify(office.airline?.airlineName || "") === selectedAirline;
 
       const matchesCountry =
         !selectedCountry || office.officeOverview.country === selectedCountry;
@@ -94,498 +100,437 @@ const Directory = () => {
     return Array.from(set).sort();
   }, [offices]);
 
-const officesByContinent = useMemo(() => {
+  const officesByContinent = useMemo(() => {
     const grouped = {};
 
     filteredOffices.forEach((office) => {
-        let continent = office?.officeOverview?.continent;
+      let continent = office?.officeOverview?.continent;
 
-        if (!continent || typeof continent !== "string") {
-            continent = "Unknown";
-        }
+      if (!continent || typeof continent !== "string") {
+        continent = "Unknown";
+      }
 
-        continent = continent.trim();
+      continent = continent.trim();
 
-        if (!grouped[continent]) {
-            grouped[continent] = [];
-        }
+      if (!grouped[continent]) {
+        grouped[continent] = [];
+      }
 
-        grouped[continent].push(office);
+      grouped[continent].push(office);
     });
 
     return grouped;
-}, [filteredOffices]);
+  }, [filteredOffices]);
 
-
-  const activeFiltersCount = [selectedAirline, selectedCountry, search].filter(
-    Boolean,
-  ).length;
+  const activeFiltersCount = [
+    selectedAirline,
+    selectedCountry,
+    search,
+    websiteUrl,
+  ].filter(Boolean).length;
 
   const handleReset = () => {
     setSearch("");
     setSelectedAirline("");
     setSelectedCountry("");
-    router.push("/directory");
+    setWebsiteUrl("");
+    router.push("/directoryAirlines");
   };
 
   const handleOfficeClick = (slug) => {
     router.push(`/directoryAirlines/airlinespages/${slug}`);
   };
 
-  const StatBox = ({ value, label }) => (
-    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-      <p className="text-3xl font-bold text-white mb-1">{value}</p>
-      <p className="text-blue-100 text-sm">{label}</p>
+  const StatBox = ({ value, label, icon: Icon }) => (
+    <div className="bg-white/20 backdrop-blur-md rounded-xl p-4 border border-white/30 flex items-center gap-3">
+      <div className="bg-white/30 p-2 rounded-lg">
+        <Icon className="h-5 w-5 text-white" />
+      </div>
+      <div>
+        <p className="text-2xl font-bold text-white">{value}</p>
+        <p className="text-white/80 text-xs">{label}</p>
+      </div>
     </div>
   );
 
   return (
-      <div className="min-h-screen bg-gray-50 pb-20">
-          {/* Hero Header */}
-          <div className="relative py-16 px-4 shadow-xl mb-8 overflow-hidden">
-              {/* Flight Background Image */}
-              <div
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{
-                      backgroundImage:
-                          "url('https://images.unsplash.com/photo-1569629743817-70d8db6c323b?auto=format&fit=crop&w=2000&q=80')",
-                  }}
-              />
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Hero Header - Only blur effect, no solid blue */}
+      <div className="relative py-12 px-4 shadow-xl mb-6 overflow-hidden">
+        {/* Background Image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1569629743817-70d8db6c323b?auto=format&fit=crop&w=2000&q=80')",
+          }}
+        />
+        
+        {/* Blur overlay only - no solid color */}
+        <div className="absolute inset-0 backdrop-blur-xs bg-black/20" />
 
-              {/* Light Effects */}
-              <div className="absolute inset-0 opacity-10">
-                  <div className="absolute top-10 left-10 w-72 h-72 bg-white rounded-full blur-3xl"></div>
-                  <div className="absolute bottom-10 right-10 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-              </div>
-
-              <div className="max-w-7xl mx-auto relative z-10">
-                  <div className="text-white text-center md:text-left">
-                      <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-                          Airline Office Directory
-                      </h1>
-
-                      <p className="text-blue-50 text-lg md:text-xl max-w-2xl">
-                          Browse our comprehensive verified list of airline
-                          contact details worldwide.
-                      </p>
-                  </div>
-
-                  {/* Quick Stats */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-                      <StatBox
-                          value={`${offices.length}+`}
-                          label="Office Locations"
-                      />
-
-                      <StatBox value={`${airlines.length}+`} label="Airlines" />
-
-                      <StatBox
-                          value={`${countries.length}+`}
-                          label="Countries"
-                      />
-
-                      <StatBox value="24/7" label="Support Available" />
-                  </div>
-              </div>
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="text-white text-center mb-8">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 drop-shadow-lg">
+              Airline Office Directory
+            </h1>
+            <p className="text-white/90 text-base md:text-lg max-w-2xl mx-auto drop-shadow-md">
+              Browse our comprehensive verified list of airline contact details worldwide.
+            </p>
           </div>
 
-          <div className="w-full mx-auto px-4 sm:px-6 lg:px-10">
-              {/* Mobile Filter Toggle */}
-              <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="lg:hidden w-full mb-6 bg-white rounded-xl p-4 shadow-sm border border-gray-200 flex items-center justify-between font-semibold text-gray-700"
-              >
-                  <span className="flex items-center gap-2">
-                      <Filter className="h-5 w-5 text-[#00ADEF]" />
-                      Filters
-                      {activeFiltersCount > 0 && (
-                          <span className="bg-[#00ADEF] text-white text-xs px-2 py-1 rounded-full">
-                              {activeFiltersCount}
-                          </span>
-                      )}
-                  </span>
-
-                  <span className="text-sm text-gray-500">
-                      {showFilters ? "Hide" : "Show"}
-                  </span>
-              </button>
-
-              <div className="flex flex-col lg:flex-row gap-8">
-                  {/* Sidebar Filters */}
-                  <aside
-                      className={`lg:w-1/4 space-y-6 ${
-                          showFilters ? "block" : "hidden lg:block"
-                      }`}
-                  >
-                      <div className="bg-white rounded-2xl p-4 mx-4 shadow-sm border border-gray-200 sticky top-24">
-                          <div className="flex items-center justify-between mb-6">
-                              <div className="flex items-center space-x-2">
-                                  <Filter className="h-5 w-5 text-[#00ADEF]" />
-
-                                  <h3 className="font-bold text-lg text-gray-900">
-                                      Filter Results
-                                  </h3>
-                              </div>
-
-                              {activeFiltersCount > 0 && (
-                                  <span className="bg-[#00ADEF] text-white text-xs font-bold px-2.5 py-1 rounded-full">
-                                      {activeFiltersCount}
-                                  </span>
-                              )}
-                          </div>
-
-                          {/* Search Input */}
-                          <div className="mb-6">
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                  Search
-                              </label>
-
-                              <div className="relative">
-                                  <input
-                                      type="text"
-                                      value={search}
-                                      onChange={(e) =>
-                                          setSearch(e.target.value)
-                                      }
-                                      placeholder="City, airline, country..."
-                                      className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-4 pr-10 focus:ring-2 focus:ring-[#00ADEF] focus:border-transparent outline-none transition-all text-sm"
-                                  />
-
-                                  {search ? (
-                                      <button
-                                          onClick={() => setSearch("")}
-                                          className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
-                                      >
-                                          <X className="h-4 w-4" />
-                                      </button>
-                                  ) : (
-                                      <Search className="absolute right-3 top-3.5 h-4 w-4 text-gray-400 pointer-events-none" />
-                                  )}
-                              </div>
-                          </div>
-
-                          {/* Airline Filter */}
-                          <div className="mb-6">
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                  Airline
-                              </label>
-
-                              <select
-                                  value={selectedAirline}
-                                  onChange={(e) =>
-                                      setSelectedAirline(e.target.value)
-                                  }
-                                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-[#00ADEF] focus:border-transparent outline-none text-sm"
-                              >
-                                  <option value="">All Airlines</option>
-
-                                  {airlines.map((airline) => (
-                                      <option
-                                          key={airline.id}
-                                          value={airline.id}
-                                      >
-                                          {airline.name}
-                                      </option>
-                                  ))}
-                              </select>
-                          </div>
-
-                          {/* Country Filter */}
-                          <div className="mb-6">
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                  Country
-                              </label>
-
-                              <select
-                                  value={selectedCountry}
-                                  onChange={(e) =>
-                                      setSelectedCountry(e.target.value)
-                                  }
-                                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 focus:ring-2 focus:ring-[#00ADEF] focus:border-transparent outline-none text-sm"
-                              >
-                                  <option value="">All Countries</option>
-
-                                  {countries.map((country) => (
-                                      <option key={country} value={country}>
-                                          {country}
-                                      </option>
-                                  ))}
-                              </select>
-                          </div>
-
-                          {/* Reset Button */}
-                          {activeFiltersCount > 0 && (
-                              <button
-                                  onClick={handleReset}
-                                  className="w-full py-3 text-sm font-semibold text-[#00ADEF] border-2 border-[#00ADEF] rounded-xl hover:bg-blue-50 transition-all"
-                              >
-                                  Reset All Filters
-                              </button>
-                          )}
-                      </div>
-
-                      {/* Help Card */}
-                      <div className="bg-gradient-to-br from-[#00ADEF]/10 to-[#00ADEF]/5 rounded-2xl p-6 border border-[#00ADEF]/20">
-                          <div className="bg-white w-12 h-12 rounded-full flex items-center justify-center mb-4">
-                              <MapPin className="h-6 w-6 text-[#00ADEF]" />
-                          </div>
-
-                          <h4 className="font-bold mb-2 text-gray-900">
-                              Need Help Finding an Office?
-                          </h4>
-
-                          <p className="text-sm text-gray-600 mb-4">
-                              Our global support team is available 24/7 to
-                              assist you.
-                          </p>
-
-                          <button className="w-full bg-[#333333] text-white py-3 rounded-xl text-sm font-semibold hover:bg-[#222222] transition-all shadow-lg">
-                              Contact Support
-                          </button>
-                      </div>
-                  </aside>
-
-                  {/* Results Area */}
-                  <main className="lg:w-3/4">
-                      {/* Results Header */}
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-                          <div>
-                              <p className="text-gray-600 font-medium">
-                                  Showing{" "}
-                                  <span className="text-[#00ADEF] font-bold text-lg">
-                                      {filteredOffices.length}
-                                  </span>{" "}
-                                  office
-                                  {filteredOffices.length !== 1 ? "s" : ""}
-                              </p>
-
-                              {activeFiltersCount > 0 && (
-                                  <p className="text-xs text-gray-500 mt-1">
-                                      {activeFiltersCount} filter
-                                      {activeFiltersCount !== 1 ? "s" : ""}{" "}
-                                      applied
-                                  </p>
-                              )}
-                          </div>
-
-                          <div className="flex items-center space-x-2">
-                              <span className="text-sm text-gray-600 mr-2 hidden sm:inline">
-                                  View:
-                              </span>
-
-                              <button
-                                  onClick={() => setViewMode("grid")}
-                                  className={`p-2.5 rounded-lg transition-all ${
-                                      viewMode === "grid"
-                                          ? "bg-[#00ADEF] text-white shadow-lg"
-                                          : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                                  }`}
-                                  title="Grid View"
-                              >
-                                  <Grid className="h-5 w-5" />
-                              </button>
-
-                              <button
-                                  onClick={() => setViewMode("list")}
-                                  className={`p-2.5 rounded-lg transition-all ${
-                                      viewMode === "list"
-                                          ? "bg-[#00ADEF] text-white shadow-lg"
-                                          : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                                  }`}
-                                  title="List View"
-                              >
-                                  <ListIcon className="h-5 w-5" />
-                              </button>
-                          </div>
-                      </div>
-
-                      {/* Results Grid/List - Organized by Continent */}
-                      {loading ? (
-                          <p>Loading...</p>
-                      ) : filteredOffices.length > 0 ? (
-                          <div className="space-y-12">
-                              {Object.entries(officesByContinent)
-                                  .filter(([continent]) => continent && continent !== 'Unknown' && continent.trim() !== '')
-                                  .sort(([a], [b]) => a.localeCompare(b))
-                                  .map(([continent, continentOffices]) => (
-                                      <div key={continent}>
-                                          {/* Continent Header */}
-                                          <div className="mb-6">
-                                              <div className="flex items-center gap-4 mb-4">
-                                                  <div className="h-1 bg-gradient-to-r from-[#00ADEF] to-blue-400 flex-1 rounded-full"></div>
-                                                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 px-4">
-                                                      {continent}
-                                                  </h2>
-                                                  <div className="h-1 bg-gradient-to-r from-blue-400 to-[#00ADEF] flex-1 rounded-full"></div>
-                                              </div>
-                                              <p className="text-gray-600 text-center mb-6">
-                                                  <span className="font-semibold text-[#00ADEF]">
-                                                      {continentOffices.length}
-                                                  </span>{" "}
-                                                  office{continentOffices.length !== 1 ? "s" : ""} in {continent}
-                                              </p>
-                                          </div>
-
-                                          {/* Offices for this continent */}
-                                          <div
-                                              className={
-                                                  viewMode === "grid"
-                                                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                                                      : "flex flex-col gap-4"
-                                              }
-                                          >
-                                              {continentOffices.map((office) =>
-                                                  viewMode === "grid" ? (
-                                                      <OfficeCard
-                                                          key={office.slug}
-                                                          office={office}
-                                                      />
-                                                  ) : (
-                                                      <div
-                                                          key={office.slug}
-                                                          onClick={() =>
-                                                              handleOfficeClick(office.slug)
-                                                          }
-                                                          className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between hover:border-[#00ADEF] hover:shadow-md transition-all group cursor-pointer"
-                                                      >
-                                                          <div className="flex items-center space-x-4 flex-1">
-                                                              <div className="h-16 w-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
-                                                                  <SafeImage
-                                                                      src={office.photo}
-                                                                      alt={`${office.airline?.airlineName || 'Office'} ${office.officeOverview.city}`}
-                                                                      className="w-full h-full object-cover"
-                                                                      fallbackSrc="https://images.unsplash.com/photo-1436491865332-7a61a109c0f2?auto=format&fit=crop&q=80&w=200"
-                                                                  />
-                                                              </div>
-
-                                                              <div className="flex-1 min-w-0">
-                                                                  <h4 className="font-bold text-gray-900 group-hover:text-[#00ADEF] transition-colors mb-1 truncate">
-                                                                      {office.airline?.airlineName || 'Unknown Airline'} - {office.officeOverview.city}
-                                                                  </h4>
-
-                                                                  <p className="text-sm text-gray-600 mb-1">
-                                                                      {office.officeOverview.country}
-                                                                  </p>
-
-                                                                  <p className="text-xs text-gray-500 truncate hidden sm:block">
-                                                                      {office.officeOverview.phone}
-                                                                  </p>
-                                                              </div>
-                                                          </div>
-
-                                                          <button className="bg-gray-100 p-3 rounded-xl group-hover:bg-[#00ADEF] group-hover:text-white transition-all flex-shrink-0 ml-4">
-                                                              <ArrowRight className="h-5 w-5" />
-                                                          </button>
-                                                      </div>
-                                                  ),
-                                              )}
-                                          </div>
-                                      </div>
-                                  ))}
-                                      
-                                  {/* Show offices with unknown continent separately */}
-                                  {officesByContinent['Unknown'] && officesByContinent['Unknown'].length > 0 && (
-                                      <div>
-                                          <div className="mb-6">
-                                              <div className="flex items-center gap-4 mb-4">
-                                                  <div className="h-1 bg-gradient-to-r from-gray-400 to-gray-300 flex-1 rounded-full"></div>
-                                                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 px-4">
-                                                      Other Locations
-                                                  </h2>
-                                                  <div className="h-1 bg-gradient-to-r from-gray-300 to-gray-400 flex-1 rounded-full"></div>
-                                              </div>
-                                              <p className="text-gray-600 text-center mb-6">
-                                                  <span className="font-semibold text-gray-500">
-                                                      {officesByContinent['Unknown'].length}
-                                                  </span>{" "}
-                                                  office{officesByContinent['Unknown'].length !== 1 ? "s" : ""} without continent information
-                                              </p>
-                                          </div>
-
-                                          <div
-                                              className={
-                                                  viewMode === "grid"
-                                                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                                                      : "flex flex-col gap-4"
-                                              }
-                                          >
-                                              {officesByContinent['Unknown'].map((office) =>
-                                                  viewMode === "grid" ? (
-                                                      <OfficeCard
-                                                          key={office.slug}
-                                                          office={office}
-                                                      />
-                                                  ) : (
-                                                      <div
-                                                          key={office.slug}
-                                                          onClick={() =>
-                                                              handleOfficeClick(office.slug)
-                                                          }
-                                                          className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between hover:border-[#00ADEF] hover:shadow-md transition-all group cursor-pointer"
-                                                      >
-                                                          <div className="flex items-center space-x-4 flex-1">
-                                                              <div className="h-16 w-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
-                                                                  <SafeImage
-                                                                      src={office.photo}
-                                                                      alt={`${office.airline?.airlineName || 'Office'} ${office.officeOverview.city}`}
-                                                                      className="w-full h-full object-cover"
-                                                                      fallbackSrc="https://images.unsplash.com/photo-1436491865332-7a61a109c0f2?auto=format&fit=crop&q=80&w=200"
-                                                                  />
-                                                              </div>
-
-                                                              <div className="flex-1 min-w-0">
-                                                                  <h4 className="font-bold text-gray-900 group-hover:text-[#00ADEF] transition-colors mb-1 truncate">
-                                                                      {office.airline?.airlineName || 'Unknown Airline'} - {office.officeOverview.city}
-                                                                  </h4>
-
-                                                                  <p className="text-sm text-gray-600 mb-1">
-                                                                      {office.officeOverview.country}
-                                                                  </p>
-
-                                                                  <p className="text-xs text-gray-500 truncate hidden sm:block">
-                                                                      {office.officeOverview.phone}
-                                                                  </p>
-                                                              </div>
-                                                          </div>
-
-                                                          <button className="bg-gray-100 p-3 rounded-xl group-hover:bg-[#00ADEF] group-hover:text-white transition-all flex-shrink-0 ml-4">
-                                                              <ArrowRight className="h-5 w-5" />
-                                                          </button>
-                                                      </div>
-                                                  ),
-                                              )}
-                                          </div>
-                                      </div>
-                                  )}
-                          </div>
-                      ) : (
-                          <div className="bg-white rounded-3xl p-12 md:p-20 text-center shadow-sm border-2 border-dashed border-gray-300">
-                              <div className="bg-gray-50 h-24 w-24 rounded-full flex items-center justify-center mx-auto mb-6">
-                                  <Search className="h-12 w-12 text-gray-300" />
-                              </div>
-
-                              <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-                                  No Offices Found
-                              </h3>
-
-                              <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                                  We couldn't find any offices matching your
-                                  search criteria. Try adjusting your filters or
-                                  search terms.
-                              </p>
-
-                              <button
-                                  onClick={handleReset}
-                                  className="bg-[#00ADEF] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#0096d6] transition-all shadow-lg"
-                              >
-                                  Clear All Filters
-                              </button>
-                          </div>
-                      )}
-                  </main>
-              </div>
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto">
+            <StatBox
+              value={`${offices.length}+`}
+              label="Office Locations"
+              icon={Building2}
+            />
+            <StatBox value={`${airlines.length}+`} label="Airlines" icon={MapPinned} />
+            <StatBox value={`${countries.length}+`} label="Countries" icon={MapPin} />
+            <StatBox value="24/7" label="Support Available" icon={Globe} />
           </div>
+        </div>
       </div>
+
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+       {/* Top Filter Bar - Single Line Layout */}
+<div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-4 mb-6 relative z-20">
+  <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+    
+    {/* Left Side: Search + Filters */}
+    <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto items-stretch sm:items-center">
+      
+      {/* Search Input */}
+      <div className="relative w-full sm:w-64 lg:w-72">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+          <Search className="h-4 w-4" />
+        </div>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search city, airline, country..."
+          className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-lg py-2 pl-9 pr-8 focus:ring-2 focus:ring-[#00ADEF] focus:border-transparent outline-none transition-all text-sm"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        )}
+      </div>
+
+      {/* Airline Filter */}
+      <div className="relative w-full sm:w-40 lg:w-44">
+        <select
+          value={selectedAirline}
+          onChange={(e) => setSelectedAirline(e.target.value)}
+          className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-lg py-2 pl-3 pr-8 focus:ring-2 focus:ring-[#00ADEF] focus:border-transparent outline-none text-sm appearance-none cursor-pointer"
+        >
+          <option value="">All Airlines</option>
+          {airlines.map((airline) => (
+            <option key={airline.id} value={airline.slug}>
+              {airline.name}
+            </option>
+          ))}
+        </select>
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+          <Filter className="h-3 w-3" />
+        </div>
+      </div>
+
+      {/* Country Filter */}
+      <div className="relative w-full sm:w-40 lg:w-44">
+        <select
+          value={selectedCountry}
+          onChange={(e) => setSelectedCountry(e.target.value)}
+          className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-lg py-2 pl-3 pr-8 focus:ring-2 focus:ring-[#00ADEF] focus:border-transparent outline-none text-sm appearance-none cursor-pointer"
+        >
+          <option value="">All Countries</option>
+          {countries.map((country) => (
+            <option key={country} value={country}>
+              {country}
+            </option>
+          ))}
+        </select>
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+          <MapPin className="h-3 w-3" />
+        </div>
+      </div>
+
+      {/* Clear Filters Button */}
+      {activeFiltersCount > 0 && (
+        <button
+          onClick={handleReset}
+          className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-all border border-red-200 whitespace-nowrap"
+        >
+          <X className="h-3 w-3" />
+          Clear
+          <span className="bg-red-200 text-red-700 text-xs px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+            {activeFiltersCount}
+          </span>
+        </button>
+      )}
+    </div>
+
+    {/* Right Side: Results Count + View Toggle */}
+    <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end">
+      <span className="text-sm text-gray-600">
+        <span className="font-bold text-[#00ADEF]">{filteredOffices.length}</span> results
+      </span>
+      
+      <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+        <button
+          onClick={() => setViewMode("grid")}
+          className={`p-1.5 rounded-md transition-all ${
+            viewMode === "grid"
+              ? "bg-white text-[#00ADEF] shadow-sm"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+          title="Grid View"
+        >
+          <Grid className="h-4 w-4" />
+        </button>
+        <button
+          onClick={() => setViewMode("list")}
+          className={`p-1.5 rounded-md transition-all ${
+            viewMode === "list"
+              ? "bg-white text-[#00ADEF] shadow-sm"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+          title="List View"
+        >
+          <ListIcon className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {/* Active Filters Tags - Below if needed */}
+  {activeFiltersCount > 0 && (
+    <div className="flex flex-wrap gap-2 items-center mt-3 pt-3 border-t border-gray-100">
+      <span className="text-xs text-gray-500 font-medium">Active:</span>
+      {search && (
+        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium">
+          "{search.length > 20 ? search.substring(0, 20) + '...' : search}"
+          <button onClick={() => setSearch("")} className="hover:text-blue-900">
+            <X className="h-3 w-3" />
+          </button>
+        </span>
+      )}
+      {selectedAirline && (
+        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium">
+          {airlines.find(a => a.slug === selectedAirline)?.name}
+          <button onClick={() => setSelectedAirline("")} className="hover:text-blue-900">
+            <X className="h-3 w-3" />
+          </button>
+        </span>
+      )}
+      {selectedCountry && (
+        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium">
+          {selectedCountry}
+          <button onClick={() => setSelectedCountry("")} className="hover:text-blue-900">
+            <X className="h-3 w-3" />
+          </button>
+        </span>
+      )}
+    </div>
+  )}
+</div>
+
+          {/* Results Area */}
+<main className="relative z-10">
+  {loading ? (
+    <div className="flex items-center justify-center py-20">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00ADEF]"></div>
+    </div>
+  ) : filteredOffices.length > 0 ? (
+    <div className="space-y-12">
+      {Object.entries(officesByContinent)
+        .filter(
+          ([continent]) =>
+            continent && continent !== "Unknown" && continent.trim() !== ""
+        )
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([continent, continentOffices]) => (
+          <div key={continent}>
+            {/* Continent Header - Improved styling */}
+            <div className="mb-8">
+              <div className="flex items-center justify-center gap-4 mb-2">
+                <div className="h-px bg-gradient-to-r from-transparent via-[#00ADEF]/50 to-[#00ADEF] flex-1 max-w-[100px]"></div>
+                <div className="flex items-center gap-2 bg-white px-5 py-2.5 rounded-full shadow-md border border-[#00ADEF]/20">
+                  <MapPin className="h-5 w-5 text-[#00ADEF]" />
+                  <h2 className="text-lg md:text-xl font-bold text-gray-900">
+                    {continent}
+                  </h2>
+                  <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                    {continentOffices.length}
+                  </span>
+                </div>
+                <div className="h-px bg-gradient-to-l from-transparent via-[#00ADEF]/50 to-[#00ADEF] flex-1 max-w-[100px]"></div>
+              </div>
+            </div>
+
+            {/* Offices Grid - Optimized for 4 columns with responsive breakpoints */}
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 lg:gap-6"
+                  : "flex flex-col gap-4"
+              }
+            >
+              {continentOffices.map((office) =>
+                viewMode === "grid" ? (
+                  <OfficeCard key={office.slug} office={office} />
+                ) : (
+                  <div
+                    key={office.slug}
+                    onClick={() => handleOfficeClick(office.slug)}
+                    className="bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between hover:border-[#00ADEF] hover:shadow-md transition-all group cursor-pointer"
+                  >
+                    <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                      <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                        <img
+                          src={`http://localhost:3001${office.photo}`}
+                          alt={`${office.airline?.airlineName || "Office"} ${
+                            office.officeOverview.city
+                          }`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src = "https://images.unsplash.com/photo-1436491865332-7a61a109c0f2?auto=format&fit=crop&q=80&w=200";
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-gray-900 group-hover:text-[#00ADEF] transition-colors mb-1 truncate text-sm sm:text-base">
+                          {office.airline?.airlineName || "Unknown Airline"} -{" "}
+                          {office.officeOverview.city}
+                        </h4>
+
+                        <p className="text-xs sm:text-sm text-gray-600 mb-1">
+                          {office.officeOverview.country}
+                        </p>
+
+                        <p className="text-xs text-gray-500 truncate hidden sm:block">
+                          {office.officeOverview.phone}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button className="bg-gray-100 p-2.5 sm:p-3 rounded-xl group-hover:bg-[#00ADEF] group-hover:text-white transition-all flex-shrink-0 ml-2 sm:ml-4">
+                      <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        ))}
+
+      {/* Unknown Continent Section */}
+      {officesByContinent["Unknown"] &&
+        officesByContinent["Unknown"].length > 0 && (
+          <div>
+            <div className="mb-8">
+              <div className="flex items-center justify-center gap-4 mb-2">
+                <div className="h-px bg-gradient-to-r from-transparent via-gray-400/50 to-gray-400 flex-1 max-w-[100px]"></div>
+                <div className="flex items-center gap-2 bg-gray-50 px-5 py-2.5 rounded-full shadow-md border border-gray-200">
+                  <MapPin className="h-5 w-5 text-gray-500" />
+                  <h2 className="text-lg md:text-xl font-bold text-gray-700">
+                    Other Locations
+                  </h2>
+                  <span className="text-xs font-medium text-gray-500 bg-gray-200 px-2 py-1 rounded-full">
+                    {officesByContinent["Unknown"].length}
+                  </span>
+                </div>
+                <div className="h-px bg-gradient-to-l from-transparent via-gray-400/50 to-gray-400 flex-1 max-w-[100px]"></div>
+              </div>
+            </div>
+
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 lg:gap-6"
+                  : "flex flex-col gap-4"
+              }
+            >
+              {officesByContinent["Unknown"].map((office) =>
+                viewMode === "grid" ? (
+                  <OfficeCard key={office.slug} office={office} />
+                ) : (
+                  <div
+                    key={office.slug}
+                    onClick={() => handleOfficeClick(office.slug)}
+                    className="bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-gray-200 flex items-center justify-between hover:border-[#00ADEF] hover:shadow-md transition-all group cursor-pointer"
+                  >
+                    <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                      <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                        <SafeImage
+                          src={office.photo}
+                          alt={`${office.airline?.airlineName || "Office"} ${
+                            office.officeOverview.city
+                          }`}
+                          className="w-full h-full object-cover"
+                          fallbackSrc="https://images.unsplash.com/photo-1436491865332-7a61a109c0f2?auto=format&fit=crop&q=80&w=200"
+                        />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-gray-900 group-hover:text-[#00ADEF] transition-colors mb-1 truncate text-sm sm:text-base">
+                          {office.airline?.airlineName || "Unknown Airline"} -{" "}
+                          {office.officeOverview.city}
+                        </h4>
+
+                        <p className="text-xs sm:text-sm text-gray-600 mb-1">
+                          {office.officeOverview.country}
+                        </p>
+
+                        <p className="text-xs text-gray-500 truncate hidden sm:block">
+                          {office.officeOverview.phone}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button className="bg-gray-100 p-2.5 sm:p-3 rounded-xl group-hover:bg-[#00ADEF] group-hover:text-white transition-all flex-shrink-0 ml-2 sm:ml-4">
+                      <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
+    </div>
+  ) : (
+    <div className="bg-white rounded-3xl p-12 md:p-20 text-center shadow-sm border-2 border-dashed border-gray-300">
+      <div className="bg-gray-50 h-24 w-24 rounded-full flex items-center justify-center mx-auto mb-6">
+        <Search className="h-12 w-12 text-gray-300" />
+      </div>
+
+      <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+        No Offices Found
+      </h3>
+
+      <p className="text-gray-500 mb-6 max-w-md mx-auto">
+        We couldn't find any offices matching your search criteria. Try adjusting your
+        filters or search terms.
+      </p>
+
+      <button
+        onClick={handleReset}
+        className="bg-[#00ADEF] text-white px-8 py-3 rounded-xl font-semibold hover:bg-[#0096d6] transition-all shadow-lg"
+      >
+        Clear All Filters
+      </button>
+    </div>
+  )}
+</main>
+      </div>
+    </div>
   );
 };
 
